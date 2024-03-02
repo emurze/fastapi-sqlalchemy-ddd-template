@@ -1,0 +1,41 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    image: api:v1
+    container_name: api
+    command:
+      bash -c "make row-migrate &&
+               cd src &&
+               poetry run uvicorn --host 0.0.0.0 --port 8080 main:app --reload"
+    networks:
+      - backend
+    ports:
+      - '8080:8080'
+    env_file:
+      - .env/.app.env
+    volumes:
+      - ./src:/service/src
+      - ./tests:/service/tests
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  db:
+    image: emurze/testdb_postgres:16
+    container_name: db
+    networks:
+      - backend
+    ports:
+      - '5432:5432'
+    env_file:
+      - .env/.db.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
