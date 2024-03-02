@@ -34,11 +34,11 @@ class InMemoryRepository(IGenericRepository):
         self._models: list[Model] = []
         self._gen_manager = gen_manager(self.field_gens)
 
-    async def add(self, **kw) -> int:
+    async def add(self, **kw) -> Model:
         kw_gen_values = self._gen_manager.iterate_generators(kw)
         instance = self.model(**kw_gen_values)
         self._models.append(instance)
-        return instance.id
+        return instance
 
     async def get(self, **kw) -> Model:
         return next(
