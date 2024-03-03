@@ -1,4 +1,4 @@
-from typing import NoReturn, Any as Model
+from typing import NoReturn, Any as Model, List
 
 from sqlalchemy import select, insert, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,10 +33,19 @@ class SqlAlchemyRepository(IGenericRepository):
         posts = await self.session.execute(query)
         return list(posts.scalars().all())
 
-    async def delete(self, **kw) -> Model:
-        query = delete(self.model).filter_by(**kw).returning(self.model)
+    async def delete_one(self, **kw) -> Model:
+        id_value = kw.get('id')
+        assert len(kw) == 1 and id_value is not None, \
+            "delete_one accepts only one id parameter"
+
+        query = delete(self.model).filter_by(id=id_value).returning(self.model)
         model = await self.session.execute(query)
         return model.scalar_one()
+
+    async def delete(self, **kw) -> List[Model]:
+        query = delete(self.model).filter_by(**kw).returning(self.model)
+        model = await self.session.execute(query)
+        return list(model.scalars().all())
 
 
 class CachedSqlalchemyRepository(SqlAlchemyRepository):

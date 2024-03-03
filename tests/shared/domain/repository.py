@@ -13,3 +13,6 @@ class IExampleRepository(abc.ABC):
 
     @abc.abstractmethod
     async def delete(self, **kw): ...
+
+    @abc.abstractmethod
+    async def delete_one(self, **kw): ...

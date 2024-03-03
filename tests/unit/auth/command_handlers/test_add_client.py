@@ -1,5 +1,5 @@
 from auth.domain.uow import IAuthUnitOfWork
-from tests.unit.auth.handlers.conftest import make_client
+from tests.unit.auth.conftest import make_client
 
 
 async def test_add_client_handler(uow: IAuthUnitOfWork) -> None:

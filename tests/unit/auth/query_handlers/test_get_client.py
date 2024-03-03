@@ -1,6 +1,7 @@
-from auth.application.query.get_client import GetClientHandler, GetClientQuery
+from auth.application.queries.get_client import GetClientQuery
+from auth.application.query_handlers.get_client import GetClientHandler
 from auth.domain.uow import IAuthUnitOfWork
-from tests.unit.auth.handlers.conftest import make_client
+from tests.unit.auth.conftest import make_client
 
 
 async def test_get_client_handler(uow: IAuthUnitOfWork) -> None:
@@ -9,4 +10,5 @@ async def test_get_client_handler(uow: IAuthUnitOfWork) -> None:
     handler = GetClientHandler(uow)
     query = GetClientQuery(id=1)
     result = await handler.execute(query)
-    assert result.id == 1
+    client = result.payload
+    assert client.id == 1

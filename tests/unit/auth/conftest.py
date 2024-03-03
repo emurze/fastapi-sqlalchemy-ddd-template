@@ -1,18 +1,19 @@
 import pytest
 
-from auth.application.command.add_client import (
-    AddClientHandler,
+from auth.application.command_handlers.add_client import AddClientHandler
+from auth.application.commands.add_client import (
     AddClientCommand,
-    AddClientResult,
+    AddClientPayload,
 )
 from auth.domain.uow import IAuthUnitOfWork
 from auth.infra.repositories import in_memory
 
 
-async def make_client(uow: IAuthUnitOfWork, **kw) -> AddClientResult:
+async def make_client(uow: IAuthUnitOfWork, **kw) -> AddClientPayload:
     handler = AddClientHandler(uow)
     command = AddClientCommand(**kw)
-    return await handler.execute(command)
+    result = await handler.execute(command)
+    return result.payload
 
 
 @pytest.fixture

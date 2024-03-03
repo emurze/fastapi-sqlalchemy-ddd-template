@@ -1,15 +1,13 @@
-import abc
-from pydantic import BaseModel, ConfigDict
+from typing import Optional, Generic, TypeVar
+
+from shared.application.model import Model
+
+Query = type("Query", (Model,), {})
+QueryPayload = type("QueryPayload", (Model,), {})
+
+T = TypeVar("T")
 
 
-class Query(BaseModel):
-    pass
-
-
-class QueryResult(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-
-class IQueryHandler(abc.ABC):
-    @abc.abstractmethod
-    async def execute(self, query: Query) -> QueryResult: ...
+class QueryResult(Model, Generic[T]):
+    payload: Optional[T] = None
+    errors: list = []

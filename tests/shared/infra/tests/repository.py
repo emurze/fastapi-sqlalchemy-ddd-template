@@ -1,13 +1,15 @@
+import pytest
+
 from tests.shared.domain.repository import IExampleRepository
 
 
-async def _add_client(repository: IExampleRepository, name: str) -> None:
+async def _add_example(repository: IExampleRepository, name: str) -> None:
     example_dict = {"name": name}
     await repository.add(**example_dict)
 
 
 async def test_can_add_and_get_example(repository: IExampleRepository) -> None:
-    await _add_client(repository, "example")
+    await _add_example(repository, "example")
 
     example = await repository.get(id=1)
 
@@ -16,8 +18,8 @@ async def test_can_add_and_get_example(repository: IExampleRepository) -> None:
 
 
 async def test_list_examples(repository: IExampleRepository) -> None:
-    await _add_client(repository, "example 1")
-    await _add_client(repository, "example 2")
+    await _add_example(repository, "example 1")
+    await _add_example(repository, "example 2")
 
     examples = await repository.list()
 
@@ -26,9 +28,31 @@ async def test_list_examples(repository: IExampleRepository) -> None:
     assert examples[1].name == "example 2"
 
 
-async def test_delete(repository: IExampleRepository) -> None:
-    await _add_client(repository, "example 1")
-    await repository.delete(id=1)
+async def test_delete_one_no_id_error(repository: IExampleRepository) -> None:
+    with pytest.raises(AssertionError, match="only one id param"):
+        await repository.delete_one()
+
+
+async def test_delete_one_example(repository: IExampleRepository) -> None:
+    await _add_example(repository, "example 1")
+    await _add_example(repository, "example 2")
+
+    deleted_example = await repository.delete_one(id=2)
+    assert deleted_example.id == 2
+    assert deleted_example.name == "example 2"
+
+    examples = await repository.list()
+    assert len(examples) == 1
+
+
+async def test_delete_examples(repository: IExampleRepository) -> None:
+    await _add_example(repository, "example 1")
+    await _add_example(repository, "example 2")
+
+    deleted_examples = await repository.delete()
+    assert len(deleted_examples) == 2
+    assert deleted_examples[0].name == "example 1"
+    assert deleted_examples[1].name == "example 2"
 
     examples = await repository.list()
     assert len(examples) == 0

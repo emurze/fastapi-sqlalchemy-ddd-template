@@ -1,16 +1,13 @@
-import abc
+from typing import Optional, TypeVar, Generic
 
-from pydantic import BaseModel, ConfigDict
+from shared.application.model import Model
 
+Command = type("Command", (Model,), {})
+CommandPayload = type("CommandPayload", (Model,), {})
 
-class Command(BaseModel):
-    pass
-
-
-class CommandResult(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+T = TypeVar("T")
 
 
-class ICommandHandler(abc.ABC):
-    @abc.abstractmethod
-    async def execute(self, command: Command) -> CommandResult: ...
+class CommandResult(Model, Generic[T]):
+    payload: Optional[T] = None
+    errors: list = []
