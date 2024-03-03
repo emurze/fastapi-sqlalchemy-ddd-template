@@ -48,24 +48,46 @@ row-migrate:
 	poetry run alembic upgrade head
 
 
-# Tests
+# Formatting | Lint | Typing
 
 black:
 	poetry run black . -l 79 tests src
 
 lint:
-	poetry run flake8 --config setup.cfg src tests
+	poetry run flake8 --config setup.cfg src
 
 typechecks:
-	poetry run mypy --config setup.cfg src tests
+	poetry run mypy --config setup.cfg src
 
-unittests:
-	poetry run pytest -s -v tests/unit
 
-integration_tests:
-	$(call docker_exec,cd tests/integration && poetry run pytest -s -vv .)
+# Unit Tests
 
-e2e_tests:
-	$(call docker_exec,cd tests/e2e && poetry run pytest -s -vv .)
+unittests-auth:
+	poetry run pytest -s -v src/auth/tests/unit
+
+unittests-shared:
+	poetry run pytest -s -v src/shared/tests/unit
+
+unittests: unittests-auth unittests-shared
+
+
+# Integration Tests
+
+integration_tests-auth:
+	$(call docker_exec,cd src/auth/tests/integration && poetry run pytest -s -vv .)
+
+integration_tests-shared:
+	$(call docker_exec,cd src/shared/tests/integration && poetry run pytest -s -vv .)
+
+integration_tests: integration_tests-auth integration_tests-shared
+
+
+# End To End Tests
+
+e2e_tests-auth:
+	$(call docker_exec,cd src/auth/tests/e2e && poetry run pytest -s -vv .)
+
+e2e_tests: e2e_tests-auth
+
 
 test: lint typechecks unittests integration_tests e2e_tests
