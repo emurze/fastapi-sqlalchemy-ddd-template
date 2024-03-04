@@ -12,5 +12,13 @@ async def test_delete_client_handler(uow: IAuthUnitOfWork) -> None:
     result = await handler.execute(command)
     deleted_client = result.payload
 
+    assert result.status is True
     assert deleted_client.id == 1
     assert deleted_client.username == "Vlad"
+
+
+async def test_delete_client_not_found_error(uow: IAuthUnitOfWork) -> None:
+    handler = DeleteClientHandler(uow)
+    command = DeleteClientCommand(id=1)
+    result = await handler.execute(command)
+    assert result.status is False

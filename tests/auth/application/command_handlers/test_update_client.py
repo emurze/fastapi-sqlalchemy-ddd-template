@@ -10,6 +10,7 @@ async def test_update_client_handler(uow: IAuthUnitOfWork) -> None:
     handler = UpdateClientHandler(uow)
     command = UpdateClientCommand(id=1, username="New Vlad")
     result = await handler.execute(command)
+
     client = result.payload
 
     assert client.id == 1

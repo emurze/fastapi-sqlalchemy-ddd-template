@@ -20,7 +20,7 @@ class ExampleInMemoryUnitOfWork(InMemoryUnitOfWork, IExampleUnitOfWork):
 
 
 @pytest.fixture
-def repository() -> IExampleRepository:
+def repo() -> IExampleRepository:
     return ExampleInMemoryRepository()
 
 

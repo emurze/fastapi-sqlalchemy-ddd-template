@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from fastapi_cache.decorator import cache
 
 from auth.application import commands, queries
 from auth.application.command_handlers.add_client import AddClientHandler
@@ -24,7 +23,7 @@ async def add_client(dto: s.AddClientJsonRequest, uow: UoWDep):
     response_model=s.GetClientJsonResponse,
     status_code=200,
 )
-@cache(expire=30)
+# @cache(expire=30)
 async def get_client(dto: to_params(s.GetClientJsonRequest), uow: UoWDep):
     handler = GetClientHandler(uow)
     command = queries.GetClientQuery(id=dto.client_id)

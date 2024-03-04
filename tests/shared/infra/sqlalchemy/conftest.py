@@ -5,7 +5,7 @@ from sqlalchemy.orm import registry
 
 from shared.domain.uow import IGenericUnitOfWork
 from shared.infra.sqlalchemy_orm.common import suppress_echo
-from shared.infra.sqlalchemy_orm import repositories as r
+from shared.infra.sqlalchemy_orm import repository as r
 from shared.infra.sqlalchemy_orm.uow import SqlAlchemyUnitOfWork
 from tests.shared.conftest import (
     Example,
@@ -14,8 +14,6 @@ from tests.shared.conftest import (
 )
 
 from tests.utils.db import async_session_factory, async_engine
-
-# Infra
 
 mapped_registry = registry()
 
@@ -37,8 +35,6 @@ class ExampleSqlAlchemyUnitOfWork(SqlAlchemyUnitOfWork, IExampleUnitOfWork):
     pass
 
 
-# Container
-
 @pytest.fixture(scope="function", autouse=True)
 async def restart_example_table():
     async with async_engine.begin() as conn:
@@ -49,7 +45,7 @@ async def restart_example_table():
 
 
 @pytest.fixture
-def repository(session: AsyncSession) -> IExampleRepository:
+def repo(session: AsyncSession) -> IExampleRepository:
     return ExampleSqlAlchemyRepository(session)
 
 

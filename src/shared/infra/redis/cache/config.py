@@ -15,4 +15,6 @@ class CacheConfig(BaseSettings):
         )
 
 
-cache_config = CacheConfig()
+def get_cache_dsn():
+    cache_config = CacheConfig()
+    return cache_config.get_dsn()

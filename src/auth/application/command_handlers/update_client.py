@@ -16,10 +16,13 @@ class UpdateClientHandler(ICommandHandler):
     async def execute(
         self, command: UpdateClientCommand,
     ) -> UpdateClientResult:
-        command_dict = command.model_dump(exclude=["id"])
-        async with self.uow:
-            client = await self.uow.clients.get_for_update(id=command.id)
-            client.update(**command_dict)
-            payload = UpdateClientPayload.model_validate(client)
-            await self.uow.commit()
-            return UpdateClientResult(payload=payload)
+        try:
+            command_dict = command.model_dump(exclude=["id"])
+            async with self.uow:
+                client = await self.uow.clients.get_for_update(id=command.id)
+                client.update(**command_dict)
+                payload = UpdateClientPayload.model_validate(client)
+                await self.uow.commit()
+                return UpdateClientResult(payload=payload)
+        except SystemError:
+            return UpdateClientResult.build_system_error()

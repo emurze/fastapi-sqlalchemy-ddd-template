@@ -14,7 +14,10 @@ class GetClientsHandler(IQueryHandler):
     uow: IAuthUnitOfWork
 
     async def execute(self, query: GetClientsQuery) -> GetClientsResult:
-        async with self.uow:
-            clients = await self.uow.clients.list()
-            payload = GetClientsPayload(clients=clients)
-            return GetClientsResult(payload=payload)
+        try:
+            async with self.uow:
+                clients = await self.uow.clients.list()
+                payload = GetClientsPayload(clients=clients)
+                return GetClientsResult(payload=payload)
+        except SystemError:
+            return GetClientsResult.build_system_error()

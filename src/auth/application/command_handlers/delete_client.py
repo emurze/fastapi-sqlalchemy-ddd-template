@@ -7,6 +7,7 @@ from auth.application.commands.delete_client import (
 )
 from auth.domain.uow import IAuthUnitOfWork
 from shared.application.command_handler import ICommandHandler
+from shared.domain.exceptions import ResourceNotFoundError
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,8 +17,13 @@ class DeleteClientHandler(ICommandHandler):
     async def execute(
         self, command: DeleteClientCommand,
     ) -> DeleteClientResult:
-        command_dict = command.model_dump()
-        async with self.uow:
-            deleted_client = await self.uow.clients.delete_one(**command_dict)
-            payload = DeleteClientPayload.model_validate(deleted_client)
-            return DeleteClientResult(payload=payload)
+        try:
+            cmd_dict = command.model_dump()
+            async with self.uow:
+                deleted_client = await self.uow.clients.delete_one(**cmd_dict)
+                payload = DeleteClientPayload.model_validate(deleted_client)
+                return DeleteClientResult(payload=payload)
+        except ResourceNotFoundError:
+            return DeleteClientResult.build_resource_not_found_error()
+        except SystemError:
+            return DeleteClientResult.build_system_error()

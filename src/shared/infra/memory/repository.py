@@ -1,6 +1,7 @@
 from collections.abc import Callable
-from typing import Any as Model, Any, Generator, List
+from typing import Any as Model, Any, Generator, List, NoReturn
 
+from shared.domain.exceptions import ResourceNotFoundError
 from shared.domain.repository import IGenericRepository
 
 
@@ -40,21 +41,24 @@ class InMemoryRepository(IGenericRepository):
         self._models.append(instance)
         return instance
 
-    async def get(self, **kw) -> Model:
-        return next(
-            model
-            for model in self._models
-            for k, v in kw.items()
-            if getattr(model, k) == v
-        )
+    async def get(self, **kw) -> NoReturn | Model:
+        try:
+            return next(
+                model
+                for model in self._models
+                for k, v in kw.items()
+                if getattr(model, k) == v
+            )
+        except StopIteration:
+            raise ResourceNotFoundError()
 
-    async def get_for_update(self, **kw) -> Model:
+    async def get_for_update(self, **kw) -> NoReturn | Model:
         return await self.get(**kw)
 
     async def list(self) -> list[Model]:
         return self._models
 
-    async def delete_one(self, **kw) -> Model:
+    async def delete_one(self, **kw) -> NoReturn | Model:
         id_value = kw.get('id')
         assert len(kw) == 1 and id_value is not None, \
             "delete_one accepts only one id parameter"
@@ -63,6 +67,8 @@ class InMemoryRepository(IGenericRepository):
             if model.id == id_value:
                 self._models.remove(model)
                 return model
+        else:
+            raise ResourceNotFoundError()
 
     async def delete(self, **kw) -> List[Model]:
         if not kw:
