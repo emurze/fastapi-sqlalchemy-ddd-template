@@ -12,16 +12,24 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /service/
 
-COPY alembic.ini .
 COPY poetry.lock .
 COPY pyproject.toml .
-COPY setup.cfg .
-COPY makefile .
 
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
+COPY alembic.ini .
+COPY setup.cfg .
+COPY makefile .
+
 COPY src src
+COPY tests tests
 
 RUN poetry install
 
 EXPOSE 8080
+
+CMD bash -c "\
+    make migrate-in-container && \
+    cd src && \
+    poetry run uvicorn --host 0.0.0.0 --port 8080 main:app --reload \
+"

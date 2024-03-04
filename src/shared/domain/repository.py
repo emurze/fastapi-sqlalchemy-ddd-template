@@ -10,6 +10,9 @@ class IGenericRepository(abc.ABC):
     async def get(self, **kw) -> Model: ...
 
     @abc.abstractmethod
+    async def get_for_update(self, **kw) -> Model: ...
+
+    @abc.abstractmethod
     async def list(self) -> List[Model]: ...
 
     @abc.abstractmethod

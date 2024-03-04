@@ -18,7 +18,7 @@ class UpdateClientHandler(ICommandHandler):
     ) -> UpdateClientResult:
         command_dict = command.model_dump(exclude=["id"])
         async with self.uow:
-            client = await self.uow.clients.get(id=command.id)
+            client = await self.uow.clients.get_for_update(id=command.id)
             client.update(**command_dict)
             payload = UpdateClientPayload.model_validate(client)
             await self.uow.commit()

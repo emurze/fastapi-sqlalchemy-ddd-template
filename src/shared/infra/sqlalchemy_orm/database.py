@@ -9,9 +9,13 @@ from sqlalchemy.ext.asyncio import (
 from shared.infra.sqlalchemy_orm.config import db_config
 
 async_engine = create_async_engine(db_config.get_dsn(), echo=True)
-async_session_maker = async_sessionmaker(async_engine)
+async_session_factory = async_sessionmaker(async_engine)
+
+
+def get_session_factory():
+    return async_session_factory
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:
-    async with async_session_maker() as session:
+    async with async_session_factory() as session:
         yield session

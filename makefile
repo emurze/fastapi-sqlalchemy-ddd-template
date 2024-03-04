@@ -44,7 +44,7 @@ migrations:
 migrate:
 	$(call docker_exec,poetry run alembic upgrade head)
 
-row-migrate:
+migrate-in-container:
 	poetry run alembic upgrade head
 
 
@@ -54,38 +54,42 @@ black:
 	poetry run black . -l 79 tests src
 
 lint:
-	poetry run flake8 --config setup.cfg src
+	poetry run flake8 --config setup.cfg src tests
 
 typechecks:
-	poetry run mypy --config setup.cfg src
+	poetry run mypy --config setup.cfg src tests
 
 
 # Unit Tests
 
 unittests-auth:
-	poetry run pytest -s -v src/auth/tests/unit
+	poetry run pytest -s -v tests/auth/domain tests/auth/application
 
 unittests-shared:
-	poetry run pytest -s -v src/shared/tests/unit
+	poetry run pytest -s -v tests/shared/domain tests/shared/application
 
-unittests: unittests-auth unittests-shared
-
+unittests: unittests-shared unittests-auth
 
 # Integration Tests
 
 integration_tests-auth:
-	$(call docker_exec,cd src/auth/tests/integration && poetry run pytest -s -vv .)
+	$(call docker_exec,cd tests/auth/infra && poetry run pytest -s -vv .)
 
 integration_tests-shared:
-	$(call docker_exec,cd src/shared/tests/integration && poetry run pytest -s -vv .)
+	$(call docker_exec,cd tests/shared/infra && poetry run pytest -s -vv .)
 
-integration_tests: integration_tests-auth integration_tests-shared
+integration_tests:
+	$(call docker_exec,\
+	    cd tests/shared/infra && poetry run pytest -s -vv . && \
+	    cd ../../../ && \
+	    cd tests/auth/infra && poetry run pytest -s -vv .\
+	)
 
 
 # End To End Tests
 
 e2e_tests-auth:
-	$(call docker_exec,cd src/auth/tests/e2e && poetry run pytest -s -vv .)
+	$(call docker_exec,cd tests/auth/presentation && poetry run pytest -s -vv .)
 
 e2e_tests: e2e_tests-auth
 

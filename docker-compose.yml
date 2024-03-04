@@ -4,10 +4,6 @@ services:
     build: .
     image: api:v1
     container_name: api
-    command:
-      bash -c "make row-migrate &&
-               cd src &&
-               poetry run uvicorn --host 0.0.0.0 --port 8080 main:app --reload"
     networks:
       - backend
     ports:
@@ -16,6 +12,7 @@ services:
       - .env/.app.env
     volumes:
       - ./src:/service/src
+      - ./tests:/service/tests
     restart: unless-stopped
     depends_on:
       - db
@@ -33,7 +30,35 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  pgadmin4:
+    image: dpage/pgadmin4:8.1
+    container_name: pgadmin4
+    networks:
+      - backend
+    ports:
+      - '8888:80'
+    env_file:
+      - .env/.pgadmin.env
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  cache:
+    image: 'redis:7'
+    container_name: 'cache'
+    command: redis-server /etc/redis.conf
+    networks:
+      - backend
+    volumes:
+      - cache_data:/data
+      - ./src/shared/infra/redis/cache/conf/redis.conf:/etc/redis.conf
+    restart: unless-stopped
+
 volumes:
+  cache_data:
+  pgadmin_data:
   postgres_data:
 
 networks:
