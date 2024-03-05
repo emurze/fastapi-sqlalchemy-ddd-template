@@ -16,6 +16,11 @@ async def restart_tables() -> None:
     await utils.restart_tables()
 
 
+@pytest.fixture(scope="session", autouse=True)
+async def echo_restart_tables() -> None:
+    await utils.echo_restart_tables()
+
+
 @pytest.fixture(scope="function")
 async def session() -> AsyncIterator[AsyncSession]:
     async with async_session_factory() as new_session:

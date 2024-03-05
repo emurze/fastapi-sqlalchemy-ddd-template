@@ -4,7 +4,7 @@ from auth.domain.uow import IAuthUnitOfWork
 from tests.auth.application.conftest import make_client
 
 
-async def test_get_client_handler(uow: IAuthUnitOfWork) -> None:
+async def test_can_get_client(uow: IAuthUnitOfWork) -> None:
     await make_client(uow, username="Vlad")
 
     handler = GetClientHandler(uow)

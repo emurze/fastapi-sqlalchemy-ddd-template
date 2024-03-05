@@ -12,7 +12,7 @@ client_table = sa.Table(
     "client",
     mapper_registry.metadata,
     sa.Column("id", sa.BigInteger, primary_key=True),
-    sa.Column("username", sa.String, nullable=False),
+    sa.Column("username", sa.String(length=256), nullable=False, unique=True),
     sa.Column(
         "date_joined",
         sa.TIMESTAMP,
@@ -25,6 +25,10 @@ client_table = sa.Table(
         nullable=True,
         onupdate=datetime.utcnow,
     ),
+    sa.CheckConstraint(
+        'char_length(username) > 2',
+        name='username_min_length',
+    )
 )
 
 

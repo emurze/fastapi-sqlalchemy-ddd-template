@@ -20,6 +20,11 @@ async def restart_tables() -> None:
     await utils.restart_tables()
 
 
+@pytest.fixture(scope="session", autouse=True)
+async def echo_restart_tables() -> None:
+    await utils.echo_restart_tables()
+
+
 @pytest.fixture(scope="function")
 def client() -> Iterator[TestClient]:
     """
