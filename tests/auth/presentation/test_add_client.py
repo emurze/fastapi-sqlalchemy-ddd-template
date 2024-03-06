@@ -1,7 +1,9 @@
 import httpx
+import pytest
 from starlette.testclient import TestClient
 
 
+@pytest.mark.e2e
 def test_add_client(client: TestClient) -> None:
     response: httpx.Response = client.post(
         "/clients/", json={"username": "Vlad"}

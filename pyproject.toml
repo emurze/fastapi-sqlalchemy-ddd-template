@@ -25,6 +25,20 @@ fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
 types-redis = "^4.6.0.20240218"
 
 
+[tool.poetry.dev-dependencies]
+poethepoet = "^0.25.0"
+
+
+[tool.poe.tasks]
+test_domain =      "docker exec -it api poetry run pytest -s -k domain"
+test_infra =       "docker exec -it api poetry run pytest -s -k infra"
+test_application = "docker exec -it api poetry run pytest -s -k application"
+test_unit =        "docker exec -it api poetry run pytest -s -m unit"
+test_integration = "docker exec -it api poetry run pytest -s -m integration"
+test_e2e =         "docker exec -it api poetry run pytest -s -m e2e"
+test_coverage =    "docker exec -it api poetry run pytest -s --cov=src --cov-report=html"
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

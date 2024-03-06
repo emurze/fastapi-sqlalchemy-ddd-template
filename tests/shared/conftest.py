@@ -1,8 +1,7 @@
 import abc
-from typing import Self, List, Any as Model
+from typing import Self, Any as Model, List
 
 from dataclasses import dataclass
-
 from shared.domain.entities import AggregateRoot
 
 

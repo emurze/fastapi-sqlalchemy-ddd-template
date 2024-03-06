@@ -18,6 +18,10 @@ async def make_client(uow: IAuthUnitOfWork, **kw) -> AddClientPayload:
 
 @pytest.fixture
 def uow() -> IAuthUnitOfWork:
+    """
+    Returns auth memory unit of work with cleaned tables
+    """
+
     return memory.AuthInMemoryUnitOfWork(
         clients=memory.ClientInMemoryRepository,
     )

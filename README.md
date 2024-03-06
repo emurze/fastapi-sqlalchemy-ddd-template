@@ -1,31 +1,64 @@
 ## Architecture - Monolith
 
-## Production Sqlalchemy Unit Of Work
+## Tests Architecture
 
-```python
-DEFAULT_SESSION_FACTORY = sessionmaker(  #(1)
-    bind=create_engine(
-        config.get_postgres_uri(),
-    )
-)
+* Mark unit, integration, e2e tests
+  ```python
+  @pytest.mark.unit
+  # or
+  @pytest.mark.integration
+  # or  
+  @pytest.mark.e2e
+  ```
+  
+* Import fixtures automatically using pytest
+  * integration
+    ```python
+    @pytest.fixture(scope="function")
+    def repo(session: AsyncSession) -> IExampleRepository:
+        return ExampleSqlAlchemyRepository(example_session)
+    
+    
+    @pytest.mark.unit
+    async def test_can_get_for_update(repo: IExampleRepository) -> None:
+        await add_example(repo, "example")
+  
+        example = await repo.get_for_update(id=1)
 
+        assert example.id == 1
+        assert example.name == "example"
+    
+    
+    @pytest.fixture(scope="function")
+    def uow(session_factory: Callable) -> IAuthUnitOfWork:
+        return AuthSqlAlchemyUnitOfWork(
+            session_factory=session_factory,
+            clients=ClientSqlAlchemyRepository,
+        )
+    
+    
+    @pytest.mark.integration
+    async def test_client_unique_username(uow: IAuthUnitOfWork) -> None:
+        vlad_data = {"username": "vlad"}
+  
+        async with uow:
+            await uow.clients.add(**vlad_data)
+            await uow.commit()
+  
+        async with uow:
+            with pytest.raises(sqlalchemy.exc.IntegrityError):
+                await uow.clients.add(**vlad_data)
+    ```
+  * e2e
+    ```python
+    @pytest.mark.e2e
+    def test_add_client(client: TestClient) -> None:
+        response: httpx.Response = client.post(
+            "/clients/", json={"username": "Vlad"}
+        )
+        response_client = response.json()
 
-class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
-    def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
-        self.session_factory = session_factory  #(1)
-
-    def __enter__(self):
-        self.session = self.session_factory()  # type: Session  #(2)
-        self.batches = repository.SqlAlchemyRepository(self.session)  #(2)
-        return self
-
-    def __exit__(self, *args):
-        self.session.rollback()
-        self.session.close()  #(3)
-
-    def commit(self):  #(4)
-        self.session.commit()
-
-    def rollback(self):  #(4)
-        self.session.rollback()
-```
+        assert response.status_code == 201
+        assert response_client["id"] == 1
+        assert response_client["username"] == "Vlad"
+    ```

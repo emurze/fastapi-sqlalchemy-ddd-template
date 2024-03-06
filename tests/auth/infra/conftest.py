@@ -1,14 +1,17 @@
+from collections.abc import Callable
+
+import pytest
+
 from auth.domain.uow import IAuthUnitOfWork
 from auth.infra.repositories.sqlachemy import (
     AuthSqlAlchemyUnitOfWork,
     ClientSqlAlchemyRepository,
 )
-from tests.utils.core.integration import *  # noqa
 
 
-@pytest.fixture
-def uow() -> IAuthUnitOfWork:
+@pytest.fixture(scope="function")
+def uow(session_factory: Callable) -> IAuthUnitOfWork:
     return AuthSqlAlchemyUnitOfWork(
-        session_factory=async_session_factory,
+        session_factory=session_factory,
         clients=ClientSqlAlchemyRepository,
     )

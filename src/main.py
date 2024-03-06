@@ -1,32 +1,25 @@
-from pprint import pprint
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
+from fastapi import FastAPI
+from sqlalchemy.orm import clear_mappers
 
 from config import app_config
 from routers import include_routers
-from shared.infra.redis.cache.config import get_cache_dsn
-
-from redis import asyncio as aioredis
 
 from shared.infra.sqlalchemy_orm.base import base
+
+
+@asynccontextmanager
+async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
+    base.run_mappers()
+    yield
+    clear_mappers()
+
 
 app = FastAPI(
     title=app_config.project_title,
     secrets=app_config.secret_key,
+    lifespan=lifespan,
 )
 include_routers(app)
-
-
-@app.on_event("startup")
-async def startup_event(cache_dsn: str = Depends(get_cache_dsn)):
-    base.run_mappers()
-    # print(cache_dsn)
-    # dsn = cache_dsn.dependency()
-    # redis = aioredis.from_url(
-    #     cache_dsn,
-    #     encoding="utf8",
-    #     decode_responses=True,
-    # )
-    # FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")

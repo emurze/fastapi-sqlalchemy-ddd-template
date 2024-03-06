@@ -1,9 +1,12 @@
+import pytest
+
 from auth.application.queries.get_client import GetClientQuery
 from auth.application.query_handlers.get_client import GetClientHandler
 from auth.domain.uow import IAuthUnitOfWork
 from tests.auth.application.conftest import make_client
 
 
+@pytest.mark.unit
 async def test_can_get_client(uow: IAuthUnitOfWork) -> None:
     await make_client(uow, username="Vlad")
 
@@ -16,6 +19,7 @@ async def test_can_get_client(uow: IAuthUnitOfWork) -> None:
     assert client.id == 1
 
 
+@pytest.mark.unit
 async def test_get_client_not_found_error(uow: IAuthUnitOfWork) -> None:
     handler = GetClientHandler(uow)
     query = GetClientQuery(id=1)

@@ -1,19 +1,21 @@
+from collections.abc import AsyncIterator, Callable
+from typing import Iterator
+
 import pytest
 import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import registry
+from sqlalchemy.ext.asyncio import AsyncSession as ASession
+from sqlalchemy.orm import registry, clear_mappers
 
 from shared.domain.uow import IGenericUnitOfWork
 from shared.infra.sqlalchemy_orm.common import suppress_echo
-from shared.infra.sqlalchemy_orm import repository as r
+from shared.infra.sqlalchemy_orm.repository import SqlAlchemyRepository
 from shared.infra.sqlalchemy_orm.uow import SqlAlchemyUnitOfWork
+from tests.conftest import async_engine, async_session_factory
 from tests.shared.conftest import (
     Example,
-    IExampleRepository,
     IExampleUnitOfWork,
+    IExampleRepository,
 )
-
-from tests.utils.db import async_session_factory, async_engine
 
 mapped_registry = registry()
 
@@ -24,10 +26,12 @@ example_table = sa.Table(
     sa.Column("name", sa.String, nullable=False),
 )
 
-mapped_registry.map_imperatively(Example, example_table)
+
+def _run_example_mappers():
+    mapped_registry.map_imperatively(Example, example_table)
 
 
-class ExampleSqlAlchemyRepository(r.SqlAlchemyRepository, IExampleRepository):
+class ExampleSqlAlchemyRepository(SqlAlchemyRepository, IExampleRepository):
     model = Example
 
 
@@ -35,8 +39,17 @@ class ExampleSqlAlchemyUnitOfWork(SqlAlchemyUnitOfWork, IExampleUnitOfWork):
     pass
 
 
-@pytest.fixture(scope="function", autouse=True)
-async def restart_example_table():
+# Built-in example fixtures
+
+@pytest.fixture(scope="function")
+def _example_mappers() -> Iterator[None]:
+    _run_example_mappers()
+    yield
+    clear_mappers()
+
+
+@pytest.fixture(scope="function")
+async def _restart_example_table(_example_mappers) -> None:
     async with async_engine.begin() as conn:
         async with suppress_echo(async_engine):
             await conn.run_sync(mapped_registry.metadata.drop_all)
@@ -44,14 +57,27 @@ async def restart_example_table():
         await conn.commit()
 
 
-@pytest.fixture
-def repo(session: AsyncSession) -> IExampleRepository:
-    return ExampleSqlAlchemyRepository(session)
+@pytest.fixture(scope="function")
+async def example_session(_restart_example_table) -> AsyncIterator[ASession]:
+    async with async_session_factory() as new_session:
+        yield new_session
 
 
-@pytest.fixture
-def uow() -> IGenericUnitOfWork:
+@pytest.fixture(scope="function")
+def example_session_factory(_restart_example_table) -> Callable:
+    return async_session_factory
+
+
+# Example fixtures
+
+@pytest.fixture(scope="function")
+def repo(example_session: ASession) -> IExampleRepository:
+    return ExampleSqlAlchemyRepository(example_session)
+
+
+@pytest.fixture(scope="function")
+def uow(example_session_factory: Callable) -> IGenericUnitOfWork:
     return ExampleSqlAlchemyUnitOfWork(
-        session_factory=async_session_factory,
+        session_factory=example_session_factory,
         examples=ExampleSqlAlchemyRepository,
     )

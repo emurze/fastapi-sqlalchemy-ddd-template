@@ -1,8 +1,11 @@
+import pytest
+
 from tests.shared.conftest import IExampleUnitOfWork
 
 example_dict = {"name": "example 1"}
 
 
+@pytest.mark.unit
 async def test_can_rollback(uow: IExampleUnitOfWork) -> None:
     async with uow:
         await uow.examples.add(**example_dict)
@@ -12,6 +15,7 @@ async def test_can_rollback(uow: IExampleUnitOfWork) -> None:
         assert len(examples) == 0
 
 
+@pytest.mark.unit
 async def test_can_commit(uow: IExampleUnitOfWork) -> None:
     async with uow:
         await uow.examples.add(**example_dict)
@@ -25,6 +29,7 @@ async def test_can_commit(uow: IExampleUnitOfWork) -> None:
         assert examples[0].name == "example 1"
 
 
+@pytest.mark.unit
 async def test_can_commit_rollback_rollback_commit_commit_rollback(
     uow: IExampleUnitOfWork,
 ) -> None:
