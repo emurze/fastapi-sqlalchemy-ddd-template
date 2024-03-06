@@ -27,6 +27,7 @@ types-redis = "^4.6.0.20240218"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.25.0"
+pytest-cov = "^4.1.0"
 
 
 [tool.poe.tasks]
@@ -36,7 +37,7 @@ test_application = "docker exec -it api poetry run pytest -s -k application"
 test_unit =        "docker exec -it api poetry run pytest -s -m unit"
 test_integration = "docker exec -it api poetry run pytest -s -m integration"
 test_e2e =         "docker exec -it api poetry run pytest -s -m e2e"
-test_coverage =    "docker exec -it api poetry run pytest -s --cov=src --cov-report=html"
+test_coverage =    "docker exec -it api bash -c 'cd src && poetry run pytest -s --cov=. --cov-report=html'"
 
 
 [build-system]
