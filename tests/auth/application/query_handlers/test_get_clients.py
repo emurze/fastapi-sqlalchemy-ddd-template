@@ -1,7 +1,7 @@
 import pytest
 
 from auth.application.queries.get_clients import GetClientsQuery
-from auth.application.query_handlers.get_clients import GetClientsHandler
+from auth.application.queries.get_clients import GetClientsHandler
 from auth.domain.uow import IAuthUnitOfWork
 from tests.auth.application.conftest import make_client
 

@@ -28,9 +28,9 @@ class TestCacheConfig(BaseSettings):
     test_cache_db: int
 
     @classmethod
-    def get_dsn(cls, driver: str = 'redis') -> str:
+    def get_dsn(cls, driver: str = "redis") -> str:
         self = cls()
-        return '{}://{}:{}/{}'.format(
+        return "{}://{}:{}/{}".format(
             driver,
             self.test_cache_host,
             self.test_cache_port,

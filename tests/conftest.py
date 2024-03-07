@@ -37,7 +37,7 @@ def _mappers() -> Iterator[None]:
 @pytest.fixture(scope="function")
 async def _restart_tables() -> None:
     """
-    Clean tables before each test
+    Cleans tables before each test
     """
     async with async_engine.begin() as conn:
         async with suppress_echo(async_engine):
@@ -77,7 +77,9 @@ def client(_restart_tables) -> Iterator[TestClient]:
             yield new_session
 
     app.dependency_overrides[get_session] = override_session  # noqa
-    app.dependency_overrides[get_session_factory] = override_session_factory  # noqa
+    app.dependency_overrides[get_session_factory] = (   # noqa
+        override_session_factory
+    )
 
     with TestClient(app) as test_client:
         yield test_client

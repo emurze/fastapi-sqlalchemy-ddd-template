@@ -15,21 +15,20 @@ WORKDIR /service/
 COPY poetry.lock .
 COPY pyproject.toml .
 
-RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
+RUN poetry install --no-root --no-interaction --no-ansi -vvv && \
+    rm -rf $POETRY_CACHE_DIR
 
 COPY alembic.ini .
-COPY setup.cfg .
-COPY makefile .
 
 COPY src src
 COPY tests tests
 
-RUN poetry install
+RUN poetry install --no-interaction --no-ansi -vvv
 
 EXPOSE 8080
 
-CMD bash -c "\
-    make migrate-in-container && \
+CMD poetry run bash -c " \
+    poe row-migrate && \
     cd src && \
-    poetry run uvicorn --host 0.0.0.0 --port 8080 main:app --reload \
+    poe run_server main:app \
 "

@@ -6,8 +6,8 @@ class CacheConfig(BaseSettings):
     cache_host: str
     cache_db: int
 
-    def get_dsn(self, driver: str = 'redis') -> str:
-        return '{}://{}:{}/{}'.format(
+    def get_dsn(self, driver: str = "redis") -> str:
+        return "{}://{}:{}/{}".format(
             driver,
             self.cache_host,
             self.cache_port,

@@ -35,11 +35,19 @@ class InMemoryRepository(IGenericRepository):
         self._models: list[Model] = []
         self._gen_manager = gen_manager(self.field_gens)
 
-    async def add(self, **kw) -> Model:
+    async def create(self, **kw) -> None:
         kw_gen_values = self._gen_manager.iterate_generators(kw)
         instance = self.model(**kw_gen_values)
         self._models.append(instance)
-        return instance
+
+    async def delete(self, **kw) -> None:
+        if not kw:
+            self._models.clear()
+        else:
+            for key, value in kw.items():
+                for model in self._models:
+                    if getattr(model, key) == value:
+                        self._models.remove(model)
 
     async def get(self, **kw) -> NoReturn | Model:
         try:
@@ -57,28 +65,3 @@ class InMemoryRepository(IGenericRepository):
 
     async def list(self) -> list[Model]:
         return self._models
-
-    async def delete_one(self, **kw) -> NoReturn | Model:
-        id_value = kw.get('id')
-        assert len(kw) == 1 and id_value is not None, \
-            "delete_one accepts only one id parameter"
-
-        for model in self._models:
-            if model.id == id_value:
-                self._models.remove(model)
-                return model
-        else:
-            raise ResourceNotFoundError()
-
-    async def delete(self, **kw) -> List[Model]:
-        if not kw:
-            removed_models = self._models.copy()
-            self._models.clear()
-        else:
-            removed_models = []
-            for key, value in kw.items():
-                for model in self._models:
-                    if getattr(model, key) == value:
-                        self._models.remove(model)
-                        removed_models.append(model)
-        return removed_models

@@ -1,7 +1,7 @@
 import pytest
 
-from auth.application.command_handlers.delete_client import DeleteClientHandler
-from auth.application.commands.delete_client import DeleteClientCommand
+from auth.application.commands.delete_client import DeleteClientCommand, \
+    DeleteClientCommandHandler
 from auth.domain.uow import IAuthUnitOfWork
 from tests.auth.application.conftest import make_client
 
@@ -10,10 +10,9 @@ from tests.auth.application.conftest import make_client
 async def test_can_delete_client(uow: IAuthUnitOfWork) -> None:
     await make_client(uow, username="Vlad")
 
-    handler = DeleteClientHandler(uow)
+    handler = DeleteClientCommandHandler(uow)
     command = DeleteClientCommand(id=1)
-    result = await handler.execute(command)
-    deleted_client = result.payload
+    await handler.execute(command)
 
     assert result.status is True
     assert deleted_client.id == 1

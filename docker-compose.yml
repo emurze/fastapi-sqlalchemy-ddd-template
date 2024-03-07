@@ -11,6 +11,7 @@ services:
     env_file:
       - .env/.app.env
     volumes:
+      - ./htmlcov:/service/htmlcov
       - ./src:/service/src
       - ./tests:/service/tests
     restart: unless-stopped

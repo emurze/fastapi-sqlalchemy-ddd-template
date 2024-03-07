@@ -12,7 +12,7 @@ from tests.shared.conftest import (
 
 class ExampleInMemoryRepository(InMemoryRepository, IExampleRepository):
     model = Example
-    field_gens = {'id': id_int_gen}
+    field_gens = {"id": id_int_gen}
 
 
 class ExampleInMemoryUnitOfWork(InMemoryUnitOfWork, IExampleUnitOfWork):

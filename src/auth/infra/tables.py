@@ -26,9 +26,9 @@ client_table = sa.Table(
         onupdate=datetime.utcnow,
     ),
     sa.CheckConstraint(
-        'char_length(username) > 2',
-        name='username_min_length',
-    )
+        "char_length(username) > 2",
+        name="username_min_length",
+    ),
 )
 
 

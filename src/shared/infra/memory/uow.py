@@ -3,7 +3,7 @@ from typing import TypeVar, TypeAlias, Self
 
 from shared.domain.uow import IGenericUnitOfWork
 
-Repository = TypeVar('Repository')
+Repository = TypeVar("Repository")
 RepositoryList = list[Repository]
 RepositoryMemory: TypeAlias = tuple[Repository, list]
 

@@ -1,4 +1,6 @@
-## Architecture - Monolith
+## Monolith Architecture
+
+* CQS, not (pure CQRS)
 
 ## Tests Architecture
 

@@ -41,6 +41,7 @@ class ExampleSqlAlchemyUnitOfWork(SqlAlchemyUnitOfWork, IExampleUnitOfWork):
 
 # Built-in example fixtures
 
+
 @pytest.fixture(scope="function")
 def _example_mappers() -> Iterator[None]:
     _run_example_mappers()
@@ -69,6 +70,7 @@ def example_session_factory(_restart_example_table) -> Callable:
 
 
 # Example fixtures
+
 
 @pytest.fixture(scope="function")
 def repo(example_session: ASession) -> IExampleRepository:

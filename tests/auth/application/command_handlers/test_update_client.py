@@ -1,6 +1,6 @@
 import pytest
 
-from auth.application.command_handlers.update_client import UpdateClientHandler
+from auth.application.commands.update_client import UpdateClientHandler
 from auth.application.commands.update_client import UpdateClientCommand
 from auth.domain.uow import IAuthUnitOfWork
 from tests.auth.application.conftest import make_client

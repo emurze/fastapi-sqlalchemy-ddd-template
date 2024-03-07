@@ -1,6 +1,6 @@
 import pytest
 
-from auth.application.command_handlers.add_client import AddClientHandler
+from auth.application.commands.create_client import AddClientHandler
 from auth.application.commands.add_client import (
     AddClientCommand,
     AddClientPayload,
