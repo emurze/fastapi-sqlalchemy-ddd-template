@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from shared.infra.sqlalchemy_orm.config import db_config
+from shared.presentation.container import container
 from shared.infra.sqlalchemy_orm.base import base
 
 # this is the Alembic Config object, which provides
@@ -18,7 +18,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 config.set_main_option(
-    "sqlalchemy.url", db_config.get_dsn() + "?async_fallback=True"
+    "sqlalchemy.url", container.config.db_dsn + "?async_fallback=True"
 )
 
 target_metadata = [base.metadata]

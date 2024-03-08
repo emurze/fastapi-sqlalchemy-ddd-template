@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+from auth.application import auth_module
 from auth.domain.entities import ClientId
 from auth.domain.uow import IAuthUnitOfWork
 from shared.application.queries import Query, QueryPayload, QueryResult
@@ -24,8 +24,8 @@ class GetClientResult(QueryResult[GetClientPayload]):
     pass
 
 
-@dataclass(frozen=True, slots=True)
-class GetClientQueryHandler(IQueryHandler):
+@auth_module.dataclass_query_handler
+class GetClientHandler(IQueryHandler):
     uow: IAuthUnitOfWork
 
     async def execute(self, query: GetClientQuery) -> GetClientResult:

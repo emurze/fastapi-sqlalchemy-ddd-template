@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-
-from auth.application.queries.get_client import GetClientPayload
+from auth.application import auth_module
+from auth.application.query.get_client import GetClientPayload
 from auth.domain.uow import IAuthUnitOfWork
 from shared.application.queries import Query, QueryPayload, QueryResult
 from shared.application.query_handler import IQueryHandler
@@ -18,7 +17,7 @@ class GetClientsResult(QueryResult[GetClientsPayload]):
     pass
 
 
-@dataclass(frozen=True, slots=True)
+@auth_module.dataclass_query_handler
 class GetClientsQueryHandler(IQueryHandler):
     uow: IAuthUnitOfWork
 

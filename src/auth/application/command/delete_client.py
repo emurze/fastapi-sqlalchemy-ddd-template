@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-
-from auth.application.commands.create_client import CreateClientCommand
+from auth.application import auth_module
+from auth.application.command.create_client import CreateClientCommand
 from auth.domain.uow import IAuthUnitOfWork
 from shared.application.command_handler import ICommandHandler
 from shared.application.commands import CommandResult
@@ -10,8 +9,8 @@ class DeleteClientCommand(CreateClientCommand):
     id: int
 
 
-@dataclass(frozen=True, slots=True)
-class DeleteClientCommandHandler(ICommandHandler):
+@auth_module.dataclass_command_handler
+class DeleteClientHandler(ICommandHandler):
     uow: IAuthUnitOfWork
 
     async def execute(self, command: DeleteClientCommand) -> CommandResult:

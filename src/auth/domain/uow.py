@@ -1,9 +1,12 @@
 import abc
+from typing import TypeAlias
 
 from auth.domain.repository import IClientRepository
 
 
 class IAuthUnitOfWork(abc.ABC):
+    """Auth unit of work."""
+
     clients: IClientRepository
 
     @abc.abstractmethod

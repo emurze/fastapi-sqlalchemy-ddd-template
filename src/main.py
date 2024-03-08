@@ -4,10 +4,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy.orm import clear_mappers
 
-from config import app_config
-from routers import include_routers
+from auth.presentation.router import router as client_router
+from shared.presentation.container import container
 
 from shared.infra.sqlalchemy_orm.base import base
+
+
+def include_routers(app_: FastAPI) -> None:
+    app_.include_router(client_router)
 
 
 @asynccontextmanager
@@ -18,8 +22,9 @@ async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title=app_config.project_title,
-    secrets=app_config.secret_key,
+    title=container.config.project_title,
+    secrets=container.config.secret_key,
     lifespan=lifespan,
 )
+app.container = container
 include_routers(app)

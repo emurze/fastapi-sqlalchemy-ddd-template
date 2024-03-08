@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-
-from auth.application.commands.create_client import CreateClientCommand
+from auth.application import auth_module
+from auth.application.command.create_client import CreateClientCommand
 from auth.domain.uow import IAuthUnitOfWork
 from shared.application.command_handler import ICommandHandler
 from shared.application.commands import CommandResult
@@ -11,7 +10,7 @@ class UpdateClientCommand(CreateClientCommand):
     id: int
 
 
-@dataclass(frozen=True, slots=True)
+@auth_module.dataclass_command_handler
 class UpdateClientCommandHandler(ICommandHandler):
     uow: IAuthUnitOfWork
 
