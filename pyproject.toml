@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "sqlalchemy-mapping"
+name = "fastapi-sqlalchemy-ddd"
 version = "0.1.0"
 description = ""
 authors = ["emurze <grayemurze@gmail.com>"]
@@ -8,10 +8,10 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 sqlalchemy = "^2.0.27"
-pytest = "^8.0.2"
-pytest-asyncio = "^0.23.5"
 pydantic = "^2.6.3"
 pydantic-settings = "^2.2.1"
+pytest = "^8.0.2"
+pytest-asyncio = "^0.23.5"
 alembic = "^1.13.1"
 black = "^24.2.0"
 mypy = "^1.8.0"
@@ -24,30 +24,30 @@ redis = "4.5"
 fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
 types-redis = "^4.6.0.20240218"
 flake8-pyproject = "^1.2.3"
+dependency-injector = "^4.41.0"
 
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.25.0"
 pytest-cov = "^4.1.0"
 
-
 [tool.poe.tasks]
 # Tests
-test             = "docker exec -it api poetry run bash -c 'pytest -m unit && pytest -m integration && pytest -m e2e'"
-test_domain      = "docker exec -it api poetry run pytest -s -k domain"
-test_infra       = "docker exec -it api poetry run pytest -s -k infra"
-test_application = "docker exec -it api poetry run pytest -s -k application"
-test_unit        = "docker exec -it api poetry run pytest -s -m unit"
-test_integration = "docker exec -it api poetry run pytest -s -m integration"
-test_e2e         = "docker exec -it api poetry run pytest -s -m e2e"
-test_coverage    = "docker exec -it api poetry run pytest -s --cov=src --cov-report=html"
+test             = "docker exec -it api poetry run bash -c 'cd tests && pytest -m unit && pytest -m integration && pytest -m e2e'"
+test_domain      = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k domain'"
+test_infra       = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k infra'"
+test_application = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k application'"
+test_unit        = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m unit'"
+test_integration = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m integration'"
+test_e2e         = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m e2e'"
+test_coverage    = "docker exec -it api bash -c 'cd tests && poetry run pytest -s --cov=src --cov-report=html'"
 
-# Lint | Formatting | Types
-black            = "poetry run black . -l 79 tests src"
+# Linting, Formatting, and Type Checking
+format           = "poetry run black . -l 79 tests src"
 lint             = "poetry run flake8 --toml-config pyproject.toml src tests"
 check_types      = "poetry run mypy src tests"
 
-# Run / Down
+# Run, Down
 run              = "docker compose up --build"
 restart          = "docker compose down && docker compose up --build"
 down             = "docker compose down"
@@ -58,6 +58,9 @@ run_server       = "poetry run uvicorn --host 0.0.0.0 --port 8080 --reload"
 makemigrations   = "docker exec -it api poetry run alembic revision --autogenerate"
 migrate          = "docker exec -it api poetry run alembic upgrade head"
 row-migrate      = "poetry run alembic upgrade head"
+
+[tool.poe.tasks.check_all]
+sequence = ["lint", "check_types", "test"]
 
 
 [build-system]
@@ -80,12 +83,15 @@ filterwarnings = [
 addopts = ["-rsxX", "-l", "--tb=short", "--strict-markers"]
 xfail_strict = true
 cache_dir = ".cache/pytest"
-pythonpath = ["." , "src"]
 asyncio_mode = "auto"
 markers = [
     "unit: marks test as unit test i.e. not using any external services (deselect with '-m \"not unit\"')",
     "integration: marks tests as integration i.e. using a database (deselect with '-m \"not integration\"')",
     "e2e: marks tests as e2e tests i.e. using a client api and a database (deselect with '-m \"not e2e\"')"
+]
+pythonpath = [
+    ".",
+    "src",
 ]
 
 

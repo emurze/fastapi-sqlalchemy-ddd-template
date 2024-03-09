@@ -10,4 +10,4 @@ QueryPayload = type("QueryPayload", (Model,), {})
 
 class QueryResult(ErrorBuilder, Generic[T]):
     payload: Optional[T] = None
-    error_detail: Optional[str] = None
+    error: Optional[str] = None

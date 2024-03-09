@@ -4,11 +4,10 @@ from typing import Optional, NewType
 
 from shared.domain.entities import AggregateRoot
 
-ClientId = NewType("ClientId", int)
-
 
 @dataclass(kw_only=True)
-class Client(AggregateRoot[ClientId]):
+class Client(AggregateRoot):
+
     username: str
     date_joined: datetime
     last_login: Optional[datetime] = None

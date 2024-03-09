@@ -1,7 +1,6 @@
 import abc
-from typing import TypeAlias
 
-from auth.domain.repository import IClientRepository
+from auth.domain.repositories import IClientRepository
 
 
 class IAuthUnitOfWork(abc.ABC):

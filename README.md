@@ -2,7 +2,7 @@
 
 * CQS, not (pure CQRS)
 
-## Tests Architecture
+## Test Architecture
 
 * Mark unit, integration, e2e tests
   ```python
@@ -64,3 +64,25 @@
         assert response_client["id"] == 1
         assert response_client["username"] == "Vlad"
     ```
+## Test shell commands
+
+Runs all type checks, linting, and tests
+```
+poe check_all
+```
+Runs only tests
+```
+poe test
+```
+Runs unit tests
+```
+poe test_unit
+```
+Runs integration tests
+```
+poe test_integration
+```
+Runs e2e tests
+```
+poe test_e2e
+```

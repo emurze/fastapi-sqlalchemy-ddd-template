@@ -5,8 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from shared.presentation.container import container
 from shared.infra.sqlalchemy_orm.base import base
+from shared.infra.sqlalchemy_orm.config import db_config
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,7 +18,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 config.set_main_option(
-    "sqlalchemy.url", container.config.db_dsn + "?async_fallback=True"
+    "sqlalchemy.url", db_config.get_dsn() + "?async_fallback=True"
 )
 
 target_metadata = [base.metadata]

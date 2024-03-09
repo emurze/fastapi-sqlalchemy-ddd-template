@@ -77,7 +77,7 @@ def client(_restart_tables) -> Iterator[TestClient]:
             yield new_session
 
     app.dependency_overrides[get_session] = override_session  # noqa
-    app.dependency_overrides[get_session_factory] = (   # noqa
+    app.dependency_overrides[get_session_factory] = (  # noqa
         override_session_factory
     )
 
