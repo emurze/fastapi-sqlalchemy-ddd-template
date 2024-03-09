@@ -1,9 +1,8 @@
 from distutils.cmd import Command
 
-from shared.application.command_handler import ICommandHandler
-from shared.application.commands import CommandResult
-from shared.application.queries import Query, QueryResult
-from shared.application.query_handler import IQueryHandler as IQHandler
+from shared.application.commands import ICommandHandler
+from shared.application.dtos import Result
+from shared.application.queries import IQueryHandler as IQHandler, Query
 
 
 class MessageBus:
@@ -19,10 +18,10 @@ class MessageBus:
     ) -> None:
         self.command_handlers[command] = handler
 
-    async def handle_query(self, query: Query) -> QueryResult:
+    async def handle_query(self, query: Query) -> Result:
         handler = self.query_handlers[type(query)]
-        return await handler.execute(query)
+        return await handler.handle(query)
 
-    async def handle_command(self, command: Command) -> CommandResult:
+    async def handle_command(self, command: Command) -> Result:
         handler = self.command_handlers[type(command)]
-        return await handler.execute(command)
+        return await handler.handle(command)

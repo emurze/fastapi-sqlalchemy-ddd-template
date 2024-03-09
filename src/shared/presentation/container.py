@@ -44,7 +44,7 @@ def create_session_factory(engine: AsyncEngine) -> Callable:
 
 def _register_handlers(register: Callable, handlers: list) -> None:
     for handler in handlers:
-        command_or_query, _ = get_function_arguments(handler.execute)
+        command_or_query, _ = get_function_arguments(handler.handle)
         register(command_or_query, handler)
 
 
@@ -99,9 +99,9 @@ class AppContainer(containers.DeclarativeContainer):
     )
 
 
-def create_container() -> AppContainer:
-    config = TopLevelConfig()
+def create_container(config: type = TopLevelConfig) -> AppContainer:
+    instance = config()
     new_container = AppContainer()
-    new_container.config.from_dict(config.model_dump())
-    new_container.config = TopLevelConfig(**new_container.config())
+    new_container.config.from_dict(instance.model_dump())
+    new_container.config = config(**new_container.config())
     return new_container

@@ -7,10 +7,9 @@ from post.application.command.delete_post import DeletePostCommand
 from post.application.command.update_post import UpdatePostCommand
 from post.application.query.get_post import GetPostQuery
 from post.presentation import schema as s
-from shared.application import errors
+from shared.application.dtos import FailedResult
 from shared.presentation.dependencies import BusDep
-from shared.presentation.errors import raise_errors
-from shared.presentation.schema import Failed
+from shared.presentation.json_dtos import FailedJsonResponse
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -20,14 +19,14 @@ router = APIRouter(prefix="/posts", tags=["posts"])
     status_code=status.HTTP_200_OK,
     response_model=s.GetPostJsonResponse,
     responses={
-        status.HTTP_404_NOT_FOUND: {'model': Failed},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': Failed},
+        status.HTTP_404_NOT_FOUND: {'model': FailedJsonResponse},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
     }
 )
 async def get_post(post_id: int, bus: BusDep):
     query = GetPostQuery(id=post_id)
-    result = await bus.handle_query(query, raise_errors=True)
-    return result.payload
+    result = await bus.handle_query(query)
+    return result
 
 
 @router.post(
@@ -35,17 +34,15 @@ async def get_post(post_id: int, bus: BusDep):
     status_code=status.HTTP_201_CREATED,
     response_model=s.CreatePostJsonResponse,
     responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': Failed},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
     }
 )
 async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
     command = CreatePostCommand.model_validate(dto)
-    created_result = await bus.handle_command(command, raise_errors=True)
-
-    query = GetPostQuery(id=created_result.payload.id)
-    result = await bus.handle_query(query, raise_errors=True)
-
-    return s.CreatePostJsonResponse.model_validate(result.payload)
+    created_result = await bus.handle_command(command)
+    query = GetPostQuery(id=created_result.id)
+    result = await bus.handle_query(query)
+    return result
 
 
 @router.delete(
@@ -54,7 +51,7 @@ async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': Failed},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
     }
 )
 async def delete_post(post_id: int, bus: BusDep):
@@ -69,29 +66,27 @@ async def delete_post(post_id: int, bus: BusDep):
     response_model=s.UpdatePostJsonResponse,
     responses={
         status.HTTP_201_CREATED: {'model': s.UpdatePostJsonResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': Failed},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
     }
 )
 async def update_post(post_id: int, dto: s.UpdatePostJsonRequest, bus: BusDep):
     command = UpdatePostCommand(**(dto.model_dump() | {"id": post_id}))
-    result = await bus.handle_command(command)
+    result = await bus.handle_command(command, raise_errors=False)
 
-    if result.error == errors.RESOURCE_NOT_FOUND_ERROR:
+    if result.error == FailedResult.RESOURCE_NOT_FOUND_ERROR:
         command = CreatePostCommand(**(dto.model_dump() | {"id": post_id}))
-        created_result = await bus.handle_command(command, raise_errors=True)
+        await bus.handle_command(command)
 
-        query = GetPostQuery(id=created_result.payload.id)
-        query_result = await bus.handle_query(query, raise_errors=True)
+        query = GetPostQuery(id=post_id)
+        query_result = await bus.handle_query(query)
 
         return JSONResponse(
-            status_code=status.HTTP_201_CREATED,
-            content=s.UpdatePostJsonResponse.model_validate(
-                query_result.payload,
-            ).model_dump()
+            s.UpdatePostJsonResponse.model_validate(query_result).model_dump(),
+            status.HTTP_201_CREATED,
         )
 
-    _ = raise_errors(result)
+    FailedJsonResponse.raise_errors(result)
 
     query = GetPostQuery(id=post_id)
     query_result = await bus.handle_query(query, raise_errors=True)
-    return s.UpdatePostJsonResponse.model_validate(query_result.payload)
+    return query_result

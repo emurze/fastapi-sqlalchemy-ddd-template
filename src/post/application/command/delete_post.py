@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from shared.application.command_handler import ICommandHandler
-from shared.application.commands import CommandResult, Command
+from shared.application.commands import ICommandHandler, Command
+from shared.application.dtos import Result, SuccessResult, FailedResult
 from shared.domain.uow import IGenericUnitOfWork
 
 
@@ -13,11 +13,11 @@ class DeletePostCommand(Command):
 class DeletePostHandler(ICommandHandler):
     uow: IGenericUnitOfWork
 
-    async def execute(self, command: DeletePostCommand) -> CommandResult:
+    async def handle(self, command: DeletePostCommand) -> Result:
         try:
             async with self.uow:
                 await self.uow.posts.delete(id=command.id)
                 await self.uow.commit()
-                return CommandResult()
+                return SuccessResult()
         except SystemError:
-            return CommandResult.build_system_error()
+            return FailedResult.build_system_error()

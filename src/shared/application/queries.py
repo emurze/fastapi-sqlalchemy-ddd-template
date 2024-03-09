@@ -1,13 +1,12 @@
-from typing import Optional, Generic, TypeVar
+import abc
 
-from shared.application.errors import ErrorBuilder
-from shared.application.model import Model
-
-T = TypeVar("T")
-Query = type("Query", (Model,), {})
-QueryPayload = type("QueryPayload", (Model,), {})
+from shared.application.dtos import Model, Result
 
 
-class QueryResult(ErrorBuilder, Generic[T]):
-    payload: Optional[T] = None
-    error: Optional[str] = None
+class Query(Model):
+    pass
+
+
+class IQueryHandler(abc.ABC):
+    @abc.abstractmethod
+    async def handle(self, query: Query) -> Result: ...

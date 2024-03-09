@@ -1,13 +1,13 @@
-from typing import Optional, TypeVar, Generic, Any
+import abc
 
-from shared.application.errors import ErrorBuilder
-from shared.application.model import Model
-
-T = TypeVar("T")
-Command = type("Command", (Model,), {})
-CommandPayload = type("Command", (Model,), {})
+from shared.application.dtos import Model, Result
 
 
-class CommandResult(ErrorBuilder, Generic[T]):
-    payload: Optional[CommandPayload] = None
-    error: Optional[str] = None
+class Command(Model):
+    pass
+
+
+class ICommandHandler(abc.ABC):
+    @abc.abstractmethod
+    async def handle(self, command: Command) -> Result:
+        ...

@@ -1,41 +1,38 @@
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional
-from shared.application.queries import Query, QueryPayload, QueryResult
-from shared.application.query_handler import IQueryHandler
+from typing import Union
+
+from shared.application.dtos import SuccessResult, FailedResult
+from shared.application.queries import IQueryHandler, Query
 from shared.domain.exceptions import ResourceNotFoundError
 from shared.domain.uow import IGenericUnitOfWork
+
+GetPostOrFailedResult = Union['GetPostResult', FailedResult]
 
 
 class GetPostQuery(Query):
     id: int
 
 
-class GetPostPayload(QueryPayload):
+class GetPostResult(SuccessResult):
     id: int
     title: str
     content: str
     draft: bool
 
 
-class GetPostResult(QueryResult[GetPostPayload]):
-    pass
-
-
 @dataclass(frozen=True, slots=True)
 class GetPostHandler(IQueryHandler):
     uow: IGenericUnitOfWork
 
-    async def execute(self, query: GetPostQuery) -> GetPostResult:
+    async def handle(self, query: GetPostQuery) -> GetPostOrFailedResult:
         try:
             query_dict = query.model_dump()
             async with self.uow:
                 post = await self.uow.posts.get(**query_dict)
-                payload = GetPostPayload.model_validate(post)
-                return GetPostResult(payload=payload)
+                return GetPostResult.model_validate(post)
 
         except ResourceNotFoundError:
-            return GetPostResult.build_resource_not_found_error()
+            return FailedResult.build_resource_not_found_error()
 
         except SystemError:
-            return GetPostResult.build_system_error()
+            return FailedResult.build_system_error()

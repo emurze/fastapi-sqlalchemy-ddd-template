@@ -1,9 +1,12 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
 
-from shared.application.command_handler import ICommandHandler
-from shared.application.commands import CommandResult, Command, CommandPayload
+from shared.application.commands import ICommandHandler, Command
+
+from shared.application.dtos import SuccessResult, FailedResult
 from shared.domain.uow import IGenericUnitOfWork
+
+CreatePostOrFail = Union['CreatePostResult', FailedResult]
 
 
 class CreatePostCommand(Command):
@@ -13,7 +16,7 @@ class CreatePostCommand(Command):
     draft: bool
 
 
-class CreatePostPayload(CommandPayload):
+class CreatePostResult(SuccessResult):
     id: int
 
 
@@ -21,13 +24,12 @@ class CreatePostPayload(CommandPayload):
 class CreatePostHandler(ICommandHandler):
     uow: IGenericUnitOfWork
 
-    async def execute(self, command: CreatePostCommand) -> CommandResult:
+    async def handle(self, command: CreatePostCommand) -> CreatePostOrFail:
         try:
             client_dict = command.model_dump(exclude_none=True)
             async with self.uow:
                 client_id = await self.uow.posts.create(**client_dict)
-                payload = CreatePostPayload(id=client_id)
                 await self.uow.commit()
-                return CommandResult(payload=payload)
+                return CreatePostResult(id=client_id)
         except SystemError:
-            return CommandResult.build_system_error()
+            return FailedResult.build_system_error()

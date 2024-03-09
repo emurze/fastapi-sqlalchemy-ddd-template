@@ -1,4 +1,4 @@
-from shared.presentation.schema import Schema
+from shared.presentation.json_dtos import Schema
 
 
 class CreatePostJsonRequest(Schema):

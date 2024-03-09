@@ -1,12 +1,9 @@
 import pytest
+from dependency_injector import providers
 
 from main import app
 from shared.infra.sqlalchemy_orm.base import base
 from shared.infra.sqlalchemy_orm.common import suppress_echo
-from shared.infra.sqlalchemy_orm.database import (
-    get_session,  # Will be replaced by test dependency
-    get_session_factory,  # Will be replaced by test dependency
-)
 from collections.abc import Iterator, AsyncIterator, Callable
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,12 +13,29 @@ from sqlalchemy import NullPool
 from sqlalchemy.orm import clear_mappers
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from tests.config import test_db_dsn
+from shared.presentation.container import create_container
+from tests.config import test_db_dsn, TestTopLevelConfig
 
-async_engine = create_async_engine(test_db_dsn, echo=True, poolclass=NullPool)
-async_session_factory = async_sessionmaker(
-    async_engine, expire_on_commit=False
-)
+
+def get_engine():
+    return create_async_engine(
+        test_db_dsn, echo=True, poolclass=NullPool
+    )
+
+
+def get_session_factory(engine):
+    return async_sessionmaker(engine, expire_on_commit=False)
+
+
+db_engine = providers.Singleton(get_engine)
+db_session_factory = providers.Singleton(get_session_factory, db_engine)
+
+container = create_container(config=TestTopLevelConfig)
+container.db_engine.override(db_engine)
+container.db_session_factory.override(db_session_factory)
+
+async_engine = container.db_engine()
+async_session_factory = container.async_session_factory()
 
 
 @pytest.fixture(scope="function")
