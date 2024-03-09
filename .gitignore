@@ -10,7 +10,7 @@
 *venv
 venv
 *.env
-.env
+backend/.env
 *my_venv
 my_venv
 *my_env
@@ -141,11 +141,11 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+backend/.env
 .venv
-.env/
+backend/.env/
 venv/
-.env/
+backend/.env/
 env.bak/
 venv.bak/
 

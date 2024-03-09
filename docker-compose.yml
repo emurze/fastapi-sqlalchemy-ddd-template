@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   api:
-    build: .
+    build: backend
     image: api:v1
     container_name: api
     networks:
@@ -9,11 +9,11 @@ services:
     ports:
       - '8080:8080'
     env_file:
-      - .env/.app.env
+      - ./backend/.env/.app.env
     volumes:
-      - ./htmlcov:/service/htmlcov
-      - ./src:/service/src
-      - ./tests:/service/tests
+      - ./backend/htmlcov:/service/htmlcov
+      - ./backend/src:/service/src
+      - ./backend/tests:/service/tests
     restart: unless-stopped
     depends_on:
       - db
@@ -26,7 +26,7 @@ services:
     ports:
       - '5432:5432'
     env_file:
-      - .env/.db.env
+      - ./backend/.env/.db.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -39,7 +39,7 @@ services:
     ports:
       - '8888:80'
     env_file:
-      - .env/.pgadmin.env
+      - ./backend/.env/.pgadmin.env
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     restart: unless-stopped
@@ -54,7 +54,7 @@ services:
       - backend
     volumes:
       - cache_data:/data
-      - ./src/shared/infra/redis/cache/conf/redis.conf:/etc/redis.conf
+      - ./backend/src/shared/infra/redis/cache/conf/redis.conf:/etc/redis.conf
     restart: unless-stopped
 
 volumes:

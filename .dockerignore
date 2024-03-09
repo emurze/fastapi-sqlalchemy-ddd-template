@@ -22,7 +22,7 @@
 
 # Distribution / packaging
 .Python
-.env/
+backend/.env/
 build/
 develop-eggs/
 dist/
