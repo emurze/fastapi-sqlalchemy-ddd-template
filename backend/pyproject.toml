@@ -32,7 +32,7 @@ poethepoet = "^0.25.0"
 pytest-cov = "^4.1.0"
 
 [tool.poe.tasks]
-# Tests
+# Testing
 test             = "docker exec -it api poetry run bash -c 'cd tests && pytest -m unit && pytest -m integration && pytest -m e2e'"
 test_domain      = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k domain'"
 test_infra       = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k infra'"

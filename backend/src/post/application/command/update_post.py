@@ -17,7 +17,7 @@ class UpdatePostHandler(ICommandHandler):
 
     async def handle(self, command: UpdatePostCommand) -> Result:
         try:
-            command_dict = command.model_dump(exclude=["id"])
+            command_dict = command.model_dump(exclude={"id"})
             async with self.uow:
                 post = await self.uow.posts.get_for_update(id=command.id)
                 post.update(**command_dict)

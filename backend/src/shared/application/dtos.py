@@ -51,7 +51,7 @@ class FailedResult(Model):
     def build_unauthorized_error(cls) -> Self:
         return cls(error=cls.UNAUTHORIZED_ERROR)
 
-    def get_error(self) -> str:
+    def get_error(self) -> Optional[str]:
         return self.error
 
     def get_status(self) -> bool:

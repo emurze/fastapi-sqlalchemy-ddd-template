@@ -28,8 +28,8 @@ async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
 config = container.config()
 app = FastAPI(
     title=config.project_title,
-    secrets=config.secret_key,
     lifespan=lifespan,
+    secret_key=config.secret_key,
+    container=container,
 )
-app.container = container
 include_routers(app)

@@ -1,52 +1,51 @@
 import pytest
-from dependency_injector import providers
+from sqlalchemy import NullPool
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
+from shared.application.message_bus import MessageBus
 from shared.infra.sqlalchemy_orm.base import base
 from shared.infra.sqlalchemy_orm.common import suppress_echo
-from collections.abc import Iterator, AsyncIterator, Callable
+from collections.abc import Iterator
 
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine
 from starlette.testclient import TestClient
 
-from sqlalchemy import NullPool
 from sqlalchemy.orm import clear_mappers
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from tests.config import TestTopLevelConfig
+from tests import containers as co
 
 from shared.presentation.container import container
-from backend.tests.config import TestTopLevelConfig
+
+# Initialize test configuration
+config = TestTopLevelConfig()
+
+# Create Asyncio SQLAlchemy engine and session factory
+engine = create_async_engine(config.db_dsn, echo=True, poolclass=NullPool)
+session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
+# Override app container with test configurations
+co.override_app_container(container, config, engine, session_factory)
+
+# Obtain test containers for memory and SQLAlchemy configurations
+# providing ??? tailored ??? handlers for efficient testing.
+memory_container = co.get_memory_test_container()
+sqlalchemy_container = co.get_sqlalchemy_test_container(
+    config=config,
+    engine=engine,
+    session_factory=session_factory,
+)
 
 
-def get_engine(config: TestTopLevelConfig) -> AsyncEngine:
-    return create_async_engine(config.db_dsn, echo=True, poolclass=NullPool)
-
-
-def get_session_factory(engine) -> Callable:
-    return async_sessionmaker(engine, expire_on_commit=False)
-
-
-class TestContainer:
+@pytest.fixture(scope="function")
+async def _restart_tables() -> None:
     """
-    A container for overriding default dependencies during testing.
+    Cleans tables before each test
     """
-
-    config = providers.Singleton(TestTopLevelConfig)
-    db_engine = providers.Singleton(get_engine, config)
-    db_session_factory = providers.Singleton(get_session_factory, db_engine)
-
-    def override_dependencies(self):
-        container.config.override(self.config)
-        container.db_engine.override(self.db_engine)
-        container.db_session_factory.override(self.db_session_factory)
-
-
-test_container = TestContainer()
-test_container.override_dependencies()
-
-from main import app  # noqa imports app with overridden container
-
-
-async_engine = container.db_engine()
-async_session_factory = container.db_session_factory()
+    async with engine.begin() as conn:
+        async with suppress_echo(engine):
+            await conn.run_sync(base.metadata.drop_all)
+            await conn.run_sync(base.metadata.create_all)
+        await conn.commit()
 
 
 @pytest.fixture(scope="function")
@@ -60,32 +59,19 @@ def _mappers() -> Iterator[None]:
 
 
 @pytest.fixture(scope="function")
-async def _restart_tables() -> None:
+def sqlalchemy_bus(_mappers, _restart_tables) -> MessageBus:
     """
-    Cleans tables before each test
+    Fixture for SQLAlchemy message bus.
     """
-    async with async_engine.begin() as conn:
-        async with suppress_echo(async_engine):
-            await conn.run_sync(base.metadata.drop_all)
-            await conn.run_sync(base.metadata.create_all)
-        await conn.commit()
+    return sqlalchemy_container.message_bus()
 
 
 @pytest.fixture(scope="function")
-def session_factory(_mappers, _restart_tables) -> Callable:
+def memory_bus() -> MessageBus:
     """
-    Provides session factory for each integration test (unit of work).
+    Fixture for memory message bus.
     """
-    return async_session_factory
-
-
-@pytest.fixture(scope="function")
-async def session(_mappers, _restart_tables) -> AsyncIterator[AsyncSession]:
-    """
-    Provides session for each integration test (repository).
-    """
-    async with async_session_factory() as new_session:
-        yield new_session
+    return memory_container.message_bus()
 
 
 @pytest.fixture(scope="function")
@@ -93,5 +79,7 @@ def client(_restart_tables) -> Iterator[TestClient]:
     """
     Provides a configured test client for end-to-end tests.
     """
+    from main import app
+
     with TestClient(app) as test_client:
         yield test_client

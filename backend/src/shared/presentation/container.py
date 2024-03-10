@@ -8,15 +8,19 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from auth.domain.uow import IAuthUnitOfWork
 from auth.infra.repositories import AuthSqlAlchemyUnitOfWork, \
     ClientSqlAlchemyRepository
 from post.application.command.create_post import CreatePostHandler
 from post.application.command.delete_post import DeletePostHandler
 from post.application.command.update_post import UpdatePostHandler
 from post.application.query.get_post import GetPostHandler
+from post.domain.repositories import IPostUnitOfWork
 from post.infra.repositories import PostSqlAlchemyUnitOfWork, \
     PostSqlAlchemyRepository
 from shared.application.message_bus import MessageBus
+from shared.application.queries import IQueryHandler as IQHandler
+from shared.application.commands import ICommandHandler as ICHandler
 from shared.presentation.config import TopLevelConfig
 from shared.presentation.message_bus import ProtectedMessageBus
 
@@ -32,6 +36,10 @@ def get_function_arguments(func: Callable):
         remaining_parameters[name] = param.annotation
 
     return first_parameter, remaining_parameters
+
+
+def get_config() -> TopLevelConfig:
+    return TopLevelConfig()
 
 
 def create_engine(config: TopLevelConfig) -> AsyncEngine:
@@ -60,7 +68,7 @@ def group(*args) -> list:
 
 
 class AppContainer(containers.DeclarativeContainer):
-    config = providers.Singleton(TopLevelConfig)
+    config = providers.Singleton(get_config)
     db_engine = providers.Singleton(create_engine, config)
     db_session_factory = providers.Singleton(create_session_factory, db_engine)
 
@@ -77,10 +85,10 @@ class AppContainer(containers.DeclarativeContainer):
         session_factory=db_session_factory,
         posts=PostSqlAlchemyRepository,
     )
-    get_post = providers.Singleton(GetPostHandler, post_uow)
-    create_post = providers.Singleton(CreatePostHandler, post_uow)
-    delete_post = providers.Singleton(DeletePostHandler, post_uow)
-    update_post = providers.Singleton(UpdatePostHandler, post_uow)
+    get_post: IQHandler = providers.Singleton(GetPostHandler, post_uow)
+    create_post: ICHandler = providers.Singleton(CreatePostHandler, post_uow)
+    delete_post: ICHandler = providers.Singleton(DeletePostHandler, post_uow)
+    update_post: ICHandler = providers.Singleton(UpdatePostHandler, post_uow)
 
     query_handlers = providers.Singleton(
         group,

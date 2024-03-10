@@ -13,7 +13,7 @@ class CreatePostCommand(Command):
     id: Optional[int] = None
     title: str
     content: str
-    draft: bool
+    draft: bool = False
 
 
 class CreatePostResult(SuccessResult):

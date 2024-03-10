@@ -44,5 +44,3 @@ class TestTopLevelConfig(BaseSettings):
     log_level: str
     db_dsn: str = Field(default_factory=TestDatabaseConfig.get_dsn)
     cache_dsn: str = Field(default_factory=TestCacheConfig.get_dsn)
-
-
