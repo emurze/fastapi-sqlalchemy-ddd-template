@@ -1,30 +1,26 @@
+from dataclasses import dataclass
+from typing import NoReturn
+
 from shared.application.commands import ICommandHandler, Command
-from shared.application.dtos import Result
+from shared.application.dtos import OutputDto
 from shared.application.queries import IQueryHandler, Query
 
+Message = Command | Query
 
+
+@dataclass(frozen=True, slots=True)
 class MessageBus:
     command_handlers: dict[type[Command], ICommandHandler]
     query_handlers: dict[type[Query], IQueryHandler]
 
-    def __init__(self) -> None:
-        self.command_handlers = {}
-        self.query_handlers = {}
+    async def handle(self, message: Message) -> NoReturn | OutputDto:
+        if isinstance(message, Command):
+            handler = self.command_handlers[message.__class__]
+            return await handler.handle(message)
 
-    def register_query_handler(
-        self, query: type[Query], handler: IQueryHandler
-    ) -> None:
-        self.query_handlers[query] = handler
+        elif isinstance(message, Query):
+            handler = self.query_handlers[message.__class__]
+            return await handler.handle(message)
 
-    def register_command_handler(
-        self, command: type[Command], handler: ICommandHandler
-    ) -> None:
-        self.command_handlers[command] = handler
-
-    async def handle_query(self, query: Query) -> Result:
-        handler = self.query_handlers[query.__class__]
-        return await handler.handle(query)
-
-    async def handle_command(self, command: Command) -> Result:
-        handler = self.command_handlers[command.__class__]
-        return await handler.handle(command)
+        else:
+            raise TypeError("Param type isn't in [Command, Query, Event]")

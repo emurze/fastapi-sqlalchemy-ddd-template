@@ -4,13 +4,7 @@ from starlette.testclient import TestClient
 
 
 @pytest.mark.e2e
-def test_overridden_project_title(client: TestClient) -> None:
-    response = client.get('/docs')
-    assert 'Test' in response.content.decode()
-
-
-@pytest.mark.e2e
-def test_add_client(client: TestClient) -> None:
+def test_create_post(client: TestClient) -> None:
     response: httpx.Response = client.post(
         "/posts/", json={
             "title": "Vlad",

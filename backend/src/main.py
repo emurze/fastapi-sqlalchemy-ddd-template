@@ -8,7 +8,7 @@ from auth.presentation.router import router as auth_router
 from health.presentation.router import router as health_router
 from post.presentation.router import router as post_router
 
-from shared.presentation.container import container
+from containers import container
 from shared.infra.sqlalchemy_orm.base import base
 
 

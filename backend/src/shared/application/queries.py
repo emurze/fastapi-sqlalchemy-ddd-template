@@ -1,6 +1,6 @@
 import abc
 
-from shared.application.dtos import Model, Result
+from shared.application.dtos import Model, OutputDto
 
 
 class Query(Model):
@@ -9,4 +9,4 @@ class Query(Model):
 
 class IQueryHandler(abc.ABC):
     @abc.abstractmethod
-    async def handle(self, query: Query) -> Result: ...
+    async def handle(self, query: Query) -> OutputDto: ...

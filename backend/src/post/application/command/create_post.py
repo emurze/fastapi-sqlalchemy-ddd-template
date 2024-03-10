@@ -3,10 +3,9 @@ from typing import Optional, Union
 
 from post.domain.repositories import IPostUnitOfWork
 from shared.application.commands import ICommandHandler, Command
+from shared.application.dtos import SuccessOutputDto, FailedOutputDto
 
-from shared.application.dtos import SuccessResult, FailedResult
-
-CreatePostOrFail = Union['CreatePostResult', FailedResult]
+CreatePostOrFail = Union['CreatePostResult', FailedOutputDto]
 
 
 class CreatePostCommand(Command):
@@ -16,7 +15,7 @@ class CreatePostCommand(Command):
     draft: bool = False
 
 
-class CreatePostResult(SuccessResult):
+class CreatePostResult(SuccessOutputDto):
     id: int
 
 
@@ -32,4 +31,4 @@ class CreatePostHandler(ICommandHandler):
                 await self.uow.commit()
                 return CreatePostResult(id=client_id)
         except SystemError:
-            return FailedResult.build_system_error()
+            return FailedOutputDto.build_system_error()

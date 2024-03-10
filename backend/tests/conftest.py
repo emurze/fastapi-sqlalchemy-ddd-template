@@ -14,7 +14,7 @@ from sqlalchemy.orm import clear_mappers
 from tests.config import TestTopLevelConfig
 from tests import containers as co
 
-from shared.presentation.container import container
+from containers import container
 
 # Initialize test configuration
 config = TestTopLevelConfig()
@@ -26,9 +26,8 @@ session_factory = async_sessionmaker(engine, expire_on_commit=False)
 # Override app container with test configurations
 co.override_app_container(container, config, engine, session_factory)
 
-# Obtain test containers for memory and SQLAlchemy configurations
-# providing ??? tailored ??? handlers for efficient testing.
-memory_container = co.get_memory_test_container()
+# Obtain test containers for QLAlchemy configurations
+# providing tailored handlers for efficient testing.
 sqlalchemy_container = co.get_sqlalchemy_test_container(
     config=config,
     engine=engine,
@@ -59,19 +58,17 @@ def _mappers() -> Iterator[None]:
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_bus(_mappers, _restart_tables) -> MessageBus:
-    """
-    Fixture for SQLAlchemy message bus.
-    """
-    return sqlalchemy_container.message_bus()
-
-
-@pytest.fixture(scope="function")
-def memory_bus() -> MessageBus:
+def bus() -> MessageBus:
     """
     Fixture for memory message bus.
     """
+    memory_container = co.get_memory_test_container()
     return memory_container.message_bus()
+
+
+@pytest.fixture(scope="function")
+def container():
+    return sqlalchemy_container
 
 
 @pytest.fixture(scope="function")

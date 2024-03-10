@@ -1,6 +1,6 @@
 import abc
 
-from shared.application.dtos import Model, Result
+from shared.application.dtos import Model, OutputDto
 
 
 class Command(Model):
@@ -9,5 +9,5 @@ class Command(Model):
 
 class ICommandHandler(abc.ABC):
     @abc.abstractmethod
-    async def handle(self, command: Command) -> Result:
+    async def handle(self, command: Command) -> OutputDto:
         ...

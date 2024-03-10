@@ -8,7 +8,7 @@ from post.infra.repositories import (
     PostInMemoryUnitOfWork,
     PostInMemoryRepository,
 )
-from shared.presentation.container import AppContainer
+from containers import AppContainer
 
 
 def link(item):
@@ -22,6 +22,7 @@ def override_app_container(container, config, engine, session_factory) -> None:
 
 
 def get_memory_test_container() -> AppContainer:
+    container = AppContainer()
     auth_uow = providers.Singleton(
         AuthInMemoryUnitOfWork,
         clients=ClientInMemoryRepository,
@@ -30,7 +31,6 @@ def get_memory_test_container() -> AppContainer:
         PostInMemoryUnitOfWork,
         posts=PostInMemoryRepository,
     )
-    container = AppContainer()
     container.auth_uow.override(auth_uow)
     container.post_uow.override(post_uow)
     return container

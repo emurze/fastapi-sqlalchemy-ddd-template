@@ -18,17 +18,9 @@ class ExampleInMemoryUnitOfWork(InMemoryUnitOfWork, IExampleUnitOfWork):
 
 @pytest.fixture(scope="function")
 def repo() -> IGenericRepository:
-    """
-    Every test it returns a new repository with cleaned models
-    """
-
     return ExampleInMemoryRepository()
 
 
 @pytest.fixture(scope="function")
 def uow() -> IExampleUnitOfWork:
-    """
-    Every test it returns a new uow with repositories with cleaned models
-    """
-
     return ExampleInMemoryUnitOfWork(examples=ExampleInMemoryRepository)

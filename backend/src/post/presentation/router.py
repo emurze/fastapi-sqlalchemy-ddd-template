@@ -7,15 +7,16 @@ from post.application.command.delete_post import DeletePostCommand
 from post.application.command.update_post import UpdatePostCommand
 from post.application.query.get_post import GetPostQuery
 from post.presentation import schema as s
-from shared.application.dtos import FailedResult
+from shared.application.dtos import FailedOutputDto
 from shared.presentation.dependencies import BusDep
 from shared.presentation.json_dtos import FailedJsonResponse
+from shared.presentation.utils import raise_errors
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
 @router.get(
-    "/",
+    "/{post_id}",
     status_code=status.HTTP_200_OK,
     response_model=s.GetPostJsonResponse,
     responses={
@@ -25,8 +26,8 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 )
 async def get_post(post_id: int, bus: BusDep):
     query = GetPostQuery(id=post_id)
-    result = await bus.handle_query(query)
-    return result
+    output_dto = raise_errors(await bus.handle(query))
+    return output_dto
 
 
 @router.post(
@@ -39,10 +40,12 @@ async def get_post(post_id: int, bus: BusDep):
 )
 async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
     command = CreatePostCommand.model_validate(dto)
-    created_result = await bus.handle_command(command)
-    query = GetPostQuery(id=created_result.id)
-    result = await bus.handle_query(query)
-    return result
+    created_output_dto = raise_errors(await bus.handle(command))
+
+    query = GetPostQuery(id=created_output_dto.id)
+    output_dto = raise_errors(await bus.handle(query))
+
+    return output_dto
 
 
 @router.delete(
@@ -56,7 +59,7 @@ async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
 )
 async def delete_post(post_id: int, bus: BusDep):
     command = DeletePostCommand(id=post_id)
-    await bus.handle_command(command, raise_errors=True)
+    raise_errors(await bus.handle(command))
 
 
 @router.put(
@@ -71,22 +74,25 @@ async def delete_post(post_id: int, bus: BusDep):
 )
 async def update_post(post_id: int, dto: s.UpdatePostJsonRequest, bus: BusDep):
     command = UpdatePostCommand(**(dto.model_dump() | {"id": post_id}))
-    result = await bus.handle_command(command, raise_errors=False)
+    output_dto = await bus.handle(command)
 
-    if result.get_error() == FailedResult.RESOURCE_NOT_FOUND_ERROR:
-        command = CreatePostCommand(**(dto.model_dump() | {"id": post_id}))
-        await bus.handle_command(command)
+    if not output_dto.status:
+        if output_dto.message == FailedOutputDto.RESOURCE_NOT_FOUND_ERROR:
+            command = CreatePostCommand(**(dto.model_dump() | {"id": post_id}))
+            raise_errors(await bus.handle(command))
 
-        query = GetPostQuery(id=post_id)
-        query_result = await bus.handle_query(query)
+            query = GetPostQuery(id=post_id)
+            get_output_dto = raise_errors(await bus.handle(query))
 
-        return JSONResponse(
-            s.UpdatePostJsonResponse.model_validate(query_result).model_dump(),
-            status.HTTP_201_CREATED,
-        )
+            return JSONResponse(
+                s.UpdatePostJsonResponse.model_validate(
+                    get_output_dto
+                ).model_dump(),
+                status.HTTP_201_CREATED,
+            )
 
-    FailedJsonResponse.raise_errors(result)
+        return FailedJsonResponse.build_by_output_dto(output_dto)
 
     query = GetPostQuery(id=post_id)
-    query_result = await bus.handle_query(query, raise_errors=True)
-    return query_result
+    get_output_dto = raise_errors(await bus.handle(query))
+    return get_output_dto

@@ -2,18 +2,18 @@ from dataclasses import dataclass
 from typing import Union
 
 from post.domain.repositories import IPostUnitOfWork
-from shared.application.dtos import SuccessResult, FailedResult
+from shared.application.dtos import SuccessOutputDto, FailedOutputDto
 from shared.application.queries import IQueryHandler, Query
 from shared.domain.exceptions import ResourceNotFoundException
 
-GetPostOrFailedResult = Union['GetPostResult', FailedResult]
+GetPostOrFailedOutputDto = Union['GetPostOutputDto', FailedOutputDto]
 
 
 class GetPostQuery(Query):
     id: int
 
 
-class GetPostResult(SuccessResult):
+class GetPostOutputDto(SuccessOutputDto):
     id: int
     title: str
     content: str
@@ -24,15 +24,15 @@ class GetPostResult(SuccessResult):
 class GetPostHandler(IQueryHandler):
     uow: IPostUnitOfWork
 
-    async def handle(self, query: GetPostQuery) -> GetPostOrFailedResult:
+    async def handle(self, query: GetPostQuery) -> GetPostOrFailedOutputDto:
         try:
             query_dict = query.model_dump()
             async with self.uow:
                 post = await self.uow.posts.get(**query_dict)
-                return GetPostResult.model_validate(post)
+                return GetPostOutputDto.model_validate(post)
 
         except ResourceNotFoundException:
-            return FailedResult.build_resource_not_found_error()
+            return FailedOutputDto.build_resource_not_found_error()
 
         except SystemError:
-            return FailedResult.build_system_error()
+            return FailedOutputDto.build_system_error()
