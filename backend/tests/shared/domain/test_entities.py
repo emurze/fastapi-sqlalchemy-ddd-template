@@ -1,6 +1,6 @@
 import pytest
 
-from tests.shared.conftest import Example
+from tests.shared.conftest_data.domain import Example
 
 
 @pytest.mark.unit

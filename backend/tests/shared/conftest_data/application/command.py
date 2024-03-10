@@ -1,34 +1,32 @@
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from post.domain.repositories import IPostUnitOfWork
 from shared.application.commands import ICommandHandler, Command
 from shared.application.dtos import SuccessOutputDto, FailedOutputDto
+from tests.shared.conftest_data.domain import IExampleUnitOfWork
 
-CreatePostOrFail = Union['CreatePostOutputDto', FailedOutputDto]
+CreateExampleOrF = Union['CreateExampleOutputDto', FailedOutputDto]
 
 
-class CreatePostCommand(Command):
+class CreateExampleCommand(Command):
     id: Optional[int] = None
-    title: str
-    content: str
-    draft: bool = False
+    name: str
 
 
-class CreatePostOutputDto(SuccessOutputDto):
+class CreateExampleOutputDto(SuccessOutputDto):
     id: int
 
 
 @dataclass(frozen=True, slots=True)
-class CreatePostHandler(ICommandHandler):
-    uow: IPostUnitOfWork
+class CreateExampleHandler(ICommandHandler):
+    uow: IExampleUnitOfWork
 
-    async def handle(self, command: CreatePostCommand) -> CreatePostOrFail:
+    async def handle(self, command: CreateExampleCommand) -> CreateExampleOrF:
         try:
             client_dict = command.model_dump(exclude_none=True)
             async with self.uow:
-                client_id = await self.uow.posts.create(**client_dict)
+                client_id = await self.uow.examples.create(**client_dict)
                 await self.uow.commit()
-                return CreatePostOutputDto(id=client_id)
+                return CreateExampleOutputDto(id=client_id)
         except SystemError:
             return FailedOutputDto.build_system_error()

@@ -27,6 +27,9 @@ test_integration-backend:
 test_e2e-backend:
 	poe --root backend test_e2e
 
+test_coverage-backend:
+	poe --root backend test_coverage
+
 # Linting, Formatting, and Type Checking
 
 format-backend:

@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import NoReturn
+from typing import NoReturn, TypeAlias
 
 from shared.application.commands import ICommandHandler, Command
 from shared.application.dtos import OutputDto
 from shared.application.queries import IQueryHandler, Query
 
-Message = Command | Query
+Message: TypeAlias = Command | Query
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,12 +15,16 @@ class MessageBus:
 
     async def handle(self, message: Message) -> NoReturn | OutputDto:
         if isinstance(message, Command):
-            handler = self.command_handlers[message.__class__]
-            return await handler.handle(message)
-
+            return await self._handle_command(message)
         elif isinstance(message, Query):
-            handler = self.query_handlers[message.__class__]
-            return await handler.handle(message)
-
+            return await self._handle_query(message)
         else:
             raise TypeError("Param type isn't in [Command, Query, Event]")
+
+    async def _handle_command(self, command: Command) -> OutputDto:
+        handler = self.command_handlers[type(command)]
+        return await handler.handle(command)
+
+    async def _handle_query(self, query: Query) -> OutputDto:
+        handler = self.query_handlers[type(query)]
+        return await handler.handle(query)

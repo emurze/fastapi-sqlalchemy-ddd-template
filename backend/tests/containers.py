@@ -1,5 +1,3 @@
-from dependency_injector import providers
-
 from auth.infra.repositories import (
     AuthInMemoryUnitOfWork,
     ClientInMemoryRepository,
@@ -8,11 +6,7 @@ from post.infra.repositories import (
     PostInMemoryUnitOfWork,
     PostInMemoryRepository,
 )
-from containers import AppContainer
-
-
-def link(item):
-    return providers.Singleton(lambda: item)
+from containers import AppContainer, link, _
 
 
 def override_app_container(container, config, engine, session_factory) -> None:
@@ -23,15 +17,17 @@ def override_app_container(container, config, engine, session_factory) -> None:
 
 def get_memory_test_container() -> AppContainer:
     container = AppContainer()
-    auth_uow = providers.Singleton(
-        AuthInMemoryUnitOfWork,
-        clients=ClientInMemoryRepository,
-    )
-    post_uow = providers.Singleton(
-        PostInMemoryUnitOfWork,
-        posts=PostInMemoryRepository,
-    )
+
+    # Auth
+    client_repo = link(ClientInMemoryRepository)
+    auth_uow = _(AuthInMemoryUnitOfWork, clients=client_repo)
+    container.client_repo.override(client_repo)
     container.auth_uow.override(auth_uow)
+
+    # Post
+    post_repo = link(PostInMemoryRepository)
+    post_uow = _(PostInMemoryUnitOfWork, posts=post_repo)
+    container.post_repo.override(post_repo)
     container.post_uow.override(post_uow)
     return container
 

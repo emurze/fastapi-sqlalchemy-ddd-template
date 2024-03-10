@@ -12,7 +12,6 @@ class Schema(BaseModel):
 
 class FailedJsonResponse(Schema):
     detail: str
-
     STATUS_CODES: ClassVar[dict[str, int]] = {
         FailedOutputDto.RESOURCE_ERROR: status.HTTP_404_NOT_FOUND,
         FailedOutputDto.RESOURCE_NOT_FOUND_ERROR: status.HTTP_404_NOT_FOUND,

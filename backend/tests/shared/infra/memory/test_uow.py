@@ -1,6 +1,6 @@
 import pytest
 
-from tests.shared.conftest import IExampleUnitOfWork
+from tests.shared.conftest_data.domain import IExampleUnitOfWork
 
 example_dict = {"name": "example 1"}
 

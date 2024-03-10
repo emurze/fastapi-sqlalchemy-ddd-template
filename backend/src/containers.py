@@ -20,6 +20,21 @@ from shared.application.message_bus import MessageBus
 from config import TopLevelConfig
 
 
+def _(obj, *args, **kw):
+    return providers.Singleton(obj, *args, **kw)
+
+
+def link(obj):
+    return providers.Singleton(lambda: obj)
+
+
+def group(*singletons):
+    def inner(*args) -> list:
+        return list(args)
+
+    return providers.Singleton(inner, *singletons)
+
+
 def get_first_param_annotation(func: Callable):
     handler_signature = inspect.signature(func)
     kwargs_iterator = iter(handler_signature.parameters.items())
@@ -52,31 +67,22 @@ def get_bus(query_handlers: list, command_handlers: list) -> MessageBus:
     )
 
 
-def _(obj, *args, **kw):
-    return providers.Singleton(obj, *args, **kw)
-
-
-def group(*singletons):
-    def inner(*args) -> list:
-        return list(args)
-
-    return providers.Singleton(inner, *singletons)
-
-
 class AppContainer(containers.DeclarativeContainer):
-    config = providers.Singleton(get_config)
-    db_engine = providers.Singleton(get_engine, config)
-    db_session_factory = providers.Singleton(get_session_factory, db_engine)
+    config = _(get_config)
+    db_engine = _(get_engine, config)
+    db_session_factory = _(get_session_factory, db_engine)
 
-    auth_uow = providers.Singleton(
+    client_repo = link(ClientSqlAlchemyRepository)
+    auth_uow = _(
         AuthSqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        clients=ClientSqlAlchemyRepository,
+        clients=client_repo,
     )
-    post_uow = providers.Singleton(
+    post_repo = link(PostSqlAlchemyRepository)
+    post_uow = _(
         PostSqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        posts=PostSqlAlchemyRepository,
+        posts=post_repo,
     )
 
     query_handlers = group(

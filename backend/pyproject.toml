@@ -40,7 +40,7 @@ test_application = "docker exec -it api bash -c 'cd tests && poetry run pytest -
 test_unit        = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m unit'"
 test_integration = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m integration'"
 test_e2e         = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m e2e'"
-test_coverage    = "docker exec -it api bash -c 'cd tests && poetry run pytest -s --cov=src --cov-report=html'"
+test_coverage    = "docker exec -it api bash -c 'poetry run pytest -s --cov=src --cov-report=html tests'"
 
 # Linting, Formatting, and Type Checking
 format           = "poetry run black . -l 79 tests src"
@@ -94,6 +94,9 @@ pythonpath = [
     "src",
 ]
 
+[tool.coverage.run]
+source = ["src"]
+omit = ["__init__.py", "*/migrations/*"]
 
 [tool.mypy]
 python_version = "3.11"

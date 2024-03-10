@@ -1,27 +1,27 @@
-import abc
-from typing import Self
+from collections.abc import Iterator
 
-from dataclasses import dataclass
-from shared.domain.entities import AggregateRoot
-from shared.domain.repository import IGenericRepository
+import pytest
+from sqlalchemy.orm import clear_mappers
+
+from shared.infra.sqlalchemy_orm.common import suppress_echo
+from tests.conftest import engine
+from tests.shared.conftest_data.tables import (
+    run_example_mappers,
+    mapped_registry,
+)
 
 
-@dataclass(kw_only=True)
-class Example(AggregateRoot):
-    name: str
+@pytest.fixture(scope="function")
+def _example_mappers() -> Iterator[None]:
+    run_example_mappers()
+    yield
+    clear_mappers()
 
 
-class IExampleUnitOfWork(abc.ABC):
-    examples: IGenericRepository
-
-    @abc.abstractmethod
-    async def __aenter__(self) -> Self: ...
-
-    @abc.abstractmethod
-    async def __aexit__(self, *args) -> None: ...
-
-    @abc.abstractmethod
-    async def commit(self) -> None: ...
-
-    @abc.abstractmethod
-    async def rollback(self) -> None: ...
+@pytest.fixture(scope="function")
+async def _restart_example_table(_example_mappers) -> None:
+    async with engine.begin() as conn:
+        async with suppress_echo(engine):
+            await conn.run_sync(mapped_registry.metadata.drop_all)
+            await conn.run_sync(mapped_registry.metadata.create_all)
+        await conn.commit()
