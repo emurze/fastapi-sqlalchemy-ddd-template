@@ -1,4 +1,6 @@
 import pytest
+from asgi_lifespan import LifespanManager
+from httpx import AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
@@ -15,27 +17,28 @@ from starlette.testclient import TestClient
 from sqlalchemy.orm import clear_mappers
 
 from tests.config import TestTopLevelConfig
-from tests import containers as co
+from tests import container as co
 
-from containers import container as app_container
+from container import container as app_container
+from redis import asyncio as aioredis
 
-# Initialize test configuration
 config = TestTopLevelConfig()
-
-# Create Asyncio SQLAlchemy engine and session factory
 engine = create_async_engine(config.db_dsn, echo=True, poolclass=NullPool)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-# Override app container with test configurations
 co.override_app_container(app_container, config, engine, session_factory)
 
-# Obtain test containers for QLAlchemy configurations
-# providing tailored handlers for efficient testing.
-sqlalchemy_container = co.get_sqlalchemy_test_container(
-    config=config,
-    engine=engine,
-    session_factory=session_factory,
-)
+
+# Cleaners
+
+@pytest.fixture(scope="function")
+def _mappers() -> Iterator[None]:
+    """
+    Cleans and resets SQLAlchemy mapper configurations for each test.
+    """
+    base.run_mappers()
+    yield
+    clear_mappers()
 
 
 @pytest.fixture(scope="function")
@@ -51,14 +54,12 @@ async def _restart_tables() -> None:
 
 
 @pytest.fixture(scope="function")
-def _mappers() -> Iterator[None]:
-    """
-    Cleans and resets SQLAlchemy mapper configurations for each test.
-    """
-    base.run_mappers()
-    yield
-    clear_mappers()
+async def _restart_cache() -> None:
+    cache_conn = aioredis.Redis.from_url(config.cache_dsn)
+    await cache_conn.flushdb(asynchronous=False)
 
+
+# Application fixtures
 
 @pytest.fixture(scope="function")
 def bus() -> MessageBus:
@@ -69,29 +70,42 @@ def bus() -> MessageBus:
     return memory_container.message_bus()
 
 
+# Infrastructure fixtures
+
 @pytest.fixture(scope="function")
-def container():
+def sqlalchemy_container(_mappers, _restart_tables):
     """
-    Fixture for Infrastructure tests
+    Provides sqlalchemy repositories and units of work
     """
-    return sqlalchemy_container
+    return app_container
+
+
+@pytest.fixture(scope="function")
+def memory_container():
+    """
+    Provides memory repositories and units of work
+    """
+    return co.get_memory_test_container()
 
 
 @pytest.fixture(scope="function")
 async def session() -> AsyncIterator[AsyncSession]:
     """
-    Fixture for Infrastructure tests
+    Repository argument
     """
     async with session_factory() as new_session:
         yield new_session
 
 
+# End To End fixtures
+
 @pytest.fixture(scope="function")
-def client(_restart_tables) -> Iterator[TestClient]:
+async def ac(_restart_cache, _restart_tables) -> Iterator[TestClient]:
     """
-    Provides a configured test client for end-to-end tests.
+    Provides a configured async test client for end-to-end tests.
     """
     from main import app
 
-    with TestClient(app) as test_client:
-        yield test_client
+    async with LifespanManager(app) as manager:
+        async with AsyncClient(app=manager.app, base_url='http://test') as ac:
+            yield ac

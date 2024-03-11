@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from fastapi_cache.decorator import cache
 from starlette import status
 from starlette.responses import JSONResponse
 
@@ -24,6 +25,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
         status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
     }
 )
+@cache(expire=15)
 async def get_post(post_id: int, bus: BusDep):
     query = GetPostQuery(id=post_id)
     output_dto = raise_errors(await bus.handle(query))

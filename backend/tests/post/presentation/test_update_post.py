@@ -1,12 +1,13 @@
-import httpx
 import pytest
+from httpx import AsyncClient
 from starlette import status
-from starlette.testclient import TestClient
+
+from tests.post.presentation.conftest import create_post
 
 
 @pytest.mark.e2e
-def test_update_post_when_it_doesnt_exist(client: TestClient) -> None:
-    response_update: httpx.Response = client.put(
+async def test_update_post_when_it_doesnt_exist(ac: AsyncClient) -> None:
+    response_update = await ac.put(
         "/posts/1", json={
             "title": "Vlados",
             "content": "Hello"
@@ -14,25 +15,23 @@ def test_update_post_when_it_doesnt_exist(client: TestClient) -> None:
     )
     assert response_update.status_code == status.HTTP_201_CREATED
 
-    response: httpx.Response = client.get("/posts/1")
-    post = response.json()
+    response = await ac.get("/posts/1")
     assert response.status_code == status.HTTP_200_OK
-    assert post["id"] == 1
-    assert post["title"] == "Vlados"
-    assert post["content"] == "Hello"
+    print(response.json())
+    assert response.json() == {
+        "id": 1,
+        "title": "Vlados",
+        "content": "Hello",
+        "draft": False,
+    }
 
 
 @pytest.mark.e2e
-def test_update_post_when_it_already_exists(client: TestClient) -> None:
-    response_create: httpx.Response = client.post(
-        "/posts/", json={
-            "title": "Vlad",
-            "content": "Hello World"
-        }
-    )
+async def test_update_post_when_it_already_exists(ac: AsyncClient) -> None:
+    response_create = await create_post(ac, title="Vlad", content="Hello")
     assert response_create.status_code == status.HTTP_201_CREATED
 
-    response_update: httpx.Response = client.put(
+    response_update = await ac.put(
         "/posts/1", json={
             "title": "Vlad",
             "content": "Hello"
@@ -40,9 +39,10 @@ def test_update_post_when_it_already_exists(client: TestClient) -> None:
     )
     assert response_update.status_code == status.HTTP_200_OK
 
-    response: httpx.Response = client.get("/posts/1")
-    post = response.json()
+    response = await ac.get("/posts/1")
     assert response.status_code == status.HTTP_200_OK
+
+    post = response.json()
     assert post["id"] == 1
     assert post["title"] == "Vlad"
     assert post["content"] == "Hello"

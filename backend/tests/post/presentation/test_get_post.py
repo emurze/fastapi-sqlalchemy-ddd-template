@@ -1,28 +1,25 @@
-import httpx
 import pytest
+from httpx import AsyncClient
 from starlette import status
-from starlette.testclient import TestClient
+
+from tests.post.presentation.conftest import create_post
 
 
 @pytest.mark.e2e
-def test_get_post(client: TestClient) -> None:
-    response_create: httpx.Response = client.post(
-        "/posts/", json={
-            "title": "Vlad",
-            "content": "Hello World"
-        }
-    )
+async def test_get_post(ac: AsyncClient) -> None:
+    response_create = await create_post(ac, title="Vlad", content="Hello")
     assert response_create.status_code == status.HTTP_201_CREATED
 
-    response: httpx.Response = client.get("/posts/1")
-    post = response.json()
+    response = await ac.get("/posts/1")
     assert response.status_code == status.HTTP_200_OK
+
+    post = response.json()
     assert post["id"] == 1
     assert post["title"] == "Vlad"
-    assert post["content"] == "Hello World"
+    assert post["content"] == "Hello"
 
 
 @pytest.mark.e2e
-def test_get_post_not_found_error(client: TestClient) -> None:
-    response: httpx.Response = client.get("/posts/1")
+async def test_get_post_not_found_error(ac: AsyncClient) -> None:
+    response = await ac.get("/posts/1")
     assert response.status_code == status.HTTP_404_NOT_FOUND

@@ -1,8 +1,8 @@
 import pytest
-from starlette.testclient import TestClient
+from httpx import AsyncClient
 
 
 @pytest.mark.e2e
-def test_health_check(client: TestClient) -> None:
-    response = client.get('/health')
+async def test_health_check(ac: AsyncClient) -> None:
+    response = await ac.get('/health')
     assert response.json() == {"message": "I'm healthy!"}

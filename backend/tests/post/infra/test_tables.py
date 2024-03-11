@@ -2,5 +2,5 @@ import pytest
 
 
 @pytest.mark.integration
-def test_(uow) -> None:
+def test_() -> None:
     pass

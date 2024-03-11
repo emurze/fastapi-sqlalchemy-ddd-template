@@ -1,19 +1,16 @@
-import httpx
 import pytest
-from starlette.testclient import TestClient
+from httpx import AsyncClient
+from starlette import status
+
+from tests.post.presentation.conftest import create_post
 
 
 @pytest.mark.e2e
-def test_create_post(client: TestClient) -> None:
-    response: httpx.Response = client.post(
-        "/posts/", json={
-            "title": "Vlad",
-            "content": "Hello World"
-        }
-    )
-    response_client = response.json()
+async def test_create_post(ac: AsyncClient) -> None:
+    response = await create_post(ac, title="Vlad", content="Hello World")
+    assert response.status_code == status.HTTP_201_CREATED
 
-    assert response.status_code == 201
-    assert response_client["id"] == 1
-    assert response_client["title"] == "Vlad"
-    assert response_client["content"] == "Hello World"
+    client = response.json()
+    assert client["id"] == 1
+    assert client["title"] == "Vlad"
+    assert client["content"] == "Hello World"
