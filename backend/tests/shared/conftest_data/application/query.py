@@ -6,7 +6,7 @@ from shared.application.queries import IQueryHandler, Query
 from shared.domain.exceptions import ResourceNotFoundException
 from tests.shared.conftest_data.domain import IExampleUnitOfWork
 
-GetExampleOrFail = Union['GetExampleOutputDto', FailedOutputDto]
+GetExampleOrFail = Union["GetExampleOutputDto", FailedOutputDto]
 
 
 class GetExampleQuery(Query):

@@ -3,7 +3,7 @@ from typing import TypeAlias, Self
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.domain.uow import IGenericUnitOfWork
+from shared.domain.uows import IGenericUnitOfWork
 
 cls: TypeAlias = type
 

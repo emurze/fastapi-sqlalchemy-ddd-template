@@ -11,6 +11,6 @@ def raise_errors(output_dto: OutputDto) -> NoReturn | OutputDto:
         message = output_dto.message
         raise HTTPException(
             status_code=FailedJsonResponse.STATUS_CODES[message],
-            detail=message
+            detail=message,
         )
     return output_dto

@@ -12,8 +12,5 @@ def get_first_param_annotation(func: Callable):
 
 def invisible_field(default_factory: Callable) -> Field:
     return field(
-        init=False,
-        repr=False,
-        compare=False,
-        default_factory=default_factory
+        init=False, repr=False, compare=False, default_factory=default_factory
     )

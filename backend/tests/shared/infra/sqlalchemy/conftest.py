@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.domain.repository import IGenericRepository
+from shared.domain.repositories import IGenericRepository
 from tests.conftest import session_factory
 from tests.shared.conftest_data.domain import IExampleUnitOfWork
 from tests.shared.conftest_data.repositories import (

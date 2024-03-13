@@ -6,7 +6,7 @@ from post.domain.repositories import IPostUnitOfWork
 from shared.application.commands import ICommandHandler, Command
 from shared.application.dtos import SuccessOutputDto, FailedOutputDto
 
-CreatePostOrFail = Union['CreatePostOutputDto', FailedOutputDto]
+CreatePostOrFail = Union["CreatePostOutputDto", FailedOutputDto]
 
 
 class CreatePostCommand(Command):
@@ -27,7 +27,7 @@ class CreatePostHandler(ICommandHandler):
     async def handle(self, command: CreatePostCommand) -> CreatePostOrFail:
         try:
             async with self.uow:
-                post = Post(title='Post 1', content='Content 1')
+                post = Post(title="Post 1", content="Content 1")
                 post_id = await self.uow.posts.add(post)
                 await self.uow.commit()
                 return CreatePostOutputDto(id=post_id)

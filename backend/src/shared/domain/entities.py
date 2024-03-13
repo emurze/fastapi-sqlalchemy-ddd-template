@@ -1,8 +1,11 @@
 from dataclasses import dataclass
+from typing import NewType
 
 from shared.domain.events import Event
-from shared.domain.value_objects.lazy import lazy, metadata
+from shared.domain.value_objects import lazy, metadata
 from shared.utils.functional import invisible_field
+
+EntityId = NewType("EntityId", int)
 
 
 @dataclass(kw_only=True)
@@ -20,9 +23,12 @@ class Entity:
 
     def to_dict(self) -> dict:
         return {
-            attr: value for attr in self.__dataclass_fields__  # noqa
-            if (not isinstance((value := getattr(self, attr)), metadata)
-                and not attr.startswith("_"))
+            attr: value
+            for attr in self.__dataclass_fields__  # noqa
+            if (
+                not isinstance((value := getattr(self, attr)), metadata)
+                and not attr.startswith("_")
+            )
         }
 
 

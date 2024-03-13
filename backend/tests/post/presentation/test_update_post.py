@@ -8,10 +8,7 @@ from tests.post.presentation.conftest import create_post
 @pytest.mark.e2e
 async def test_update_post_when_it_doesnt_exist(ac: AsyncClient) -> None:
     response_update = await ac.put(
-        "/posts/1", json={
-            "title": "Vlados",
-            "content": "Hello"
-        }
+        "/posts/1", json={"title": "Vlados", "content": "Hello"}
     )
     assert response_update.status_code == status.HTTP_201_CREATED
 
@@ -32,10 +29,7 @@ async def test_update_post_when_it_already_exists(ac: AsyncClient) -> None:
     assert response_create.status_code == status.HTTP_201_CREATED
 
     response_update = await ac.put(
-        "/posts/1", json={
-            "title": "Vlad",
-            "content": "Hello"
-        }
+        "/posts/1", json={"title": "Vlad", "content": "Hello"}
     )
     assert response_update.status_code == status.HTTP_200_OK
 

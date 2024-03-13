@@ -1,6 +1,6 @@
 import pytest
 
-from shared.domain.repository import IGenericRepository
+from shared.domain.repositories import IGenericRepository
 from tests.shared.infra.memory import test_repository as memory_impl
 
 

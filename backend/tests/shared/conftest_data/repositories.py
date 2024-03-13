@@ -1,4 +1,4 @@
-from shared.domain.repository import IGenericRepository
+from shared.domain.repositories import IGenericRepository
 from shared.infra.memory.repository import InMemoryRepository
 from shared.infra.memory.uow import InMemoryUnitOfWork
 from shared.infra.memory.utils import id_int_gen
@@ -8,6 +8,7 @@ from tests.shared.conftest_data.domain import Example, IExampleUnitOfWork
 
 
 # In Memory
+
 
 class ExampleInMemoryRepository(InMemoryRepository, IGenericRepository):
     model = Example
@@ -19,6 +20,7 @@ class ExampleInMemoryUnitOfWork(InMemoryUnitOfWork, IExampleUnitOfWork):
 
 
 # SqlAlchemy
+
 
 class ExampleSqlAlchemyRepository(SqlAlchemyRepository, IGenericRepository):
     model = Example

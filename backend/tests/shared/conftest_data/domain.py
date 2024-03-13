@@ -3,7 +3,7 @@ from typing import Self
 
 from dataclasses import dataclass
 from shared.domain.entities import AggregateRoot
-from shared.domain.repository import IGenericRepository
+from shared.domain.repositories import IGenericRepository
 
 
 @dataclass(kw_only=True)

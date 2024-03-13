@@ -1,7 +1,7 @@
 import pytest
 
 from shared.domain.exceptions import ResourceNotFoundException
-from shared.domain.repository import IGenericRepository
+from shared.domain.repositories import IGenericRepository
 from tests.shared.conftest_data.domain import Example
 
 

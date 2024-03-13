@@ -5,7 +5,7 @@ from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
-    AsyncSession
+    AsyncSession,
 )
 from shared.application.message_bus import MessageBus
 from shared.infra.sqlalchemy_orm.base import base
@@ -30,6 +30,7 @@ co.override_app_container(app_container, config, engine, session_factory)
 
 
 # Cleaners
+
 
 @pytest.fixture(scope="function")
 def _mappers() -> Iterator[None]:
@@ -61,6 +62,7 @@ async def _restart_cache() -> None:
 
 # Application fixtures
 
+
 @pytest.fixture(scope="function")
 def bus() -> MessageBus:
     """
@@ -71,6 +73,7 @@ def bus() -> MessageBus:
 
 
 # Infrastructure fixtures
+
 
 @pytest.fixture(scope="function")
 def sqlalchemy_container(_mappers, _restart_tables):
@@ -100,6 +103,7 @@ async def session() -> AsyncIterator[AsyncSession]:
 
 # End To End fixtures
 
+
 @pytest.fixture(scope="function")
 async def ac(_restart_cache, _restart_tables) -> Iterator[TestClient]:
     """
@@ -108,5 +112,5 @@ async def ac(_restart_cache, _restart_tables) -> Iterator[TestClient]:
     from main import app
 
     async with LifespanManager(app) as manager:
-        async with AsyncClient(app=manager.app, base_url='http://test') as ac:
+        async with AsyncClient(app=manager.app, base_url="http://test") as ac:
             yield ac

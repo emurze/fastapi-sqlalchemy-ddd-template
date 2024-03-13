@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Online Shop</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Don't use this in production -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div>
+        <div id="root"></div>
+    </div>
+    <script type="text/babel">
+        const SYMBOL_X = 'X'
+        const SYMBOL_O = 'O'
+        const symbols = new Map([
+            [SYMBOL_X, 'symbol-x'],
+            [SYMBOL_O, 'symbol-o'],
+        ])
+
+        const App = () => {
+            const CURRENT_STEP = SYMBOL_X
+            const cells = [
+                SYMBOL_O, null, null,
+                SYMBOL_O, SYMBOL_X, null,
+                SYMBOL_X, SYMBOL_O, SYMBOL_X,
+            ]
+
+            return (
+                <div className="game">
+                    <div className="game-info">
+                        Ход: <span className={`symbol ${symbols.get(CURRENT_STEP)}`}>{CURRENT_STEP}</span>
+                    </div>
+                    <div className="game-field">
+                        {cells.map(symbol => (
+                            <button className="cell">
+                                {symbol ? <span className={`symbol ${symbols.get(symbol)}`}>{symbol}</span> : null}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'))
+
+        root.render(<App/>)
+
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        .game {
+            border: 1px solid black;
+            padding: 20px 50px 40px 50px;
+            max-width: 320px;
+            margin: 60px auto 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+            font-size: 30px;
+        }
+        .game-info {
+            text-align: center;
+            padding: 30px;
+        }
+        .game-field {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            border: 1px solid black;
+        }
+        .cell {
+            border: 1px solid gray;
+            padding: 15px;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            font-size: 30px;
+        }
+        .symbol-o {color: #008000;}
+        .symbol-x {color: #ea0303;}
+        .cell--win {background-color: rgba(255, 0, 0, 0.1);}
+    </style>
+</body>
+</html>

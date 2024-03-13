@@ -42,7 +42,7 @@ def get_bus(query_handlers: list, command_handlers: list) -> MessageBus:
             get_first_param_annotation(handler.handle): handler
             for handler in command_handlers
         },
-        event_handlers={}
+        event_handlers={},
     )
 
 
@@ -62,7 +62,7 @@ class AppContainer(containers.DeclarativeContainer):
     post_uow = Singleton(
         post_repos.PostSqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        posts=post_repository
+        posts=post_repository,
     )
 
     # Application

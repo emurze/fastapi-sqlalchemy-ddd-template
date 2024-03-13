@@ -6,7 +6,7 @@ from shared.application.dtos import SuccessOutputDto, FailedOutputDto
 from shared.application.queries import IQueryHandler, Query
 from shared.domain.exceptions import ResourceNotFoundException
 
-GetPostOrFailedOutputDto = Union['GetPostOutputDto', FailedOutputDto]
+GetPostOrFailedOutputDto = Union["GetPostOutputDto", FailedOutputDto]
 
 
 class GetPostQuery(Query):

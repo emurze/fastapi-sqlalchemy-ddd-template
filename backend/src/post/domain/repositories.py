@@ -1,35 +1,12 @@
 import abc
-from typing import Any as Model, List
+
+from shared.domain.repositories import IGenericRepository
+from shared.domain.uows import IGenericUnitOfWork
 
 
-class IPostRepository(abc.ABC):
-    @abc.abstractmethod
-    async def add(self, instance: Model) -> Model: ...
-
-    @abc.abstractmethod
-    async def delete(self, **kw) -> List[Model]: ...
-
-    @abc.abstractmethod
-    async def get(self, **kw) -> Model: ...
-
-    @abc.abstractmethod
-    async def get_for_update(self, **kw) -> Model: ...
-
-    @abc.abstractmethod
-    async def list(self) -> list[Model]: ...
+class IPostRepository(IGenericRepository, abc.ABC):
+    pass
 
 
-class IPostUnitOfWork(abc.ABC):
+class IPostUnitOfWork(IGenericUnitOfWork, abc.ABC):
     posts: IPostRepository
-
-    @abc.abstractmethod
-    async def __aenter__(self) -> None: ...
-
-    @abc.abstractmethod
-    async def __aexit__(self, *args) -> None: ...
-
-    @abc.abstractmethod
-    async def commit(self) -> None: ...
-
-    @abc.abstractmethod
-    async def rollback(self) -> None: ...

@@ -1,6 +1,6 @@
 import pytest
 
-from shared.domain.repository import IGenericRepository
+from shared.domain.repositories import IGenericRepository
 from tests.shared.conftest_data.domain import IExampleUnitOfWork
 from tests.shared.conftest_data.repositories import (
     ExampleInMemoryRepository,

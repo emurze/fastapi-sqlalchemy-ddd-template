@@ -1,6 +1,5 @@
 from auth.domain.entities import Client
-from auth.domain.repositories import IClientRepository
-from auth.domain.uow import IAuthUnitOfWork
+from auth.domain.repositories import IClientRepository, IAuthUnitOfWork
 from shared.infra.memory.repository import InMemoryRepository
 from shared.infra.memory.uow import InMemoryUnitOfWork
 from shared.infra.memory.utils import id_int_gen, create_at_gen

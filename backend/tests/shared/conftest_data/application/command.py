@@ -5,7 +5,7 @@ from shared.application.commands import ICommandHandler, Command
 from shared.application.dtos import SuccessOutputDto, FailedOutputDto
 from tests.shared.conftest_data.domain import IExampleUnitOfWork
 
-CreateExampleOrF = Union['CreateExampleOutputDto', FailedOutputDto]
+CreateExampleOrF = Union["CreateExampleOutputDto", FailedOutputDto]
 
 
 class CreateExampleCommand(Command):

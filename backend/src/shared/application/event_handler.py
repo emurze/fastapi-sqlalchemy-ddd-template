@@ -6,5 +6,4 @@ from shared.domain.events import Event
 
 class IEventHandler(abc.ABC):
     @abc.abstractmethod
-    async def handle(self, event: Event) -> OutputDto:
-        ...
+    async def handle(self, event: Event) -> OutputDto: ...

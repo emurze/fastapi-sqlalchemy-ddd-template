@@ -9,5 +9,4 @@ class Command(Model):
 
 class ICommandHandler(abc.ABC):
     @abc.abstractmethod
-    async def handle(self, command: Command) -> OutputDto:
-        ...
+    async def handle(self, command: Command) -> OutputDto: ...

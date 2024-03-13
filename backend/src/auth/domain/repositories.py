@@ -1,19 +1,12 @@
 import abc
-from typing import Any as Model, List
+
+from shared.domain.repositories import IGenericRepository
+from shared.domain.uows import IGenericUnitOfWork
 
 
-class IClientRepository(abc.ABC):
-    @abc.abstractmethod
-    async def add(self, **kw) -> Model: ...
+class IClientRepository(IGenericRepository, abc.ABC):
+    pass
 
-    @abc.abstractmethod
-    async def delete(self, **kw) -> List[Model]: ...
 
-    @abc.abstractmethod
-    async def get(self, **kw) -> Model: ...
-
-    @abc.abstractmethod
-    async def get_for_update(self, **kw) -> Model: ...
-
-    @abc.abstractmethod
-    async def list(self) -> list[Model]: ...
+class IAuthUnitOfWork(IGenericUnitOfWork, abc.ABC):
+    clients: IClientRepository

@@ -1,15 +1,14 @@
 import abc
+from typing import Self
 
-from auth.domain.repositories import IClientRepository
 
-
-class IAuthUnitOfWork(abc.ABC):
-    """Auth unit of work."""
-
-    clients: IClientRepository
+class IGenericUnitOfWork(metaclass=abc.ABCMeta):
+    """
+    examples: IExampleRepository  # Add similar lines to your interface
+    """
 
     @abc.abstractmethod
-    async def __aenter__(self) -> None: ...
+    async def __aenter__(self) -> Self: ...
 
     @abc.abstractmethod
     async def __aexit__(self, *args) -> None: ...

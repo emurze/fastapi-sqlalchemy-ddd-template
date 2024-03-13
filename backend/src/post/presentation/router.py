@@ -21,9 +21,9 @@ router = APIRouter(prefix="/posts", tags=["posts"])
     status_code=status.HTTP_200_OK,
     response_model=s.PostResponse,
     responses={
-        status.HTTP_404_NOT_FOUND: {'model': FailedJsonResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
-    }
+        status.HTTP_404_NOT_FOUND: {"model": FailedJsonResponse},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
+    },
 )
 @cache(expire=15)
 async def get_post(post_id: int, bus: BusDep):
@@ -37,8 +37,8 @@ async def get_post(post_id: int, bus: BusDep):
     status_code=status.HTTP_201_CREATED,
     response_model=s.PostResponse,
     responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
-    }
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
+    },
 )
 async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
     command = CreatePostCommand.model_validate(dto)
@@ -56,8 +56,8 @@ async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
     responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
-    }
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
+    },
 )
 async def delete_post(post_id: int, bus: BusDep):
     command = DeletePostCommand(id=post_id)
@@ -70,9 +70,9 @@ async def delete_post(post_id: int, bus: BusDep):
     status_code=status.HTTP_200_OK,
     response_model=s.PostResponse,
     responses={
-        status.HTTP_201_CREATED: {'model': s.PostResponse},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
-    }
+        status.HTTP_201_CREATED: {"model": s.PostResponse},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
+    },
 )
 async def update_post(post_id: int, dto: s.PostResponse, bus: BusDep):
     command = UpdatePostCommand(**(dto.model_dump() | {"id": post_id}))
@@ -87,9 +87,7 @@ async def update_post(post_id: int, dto: s.PostResponse, bus: BusDep):
             get_output_dto = raise_errors(await bus.handle(query))
 
             return JSONResponse(
-                s.PostResponse.model_validate(
-                    get_output_dto
-                ).model_dump(),
+                s.PostResponse.model_validate(get_output_dto).model_dump(),
                 status.HTTP_201_CREATED,
             )
 

@@ -1,7 +1,7 @@
 import copy
 from typing import TypeVar, TypeAlias, Self
 
-from shared.domain.uow import IGenericUnitOfWork
+from shared.domain.uows import IGenericUnitOfWork
 
 Repository = TypeVar("Repository")
 RepositoryList = list[Repository]
