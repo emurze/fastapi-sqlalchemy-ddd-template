@@ -19,7 +19,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 @router.get(
     "/{post_id}",
     status_code=status.HTTP_200_OK,
-    response_model=s.GetPostJsonResponse,
+    response_model=s.PostResponse,
     responses={
         status.HTTP_404_NOT_FOUND: {'model': FailedJsonResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
@@ -35,7 +35,7 @@ async def get_post(post_id: int, bus: BusDep):
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=s.CreatePostJsonResponse,
+    response_model=s.PostResponse,
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
     }
@@ -68,13 +68,13 @@ async def delete_post(post_id: int, bus: BusDep):
     "/{post_id}",
     response_description="Updated",
     status_code=status.HTTP_200_OK,
-    response_model=s.UpdatePostJsonResponse,
+    response_model=s.PostResponse,
     responses={
-        status.HTTP_201_CREATED: {'model': s.UpdatePostJsonResponse},
+        status.HTTP_201_CREATED: {'model': s.PostResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {'model': FailedJsonResponse},
     }
 )
-async def update_post(post_id: int, dto: s.UpdatePostJsonRequest, bus: BusDep):
+async def update_post(post_id: int, dto: s.PostResponse, bus: BusDep):
     command = UpdatePostCommand(**(dto.model_dump() | {"id": post_id}))
     output_dto = await bus.handle(command)
 
@@ -87,7 +87,7 @@ async def update_post(post_id: int, dto: s.UpdatePostJsonRequest, bus: BusDep):
             get_output_dto = raise_errors(await bus.handle(query))
 
             return JSONResponse(
-                s.UpdatePostJsonResponse.model_validate(
+                s.PostResponse.model_validate(
                     get_output_dto
                 ).model_dump(),
                 status.HTTP_201_CREATED,

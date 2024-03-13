@@ -7,20 +7,8 @@ class CreatePostJsonRequest(Schema):
     draft: bool = False
 
 
-class CreatePostJsonResponse(Schema):
+class PostResponse(Schema):
     id: int
     title: str
     content: str
     draft: bool = False
-
-
-class GetPostJsonResponse(CreatePostJsonResponse):
-    pass
-
-
-class UpdatePostJsonRequest(CreatePostJsonRequest):
-    pass
-
-
-class UpdatePostJsonResponse(CreatePostJsonResponse):
-    pass

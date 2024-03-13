@@ -44,7 +44,7 @@ def _mappers() -> Iterator[None]:
 @pytest.fixture(scope="function")
 async def _restart_tables() -> None:
     """
-    Cleans tables before each test
+    Cleans tables before each test.
     """
     async with engine.begin() as conn:
         async with suppress_echo(engine):
@@ -64,7 +64,7 @@ async def _restart_cache() -> None:
 @pytest.fixture(scope="function")
 def bus() -> MessageBus:
     """
-    Fixture for Application tests
+    Fixture for Application tests.
     """
     memory_container = co.get_memory_test_container()
     return memory_container.message_bus()
@@ -75,7 +75,7 @@ def bus() -> MessageBus:
 @pytest.fixture(scope="function")
 def sqlalchemy_container(_mappers, _restart_tables):
     """
-    Provides sqlalchemy repositories and units of work
+    Provides sqlalchemy repositories and units of work.
     """
     return app_container
 
@@ -83,7 +83,7 @@ def sqlalchemy_container(_mappers, _restart_tables):
 @pytest.fixture(scope="function")
 def memory_container():
     """
-    Provides memory repositories and units of work
+    Provides memory repositories and units of work.
     """
     return co.get_memory_test_container()
 
@@ -91,7 +91,8 @@ def memory_container():
 @pytest.fixture(scope="function")
 async def session() -> AsyncIterator[AsyncSession]:
     """
-    Repository argument
+    This session is typically injected into repository classes for performing
+    database operations.
     """
     async with session_factory() as new_session:
         yield new_session

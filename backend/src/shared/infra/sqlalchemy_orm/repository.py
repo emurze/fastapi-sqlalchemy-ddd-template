@@ -8,13 +8,21 @@ from shared.domain.repository import IGenericRepository
 
 
 class SqlAlchemyRepository(IGenericRepository):
-    model: type[Model]
+    aggregate_root: type[Model]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, **kw) -> int:
-        stmt = insert(self.model).values(**kw).returning(self.model.id)
+    @property
+    def model(self) -> type[Model]:
+        return self.aggregate_root
+
+    async def add(self, instance: Model) -> int:
+        stmt = (
+            insert(self.model)
+            .values(**instance.to_dict())
+            .returning(self.model.id)
+        )
         model_id = await self.session.execute(stmt)
         return model_id.scalar_one()
 

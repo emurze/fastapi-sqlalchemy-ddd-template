@@ -28,17 +28,22 @@ class GeneratorsManager:
 
 
 class InMemoryRepository(IGenericRepository):
-    model: type[Model]
+    aggregate_root: type[Model]
     field_gens: dict[str, Callable]
 
     def __init__(self, gen_manager: type[Any] = GeneratorsManager) -> None:
         self._models: list[Model] = []
         self._gen_manager = gen_manager(self.field_gens)
 
-    async def create(self, **kw) -> int:
-        kw_gen_values = self._gen_manager.iterate_generators(kw)
-        instance = self.model(**kw_gen_values)
-        self._models.append(instance)
+    @property
+    def model(self) -> type[Model]:
+        return self.aggregate_root
+
+    async def add(self, instance: Model) -> int:
+        instance_dict = instance.to_dict()
+        kw_gen_values = self._gen_manager.iterate_generators(instance_dict)
+        instance_with_generated_fields = self.model(**kw_gen_values)
+        self._models.append(instance_with_generated_fields)
         return instance.id
 
     async def delete(self, **kw) -> None:

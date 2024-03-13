@@ -29,12 +29,12 @@ def get_memory_test_container() -> AppContainer:
     # Auth
     client_repo = Link(ClientInMemoryRepository)
     auth_uow = Singleton(AuthInMemoryUnitOfWork, clients=client_repo)
-    container.client_repo.override(client_repo)
+    container.client_repository.override(client_repo)
     container.auth_uow.override(auth_uow)
 
     # Post
     post_repo = Link(PostInMemoryRepository)
     post_uow = Singleton(PostInMemoryUnitOfWork, posts=post_repo)
-    container.post_repo.override(post_repo)
+    container.post_repository.override(post_repo)
     container.post_uow.override(post_uow)
     return container

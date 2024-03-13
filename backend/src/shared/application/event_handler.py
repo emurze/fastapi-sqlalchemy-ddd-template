@@ -1,10 +1,7 @@
 import abc
 
-from shared.application.dtos import Model, OutputDto
-
-
-class Event(Model):
-    pass
+from shared.application.dtos import OutputDto
+from shared.domain.events import Event
 
 
 class IEventHandler(abc.ABC):

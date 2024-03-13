@@ -8,7 +8,7 @@ from shared.infra.sqlalchemy_orm.uow import SqlAlchemyUnitOfWork
 
 
 class PostSqlAlchemyRepository(SqlAlchemyRepository, IPostRepository):
-    model = Post
+    aggregate_root = Post
 
 
 class PostSqlAlchemyUnitOfWork(SqlAlchemyUnitOfWork, IPostUnitOfWork):
@@ -16,7 +16,7 @@ class PostSqlAlchemyUnitOfWork(SqlAlchemyUnitOfWork, IPostUnitOfWork):
 
 
 class PostInMemoryRepository(InMemoryRepository, IPostRepository):
-    model = Post
+    aggregate_root = Post
     field_gens = {
         "id": id_int_gen,
     }

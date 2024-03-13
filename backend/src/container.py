@@ -25,11 +25,6 @@ def get_config() -> TopLevelConfig:
 
 
 def get_engine(config: TopLevelConfig) -> AsyncEngine:
-    print(config.db_dsn)
-    print(config.db_dsn)
-    print(config.db_dsn)
-    print(config.db_dsn)
-    print(config.db_dsn)
     return create_async_engine(config.db_dsn, echo=True)
 
 
@@ -46,7 +41,8 @@ def get_bus(query_handlers: list, command_handlers: list) -> MessageBus:
         command_handlers={
             get_first_param_annotation(handler.handle): handler
             for handler in command_handlers
-        }
+        },
+        event_handlers={}
     )
 
 
@@ -56,17 +52,17 @@ class AppContainer(containers.DeclarativeContainer):
     db_session_factory = Singleton(get_session_factory, db_engine)
 
     # Infrastructure
-    client_repo = Link(auth_repos.ClientSqlAlchemyRepository)
+    client_repository = Link(auth_repos.ClientSqlAlchemyRepository)
     auth_uow = Singleton(
         auth_repos.AuthSqlAlchemyUnitOfWork,
         dsession_factory=db_session_factory,
-        clients=client_repo,
+        clients=client_repository,
     )
-    post_repo = Link(post_repos.PostSqlAlchemyRepository)
+    post_repository = Link(post_repos.PostSqlAlchemyRepository)
     post_uow = Singleton(
         post_repos.PostSqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        posts=post_repo
+        posts=post_repository
     )
 
     # Application

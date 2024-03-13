@@ -19,7 +19,7 @@ query_handlers = {
     GetExampleQuery: GetExampleHandler(uow),
 }
 
-message_bus = MessageBus(command_handlers, query_handlers)
+message_bus = MessageBus(command_handlers, query_handlers, {})
 
 
 @pytest.mark.unit
