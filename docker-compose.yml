@@ -3,7 +3,7 @@ services:
   api:
     build:
       context: backend
-      dockerfile: docker/dockerfile.dev
+      dockerfile: backend/dockerfile.dev
     image: api:v1
     container_name: api
     networks:
