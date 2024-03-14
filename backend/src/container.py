@@ -9,14 +9,14 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from auth.infra import repositories as auth_repos
+from post.application.command.create_post import create_post_handler
+from post.application.command.delete_post import delete_post_handler
+from post.application.command.update_post import update_post_handler
+from post.application.query.get_post import get_post_handler
 from post.infra import repositories as post_repos
-from post.application.command.create_post import CreatePostHandler
-from post.application.command.delete_post import DeletePostHandler
-from post.application.command.update_post import UpdatePostHandler
-from post.application.query.get_post import GetPostHandler
-from shared.application.message_bus import MessageBus
 from config import TopLevelConfig
-from shared.infra.dependency_injector.utils import Link, Group
+from shared.application.message_bus import MessageBus
+from shared.infra.dependency_injector.utils import Link, Group, InjectInHandler
 from shared.utils.functional import get_first_param_annotation
 
 
@@ -32,17 +32,24 @@ def get_session_factory(engine: AsyncEngine) -> Callable:
     return async_sessionmaker(engine)
 
 
-def get_bus(query_handlers: list, command_handlers: list) -> MessageBus:
+def get_bus(
+    query_handlers: list[tuple],
+    command_handlers: list[tuple],
+    event_handlers: list[tuple]
+) -> MessageBus:
     return MessageBus(
         query_handlers={
-            get_first_param_annotation(handler.handle): handler
-            for handler in query_handlers
+            get_first_param_annotation(handler): wrapped
+            for wrapped, handler in query_handlers
         },
         command_handlers={
-            get_first_param_annotation(handler.handle): handler
-            for handler in command_handlers
+            get_first_param_annotation(handler): wrapped
+            for wrapped, handler in command_handlers
         },
-        event_handlers={},
+        event_handlers={
+            get_first_param_annotation(handler): wrapped
+            for wrapped, handler in event_handlers
+        },
     )
 
 
@@ -67,14 +74,20 @@ class AppContainer(containers.DeclarativeContainer):
 
     # Application
     query_handlers = Group(
-        Singleton(GetPostHandler, post_uow),
+        InjectInHandler(get_post_handler, post_uow),
     )
     command_handlers = Group(
-        Singleton(CreatePostHandler, post_uow),
-        Singleton(DeletePostHandler, post_uow),
-        Singleton(UpdatePostHandler, post_uow),
+        InjectInHandler(create_post_handler, post_uow),
+        InjectInHandler(delete_post_handler, post_uow),
+        InjectInHandler(update_post_handler, post_uow),
     )
-    message_bus = Singleton(get_bus, query_handlers, command_handlers)
+    event_handlers = Group()
+    message_bus = Singleton(
+        get_bus,
+        query_handlers,
+        command_handlers,
+        event_handlers
+    )
 
 
 container = AppContainer()

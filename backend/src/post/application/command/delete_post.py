@@ -1,8 +1,5 @@
-from dataclasses import dataclass
-
 from post.domain.repositories import IPostUnitOfWork
-from shared.application.commands import ICommandHandler, Command
-from shared.application import dtos
+from shared.application.commands import Command, CommandResult
 from shared.domain.entities import EntityId
 
 
@@ -10,15 +7,13 @@ class DeletePostCommand(Command):
     id: int
 
 
-@dataclass(frozen=True, slots=True)
-class DeletePostHandler(ICommandHandler):
-    uow: IPostUnitOfWork
-
-    async def handle(self, command: DeletePostCommand) -> dtos.OutputDto:
-        try:
-            async with self.uow:
-                await self.uow.posts.delete(entity_id=EntityId(command.id))
-                await self.uow.commit()
-                return dtos.SuccessOutputDto()
-        except SystemError:
-            return dtos.FailedOutputDto.build_system_error()
+async def delete_post_handler(
+    command: DeletePostCommand, uow: IPostUnitOfWork
+) -> CommandResult:
+    try:
+        async with uow:
+            await uow.posts.delete(entity_id=EntityId(command.id))
+            await uow.commit()
+            return CommandResult()
+    except SystemError:
+        return CommandResult.build_system_error()

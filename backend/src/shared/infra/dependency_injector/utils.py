@@ -1,3 +1,7 @@
+import inspect
+from functools import partial
+from typing import TypeAlias, Callable
+
 from dependency_injector import providers
 
 
@@ -12,5 +16,15 @@ def _group(*singletons):
     return providers.Singleton(inner, *singletons)
 
 
-Link = _link
-Group = _group
+def _inject_in_handler(handler: Callable, *args, **kw):
+    def wrapper(message):
+        return handler(message, *args, **kw)
+
+    return _link((wrapper, handler))
+
+    # handler(command, uow=3)
+
+
+Link: TypeAlias = _link
+Group: TypeAlias = _group
+InjectInHandler: TypeAlias = _inject_in_handler

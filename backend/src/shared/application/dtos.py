@@ -3,8 +3,9 @@ from typing import Optional, ClassVar, Self, TypeAlias
 from pydantic import BaseModel, ConfigDict
 
 
-class Model(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class Model:
+    def model_from(self):
+        pass
 
 
 class SuccessOutputDto(Model):

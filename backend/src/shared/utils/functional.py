@@ -1,10 +1,10 @@
-import inspect
 from collections.abc import Callable
 from dataclasses import field, Field
+from inspect import signature
 
 
 def get_first_param_annotation(func: Callable):
-    handler_signature = inspect.signature(func)
+    handler_signature = signature(func)
     kwargs_iterator = iter(handler_signature.parameters.items())
     _, first_param = next(kwargs_iterator)
     return first_param.annotation

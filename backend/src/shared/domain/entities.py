@@ -21,7 +21,7 @@ class Entity:
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def to_dict(self) -> dict:
+    def as_dict(self) -> dict:
         return {
             attr: value
             for attr in self.__dataclass_fields__  # noqa

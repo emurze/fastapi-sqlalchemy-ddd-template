@@ -1,38 +1,28 @@
 from dataclasses import dataclass
-from typing import Union
 
+from post.application.query.model_mappers import map_post_model_to_dto
 from post.domain.repositories import IPostUnitOfWork
-from shared.application.dtos import SuccessOutputDto, FailedOutputDto
-from shared.application.queries import IQueryHandler, Query
+from shared.application.queries import Query, QueryResult
 from shared.domain.exceptions import ResourceNotFoundException
 
-GetPostOrFailedOutputDto = Union["GetPostOutputDto", FailedOutputDto]
 
-
+@dataclass
 class GetPostQuery(Query):
     id: int
 
 
-class GetPostOutputDto(SuccessOutputDto):
-    id: int
-    title: str
-    content: str
-    draft: bool
+async def get_post_handler(
+    query: GetPostQuery, uow: IPostUnitOfWork
+) -> QueryResult:
+    try:
+        query_dict = query.model_dump()
+        async with uow:
+            post = await uow.posts.get(**query_dict)
+            dto = map_post_model_to_dto(post)
+            return QueryResult(payload=dto)
 
+    except ResourceNotFoundException:
+        return QueryResult.build_resource_not_found_error()
 
-@dataclass(frozen=True, slots=True)
-class GetPostHandler(IQueryHandler):
-    uow: IPostUnitOfWork
-
-    async def handle(self, query: GetPostQuery) -> GetPostOrFailedOutputDto:
-        try:
-            query_dict = query.model_dump()
-            async with self.uow:
-                post = await self.uow.posts.get(**query_dict)
-                return GetPostOutputDto.model_validate(post)
-
-        except ResourceNotFoundException:
-            return FailedOutputDto.build_resource_not_found_error()
-
-        except SystemError:
-            return FailedOutputDto.build_system_error()
+    except SystemError:
+        return QueryResult.build_system_error()

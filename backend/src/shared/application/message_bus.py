@@ -1,21 +1,22 @@
 from dataclasses import dataclass
-from typing import NoReturn, TypeAlias
+from typing import NoReturn, TypeAlias, Callable
 
-from shared.application.commands import ICommandHandler, Command
-from shared.application.dtos import OutputDto
-from shared.application.event_handler import Event, IEventHandler
-from shared.application.queries import IQueryHandler, Query
+from shared.application.commands import Command, CommandResult
+from shared.application.events import EventResult
+from shared.application.queries import Query, QueryResult
+from shared.domain.events import Event
 
 Message: TypeAlias = Command | Query | Event
+Result: TypeAlias = CommandResult | QueryResult | EventResult
 
 
 @dataclass(frozen=True, slots=True)
 class MessageBus:
-    command_handlers: dict[type[Command], ICommandHandler]
-    query_handlers: dict[type[Query], IQueryHandler]
-    event_handlers: dict[type[Event], IEventHandler]
+    command_handlers: dict[type[Command], Callable]
+    query_handlers: dict[type[Query], Callable]
+    event_handlers: dict[type[Event], Callable]
 
-    async def handle(self, message: Message) -> NoReturn | OutputDto:
+    async def handle(self, message: Message) -> NoReturn | Result:
         if isinstance(message, Command):
             return await self._handle_command(message)
         elif isinstance(message, Query):
@@ -25,14 +26,14 @@ class MessageBus:
         else:
             raise TypeError("Param type isn't in [Command, Query, Event]")
 
-    async def _handle_command(self, command: Command) -> OutputDto:
+    async def _handle_command(self, command: Command) -> CommandResult:
         handler = self.command_handlers[type(command)]
-        return await handler.handle(command)
+        return await handler(command)
 
-    async def _handle_query(self, query: Query) -> OutputDto:
+    async def _handle_query(self, query: Query) -> QueryResult:
         handler = self.query_handlers[type(query)]
-        return await handler.handle(query)
+        return await handler(query)
 
-    async def _handle_event(self, event: Event) -> OutputDto:
+    async def _handle_event(self, event: Event) -> EventResult:
         handler = self.event_handlers[type(event)]
-        return await handler.handle(event)
+        return await handler(event)
