@@ -1,17 +1,16 @@
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
 from starlette import status
-from starlette.responses import JSONResponse
 
 from post.application.command import CreatePostCommand
 from post.application.command.delete_post import DeletePostCommand
 from post.application.command.update_post import UpdatePostCommand
 from post.application.query.get_post import GetPostQuery
 from post.presentation import schema as s
-from shared.application.dtos import FailedOutputDto
+from shared.domain.errors import Error
 from shared.presentation.dependencies import BusDep
 from shared.presentation.json_dtos import FailedJsonResponse
-from shared.presentation.utils import raise_errors
+from shared.presentation.utils import handle_errors
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -28,26 +27,23 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 @cache(expire=15)
 async def get_post(post_id: int, bus: BusDep):
     query = GetPostQuery(id=post_id)
-    output_dto = raise_errors(await bus.handle(query))
-    return output_dto
+    query_result = await bus.handle(query)
+    handle_errors(query_result, [Error.NOT_FOUND])
+    return query_result.payload
 
 
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=s.PostResponse,
+    response_model=int,
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
     },
 )
 async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
-    command = CreatePostCommand.model_validate(dto)
-    created_output_dto = raise_errors(await bus.handle(command))
-
-    query = GetPostQuery(id=created_output_dto.id)
-    output_dto = raise_errors(await bus.handle(query))
-
-    return output_dto
+    command = CreatePostCommand(**dto.model_dump())
+    create_result = await bus.handle(command)
+    return create_result.payload.id
 
 
 @router.delete(
@@ -61,38 +57,25 @@ async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
 )
 async def delete_post(post_id: int, bus: BusDep):
     command = DeletePostCommand(id=post_id)
-    raise_errors(await bus.handle(command))
+    await bus.handle(command)
 
 
 @router.put(
     "/{post_id}",
     response_description="Updated",
-    status_code=status.HTTP_200_OK,
-    response_model=s.PostResponse,
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     responses={
-        status.HTTP_201_CREATED: {"model": s.PostResponse},
+        status.HTTP_201_CREATED: {"model": None},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
     },
 )
 async def update_post(post_id: int, dto: s.PostResponse, bus: BusDep):
-    command = UpdatePostCommand(**(dto.model_dump() | {"id": post_id}))
-    output_dto = await bus.handle(command)
+    full_dto_dict = dto.model_dump() | {"id": post_id}
+    command = UpdatePostCommand(**full_dto_dict)
+    update_result = await bus.handle(command)
 
-    if not output_dto.status:
-        if output_dto.message == FailedOutputDto.RESOURCE_NOT_FOUND_ERROR:
-            command = CreatePostCommand(**(dto.model_dump() | {"id": post_id}))
-            raise_errors(await bus.handle(command))
-
-            query = GetPostQuery(id=post_id)
-            get_output_dto = raise_errors(await bus.handle(query))
-
-            return JSONResponse(
-                s.PostResponse.model_validate(get_output_dto).model_dump(),
-                status.HTTP_201_CREATED,
-            )
-
-        return FailedJsonResponse.build_by_output_dto(output_dto)
-
-    query = GetPostQuery(id=post_id)
-    get_output_dto = raise_errors(await bus.handle(query))
-    return get_output_dto
+    if update_result.error == Error.NOT_FOUND:
+        command = CreatePostCommand(**full_dto_dict)
+        create_result = await bus.handle(command)
+        return {"post": create_result.payload.id}

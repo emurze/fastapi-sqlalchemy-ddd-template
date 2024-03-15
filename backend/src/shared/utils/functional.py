@@ -14,3 +14,7 @@ def invisible_field(default_factory: Callable) -> Field:
     return field(
         init=False, repr=False, compare=False, default_factory=default_factory
     )
+
+
+def as_model(_dict: dict) -> ...:
+    pass

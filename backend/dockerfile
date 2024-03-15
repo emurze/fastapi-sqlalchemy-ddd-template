@@ -28,8 +28,4 @@ RUN poetry install
 
 EXPOSE 8080
 
-CMD poetry run bash -c " \
-    poe row-migrate && \
-    cd src && \
-    poetry run uvicorn --host 0.0.0.0 --port 8080 main:app --reload \
-"
+CMD poetry run bash -c "cd src && poe row-migrate && python -O -m uvicorn --host 0.0.0.0 --port 8080 main:app"

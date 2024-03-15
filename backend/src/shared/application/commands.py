@@ -1,15 +1,15 @@
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
-from shared.application.dtos import Model
+from shared.application.utils import DataclassMixin
 
 
-class Command(Model):
+class Command(DataclassMixin):
     pass
 
 
 @dataclass(kw_only=True)
-class CommandResult:
+class CommandResult(DataclassMixin):
     payload: Any = None
-    errors: list = field(default_factory=list)
     events: list = field(default_factory=list)
+    error: Optional[str] = None

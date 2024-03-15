@@ -1,16 +1,23 @@
-from typing import NoReturn
+from typing import TypeAlias
 
+from black import Optional
 from fastapi import HTTPException
+from starlette.responses import JSONResponse
 
-from shared.application.dtos import OutputDto
-from shared.presentation.json_dtos import FailedJsonResponse
+from shared.presentation.json_dtos import STATUS_CODES
 
 
-def raise_errors(output_dto: OutputDto) -> NoReturn | OutputDto:
-    if not output_dto.status:
-        message = output_dto.message
+def handle_errors(result, errors: Optional[list] = None) -> None:
+    if result.error and result.error in errors:
         raise HTTPException(
-            status_code=FailedJsonResponse.STATUS_CODES[message],
-            detail=message,
+            status_code=STATUS_CODES[result.error],
+            detail=result.error,
         )
-    return output_dto
+
+
+def _get_response(result, schema, status_code: int) -> JSONResponse:
+    model = schema.model_validate(result.payload)
+    return JSONResponse(model.model_dump(), status_code)
+
+
+Response: TypeAlias = _get_response

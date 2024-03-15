@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
 )
-from shared.application.message_bus import MessageBus
+from shared.application.messagebus import MessageBus
 from shared.infra.sqlalchemy_orm.base import base
 from shared.infra.sqlalchemy_orm.common import suppress_echo
 from collections.abc import Iterator, AsyncIterator

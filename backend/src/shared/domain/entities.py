@@ -1,20 +1,17 @@
 from dataclasses import dataclass
-from typing import NewType
 
 from shared.domain.events import Event
 from shared.domain.value_objects import lazy, metadata
 from shared.utils.functional import invisible_field
 
-EntityId = NewType("EntityId", int)
-
 
 @dataclass(kw_only=True)
 class Entity:
     id: lazy[int] = metadata("autoincrement")
-    _events: list = invisible_field(default_factory=list)
 
-    def register_event(self, event: Event) -> None:
-        self._events.append(event)
+    def __hash__(self) -> int:
+        assert self.id != metadata  # check it
+        return hash(self.id)
 
     def update(self, **kw) -> None:
         assert kw.get("id") is None, "Entity can't update id"
@@ -32,5 +29,14 @@ class Entity:
         }
 
 
+@dataclass(kw_only=True)
 class AggregateRoot(Entity):
-    """Root Aggregate"""
+    """Consists of 1+ entities. Spans transaction boundaries."""
+
+    events: list = invisible_field(default_factory=list)
+
+    def register_event(self, event: Event) -> None:
+        self.events.append(event)
+
+    def collect_events(self):
+        pass

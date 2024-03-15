@@ -4,7 +4,7 @@ from post.application.command import CreatePostCommand
 from post.application.command.delete_post import DeletePostCommand
 from post.application.query.get_post import GetPostQuery
 from shared.application.dtos import FailedOutputDto
-from shared.application.message_bus import MessageBus
+from shared.application.messagebus import MessageBus
 
 
 @pytest.mark.unit

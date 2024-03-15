@@ -3,7 +3,7 @@ import pytest
 from post.application.command import CreatePostCommand
 from post.application.command.update_post import UpdatePostCommand
 from post.application.query.get_post import GetPostQuery
-from shared.application.message_bus import MessageBus
+from shared.application.messagebus import MessageBus
 
 
 @pytest.mark.unit

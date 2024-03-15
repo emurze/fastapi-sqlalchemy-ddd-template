@@ -15,8 +15,8 @@ from post.application.command.update_post import update_post_handler
 from post.application.query.get_post import get_post_handler
 from post.infra import repositories as post_repos
 from config import TopLevelConfig
-from shared.application.message_bus import MessageBus
-from shared.infra.dependency_injector.utils import Link, Group, InjectInHandler
+from shared.application.messagebus import MessageBus
+from shared.infra.dependency_injector.utils import Link, Group, InjectIn
 from shared.utils.functional import get_first_param_annotation
 
 
@@ -35,7 +35,7 @@ def get_session_factory(engine: AsyncEngine) -> Callable:
 def get_bus(
     query_handlers: list[tuple],
     command_handlers: list[tuple],
-    event_handlers: list[tuple]
+    event_handlers: list[tuple],
 ) -> MessageBus:
     return MessageBus(
         query_handlers={
@@ -74,19 +74,16 @@ class AppContainer(containers.DeclarativeContainer):
 
     # Application
     query_handlers = Group(
-        InjectInHandler(get_post_handler, post_uow),
+        InjectIn(get_post_handler, post_uow),
     )
     command_handlers = Group(
-        InjectInHandler(create_post_handler, post_uow),
-        InjectInHandler(delete_post_handler, post_uow),
-        InjectInHandler(update_post_handler, post_uow),
+        InjectIn(create_post_handler, post_uow),
+        InjectIn(delete_post_handler, post_uow),
+        InjectIn(update_post_handler, post_uow),
     )
     event_handlers = Group()
     message_bus = Singleton(
-        get_bus,
-        query_handlers,
-        command_handlers,
-        event_handlers
+        get_bus, query_handlers, command_handlers, event_handlers
     )
 
 

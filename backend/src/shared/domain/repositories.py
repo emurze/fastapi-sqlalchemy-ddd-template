@@ -1,27 +1,29 @@
 import abc
-from typing import List, NoReturn
+from typing import List
 
-from shared.domain.entities import EntityId, AggregateRoot
+from shared.domain.entities import AggregateRoot
 
 
 class IGenericRepository(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    async def add(self, entity: AggregateRoot) -> EntityId: ...
+    async def add(self, entity: AggregateRoot) -> int: ...
 
     @abc.abstractmethod
-    async def remove(self, entity: AggregateRoot) -> None: ...
+    async def delete(self, entity: AggregateRoot) -> None: ...
 
     @abc.abstractmethod
-    async def remove_by_id(self, entity_id: EntityId) -> None: ...
+    async def delete_by_id(self, entity_id: int) -> None: ...
 
     @abc.abstractmethod
     async def get_by_id(
-        self, entity_id: EntityId, for_update: bool = False
-    ) -> NoReturn | AggregateRoot:
-        ...
+        self, entity_id: int, for_update: bool = False
+    ) -> AggregateRoot | None: ...
 
     @abc.abstractmethod
     async def count(self) -> int: ...
 
     @abc.abstractmethod
     async def list(self) -> List[AggregateRoot]: ...
+
+    @abc.abstractmethod
+    def collect_events(self): ...

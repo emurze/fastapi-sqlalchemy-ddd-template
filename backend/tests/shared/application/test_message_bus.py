@@ -1,11 +1,11 @@
 import pytest
 
-from shared.application.message_bus import MessageBus
-from tests.shared.conftest_data.application.command import (
+from shared.application.messagebus import MessageBus
+from tests.shared.conftest_data.application.create_example import (
     CreateExampleCommand,
     CreateExampleHandler,
 )
-from tests.shared.conftest_data.application.query import (
+from tests.shared.conftest_data.application.get_example import (
     GetExampleQuery,
     GetExampleHandler,
 )

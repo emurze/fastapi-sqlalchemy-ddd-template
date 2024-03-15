@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import NoReturn, TypeAlias, Callable
 
@@ -6,6 +7,7 @@ from shared.application.events import EventResult
 from shared.application.queries import Query, QueryResult
 from shared.domain.events import Event
 
+logger = logging.getLogger(__name__)
 Message: TypeAlias = Command | Query | Event
 Result: TypeAlias = CommandResult | QueryResult | EventResult
 

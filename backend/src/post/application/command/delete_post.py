@@ -1,19 +1,19 @@
+from dataclasses import dataclass
+
 from post.domain.repositories import IPostUnitOfWork
 from shared.application.commands import Command, CommandResult
-from shared.domain.entities import EntityId
 
 
+@dataclass(kw_only=True)
 class DeletePostCommand(Command):
     id: int
 
 
 async def delete_post_handler(
-    command: DeletePostCommand, uow: IPostUnitOfWork
+    command: DeletePostCommand,
+    uow: IPostUnitOfWork,
 ) -> CommandResult:
-    try:
-        async with uow:
-            await uow.posts.delete(entity_id=EntityId(command.id))
-            await uow.commit()
-            return CommandResult()
-    except SystemError:
-        return CommandResult.build_system_error()
+    async with uow:
+        await uow.posts.delete_by_id(command.id)
+        await uow.commit()
+        return CommandResult()

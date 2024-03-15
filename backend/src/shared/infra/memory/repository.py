@@ -1,8 +1,7 @@
 from collections.abc import Callable
-from typing import Any, Generator, NoReturn
+from typing import Any, Generator, cast
 
-from shared.domain.entities import AggregateRoot, EntityId
-from shared.domain.exceptions import ResourceNotFoundException
+from shared.domain.entities import AggregateRoot
 from shared.domain.repositories import IGenericRepository
 
 
@@ -33,35 +32,42 @@ class InMemoryRepository(IGenericRepository):
     field_gens: dict[str, Callable]
 
     def __init__(self, gen_manager: type[Any] = GeneratorsManager) -> None:
-        self._models: dict[EntityId, AggregateRoot] = {}
+        self._models: dict[int, AggregateRoot] = {}
         self._gen_manager = gen_manager(self.field_gens)
+        assert (
+            self.aggregate_root
+        ), f"Aggregate root is not set for {type(self)} repository"  # test it
+        self.model = cast(Any, self.aggregate_root)
 
-    @property
-    def model(self) -> type[Any]:
-        return self.aggregate_root
-
-    async def add(self, entity: AggregateRoot) -> EntityId:
-        kw_gen_values = self._gen_manager.iterate_gens(entity.to_dict())
+    async def add(self, entity: AggregateRoot) -> int:
+        kw_gen_values = self._gen_manager.iterate_gens(entity.as_dict())
         extended_instance = self.model(**kw_gen_values)
         self._models[extended_instance.id] = extended_instance
         return extended_instance.id
 
-    async def delete(self, entity_id: EntityId) -> None:
+    async def delete(self, entity: AggregateRoot) -> None:
+        del self._models[entity.id]
+
+    async def delete_by_id(self, entity_id: int) -> None:
         del self._models[entity_id]
 
-    async def get(self, **kw) -> NoReturn | AggregateRoot:
+    async def get_by_id(
+        self, entity_id: int, for_update: bool = False
+    ) -> AggregateRoot | None:
         try:
             return next(
                 model
                 for model in self._models.values()
-                for k, v in kw.items()
-                if getattr(model, k) == v
+                if model.id == entity_id
             )
         except StopIteration:
-            raise ResourceNotFoundException()
+            return None
 
-    async def get_for_update(self, **kw) -> NoReturn | AggregateRoot:
-        return await self.get(**kw)
+    async def count(self) -> int:
+        return len(self._models)
 
     async def list(self) -> list[AggregateRoot]:
         return list(self._models.values())
+
+    def collect_events(self):
+        pass
