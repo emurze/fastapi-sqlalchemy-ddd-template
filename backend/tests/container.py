@@ -1,9 +1,5 @@
 from dependency_injector.providers import Singleton
 
-from auth.infra.repositories import (
-    AuthInMemoryUnitOfWork,
-    ClientInMemoryRepository,
-)
 from post.infra.repositories import (
     PostInMemoryUnitOfWork,
     PostInMemoryRepository,
@@ -25,12 +21,6 @@ def get_memory_test_container() -> AppContainer:
     """
 
     container = AppContainer()
-
-    # Auth
-    client_repo = Link(ClientInMemoryRepository)
-    auth_uow = Singleton(AuthInMemoryUnitOfWork, clients=client_repo)
-    container.client_repository.override(client_repo)
-    container.auth_uow.override(auth_uow)
 
     # Post
     post_repo = Link(PostInMemoryRepository)

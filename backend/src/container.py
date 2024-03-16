@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from auth.infra import repositories as auth_repos
 from post.application.command.create_post import create_post_handler
 from post.application.command.delete_post import delete_post_handler
 from post.application.command.update_post import update_post_handler
@@ -59,12 +58,6 @@ class AppContainer(containers.DeclarativeContainer):
     db_session_factory = Singleton(get_session_factory, db_engine)
 
     # Infrastructure
-    client_repository = Link(auth_repos.ClientSqlAlchemyRepository)
-    auth_uow = Singleton(
-        auth_repos.AuthSqlAlchemyUnitOfWork,
-        dsession_factory=db_session_factory,
-        clients=client_repository,
-    )
     post_repository = Link(post_repos.PostSqlAlchemyRepository)
     post_uow = Singleton(
         post_repos.PostSqlAlchemyUnitOfWork,

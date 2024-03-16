@@ -1,11 +1,5 @@
-from typing import Union, TypeAlias, TypeVar
+from typing import Union, TypeAlias, TypeVar, NewType
 
-
-class _Metadata:
-    def __init__(self, *args, **kw) -> None:
-        pass
-
-
+Deferred = NewType("Deferred", None)
 T = TypeVar("T")
-lazy: TypeAlias = Union[T, _Metadata]
-metadata: TypeAlias = _Metadata
+deferred: TypeAlias = Union[T, Deferred]

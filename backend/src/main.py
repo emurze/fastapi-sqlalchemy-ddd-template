@@ -8,7 +8,6 @@ from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 from sqlalchemy.orm import clear_mappers
 
-from auth.presentation.api import router as auth_router
 from health.presentation.api import router as health_router
 from post.presentation.api import router as post_router
 
@@ -38,7 +37,6 @@ app = FastAPI(
     secret_key=config.secret_key,
     container=container,
 )
-app.include_router(auth_router)
 app.include_router(post_router)
 app.include_router(health_router)
 

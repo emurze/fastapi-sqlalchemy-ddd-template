@@ -7,6 +7,10 @@ class CreatePostJsonRequest(Schema):
     draft: bool = False
 
 
+class CreatePostJsonResponse(Schema):
+    id: int
+
+
 class PostResponse(Schema):
     id: int
     title: str

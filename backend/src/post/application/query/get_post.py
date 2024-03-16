@@ -19,7 +19,7 @@ async def get_post_handler(
         post = await uow.posts.get_by_id(query.id)
 
         if not post:
-            return QueryResult(error=Error.NOT_FOUND)
+            return QueryResult(error=Error.not_found())
 
         dto = map_post_model_to_dto(post)
         return QueryResult(payload=dto)

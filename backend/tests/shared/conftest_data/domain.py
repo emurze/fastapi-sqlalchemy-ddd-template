@@ -1,14 +1,16 @@
 import abc
 from typing import Self
 
-from dataclasses import dataclass
+from pydantic import Field
+from pydantic.dataclasses import dataclass
+
 from shared.domain.entities import AggregateRoot
 from shared.domain.repositories import IGenericRepository
 
 
 @dataclass(kw_only=True)
 class Example(AggregateRoot):
-    name: str
+    name: str = Field(max_length=10)
 
 
 class IExampleUnitOfWork(abc.ABC):

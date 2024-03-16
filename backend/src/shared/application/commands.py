@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from shared.application.utils import DataclassMixin
+from shared.domain.errors import Error
 
 
 class Command(DataclassMixin):
@@ -12,4 +13,4 @@ class Command(DataclassMixin):
 class CommandResult(DataclassMixin):
     payload: Any = None
     events: list = field(default_factory=list)
-    error: Optional[str] = None
+    error: Optional[Error] = None

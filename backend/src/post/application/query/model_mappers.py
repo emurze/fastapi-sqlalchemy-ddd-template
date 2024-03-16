@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 
+from shared.application.utils import DataclassMixin
 from shared.domain.entities import Entity
 
 
 @dataclass
-class GetPostDTO:
+class GetPostDTO(DataclassMixin):
     id: int
     title: str
     content: str
