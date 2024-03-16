@@ -11,7 +11,7 @@ def handle_errors(result, errors: Optional[list] = None) -> None:
     if result.error and result.error.type in errors:
         raise HTTPException(
             status_code=STATUS_CODES[result.error.type],
-            detail=result.error.details,
+            detail=result.error.detail,
         )
 
 

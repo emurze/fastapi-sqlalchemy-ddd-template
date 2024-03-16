@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel
 
 from post.domain.entitites import Post
 from post.domain.repositories import IPostUnitOfWork
 from shared.application.commands import Command, CommandResult
 from shared.domain.errors import Error
-from shared.utils.functional import as_model
 
 
 @dataclass(kw_only=True)
@@ -16,6 +15,10 @@ class CreatePostCommand(Command):
     title: str
     content: str
     draft: bool = False
+
+
+class CreatePostPayload(BaseModel):
+    id: int
 
 
 async def create_post_handler(
@@ -34,4 +37,4 @@ async def create_post_handler(
         #     return CommandResult(error=Error.conflict())
         
         await uow.commit()
-        return CommandResult(payload=as_model({"id": post_id}))
+        return CommandResult(payload={"id": post_id})

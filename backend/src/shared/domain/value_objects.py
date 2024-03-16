@@ -1,5 +1,10 @@
-from typing import Union, TypeAlias, TypeVar, NewType
+from enum import Enum
+from typing import Union, TypeAlias, TypeVar
 
-Deferred = NewType("Deferred", None)
+
+class Deferred(Enum):
+    pass
+
+
 T = TypeVar("T")
-deferred: TypeAlias = Union[T, Deferred]
+deferred: TypeAlias = Union[T, type[Deferred]]

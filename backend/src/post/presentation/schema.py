@@ -1,14 +1,14 @@
 from shared.presentation.json_dtos import Schema
 
 
-class CreatePostJsonRequest(Schema):
+class CreatePostResponse(Schema):
+    id: int
+
+
+class PostRequest(Schema):
     title: str
     content: str
     draft: bool = False
-
-
-class CreatePostJsonResponse(Schema):
-    id: int
 
 
 class PostResponse(Schema):

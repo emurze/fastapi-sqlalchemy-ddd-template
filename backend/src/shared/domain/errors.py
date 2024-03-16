@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Self
 
 
@@ -15,28 +15,33 @@ class ErrorType:
 @dataclass(frozen=True, slots=True)
 class Error:
     type: str
-    details: list = field(default_factory=list)
+    detail: list | str
 
     @classmethod
     def conflict(cls, detail: str = ErrorType.CONFLICT) -> Self:
-        return cls(type=ErrorType.CONFLICT, details=[detail])
+        return cls(type=ErrorType.CONFLICT, detail=detail)
 
     @classmethod
-    def validation(cls, details: list) -> Self:
-        return cls(type=ErrorType.VALIDATION, details=details)
+    def validation(cls, detail: list) -> Self:
+        return cls(type=ErrorType.VALIDATION, detail=detail)
 
     @classmethod
     def not_found(cls, detail: str = ErrorType.NOT_FOUND) -> Self:
-        return cls(type=ErrorType.NOT_FOUND, details=[detail])
+        return cls(type=ErrorType.NOT_FOUND, detail=detail)
 
     @classmethod
     def unauthorized(cls, detail: str = ErrorType.UNAUTHORIZED) -> Self:
-        return cls(type=ErrorType.UNAUTHORIZED, details=[detail])
+        return cls(type=ErrorType.UNAUTHORIZED, detail=detail)
 
     @classmethod
     def forbidden(cls, detail: str = ErrorType.FORBIDDEN) -> Self:
-        return cls(type=ErrorType.FORBIDDEN, details=[detail])
+        return cls(type=ErrorType.FORBIDDEN, detail=detail)
 
     @classmethod
     def system(cls, detail: str = ErrorType.SYSTEM) -> Self:
-        return cls(type=ErrorType.SYSTEM, details=[detail])
+        return cls(type=ErrorType.SYSTEM, detail=detail)
+
+
+class NoneError:
+    type = None
+    details = None

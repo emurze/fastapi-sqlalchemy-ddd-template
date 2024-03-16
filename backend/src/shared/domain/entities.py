@@ -1,3 +1,4 @@
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from shared.domain.value_objects import Deferred, deferred
@@ -5,11 +6,7 @@ from shared.domain.value_objects import Deferred, deferred
 
 @dataclass(kw_only=True)
 class Entity:
-    """
-    1. Transit carefully to presentation layer
-    2. Write logic to return presentation error
-    """
-
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     id: deferred[int] = Deferred
 
     def __init__(self, **kw) -> None:

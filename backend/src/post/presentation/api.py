@@ -36,17 +36,17 @@ async def get_post(post_id: int, bus: BusDep):
     "/",
     response_description="Successfully Created",
     status_code=status.HTTP_201_CREATED,
-    response_model=s.CreatePostJsonResponse,
+    response_model=s.CreatePostResponse,
     responses={
         status.HTTP_400_BAD_REQUEST: {"model": FailedJsonResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
     },
 )
-async def create_post(dto: s.CreatePostJsonRequest, bus: BusDep):
+async def create_post(dto: s.PostRequest, bus: BusDep):
     command = CreatePostCommand(**dto.model_dump())
     create_result = await bus.handle(command)
     handle_errors(create_result, [ErrorType.VALIDATION, ErrorType.CONFLICT])
-    return create_result.payload.id
+    return create_result.payload
 
 
 @router.delete(
@@ -65,16 +65,17 @@ async def delete_post(post_id: int, bus: BusDep):
 @router.put(
     "/{post_id}",
     response_description="Successfully Updated",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
+    response_model=s.CreatePostResponse,
     responses={
         status.HTTP_201_CREATED: {
-            "model": s.CreatePostJsonResponse,
+            "model": s.CreatePostResponse,
             "description": "Successfully Created",
         },
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
     },
 )
-async def update_post(post_id: int, dto: s.PostResponse, bus: BusDep):
+async def update_post(post_id: int, dto: s.PostRequest, bus: BusDep):
     full_dto_dict = dto.model_dump() | {"id": post_id}
     command = UpdatePostCommand(**full_dto_dict)
     update_result = await bus.handle(command)
@@ -83,4 +84,6 @@ async def update_post(post_id: int, dto: s.PostResponse, bus: BusDep):
         command = CreatePostCommand(**full_dto_dict)
         result = await bus.handle(command)
         status_code = status.HTTP_201_CREATED
-        return Response(result.payload, s.CreatePostJsonResponse, status_code)
+        return Response(result.payload, s.CreatePostResponse, status_code)
+
+    return {"id": post_id}

@@ -2,8 +2,6 @@ from collections.abc import Callable
 from dataclasses import field
 from inspect import signature
 
-from dotmap import DotMap
-
 
 def get_first_param_annotation(func: Callable):
     handler_signature = signature(func)
@@ -16,10 +14,6 @@ def invisible_field(default_factory: Callable):
     return field(
         init=False, repr=False, compare=False, default_factory=default_factory
     )
-
-
-def as_model(_dict: dict) -> DotMap:
-    return DotMap(_dict)
 
 
 def get_const(_field, name: str):

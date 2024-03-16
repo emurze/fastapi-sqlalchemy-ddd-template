@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from shared.application.utils import DataclassMixin
-from shared.domain.errors import Error
+from shared.domain.errors import Error, NoneError
 
 
 class Command(DataclassMixin):
@@ -13,4 +13,4 @@ class Command(DataclassMixin):
 class CommandResult(DataclassMixin):
     payload: Any = None
     events: list = field(default_factory=list)
-    error: Optional[Error] = None
+    error: Error | NoneError = NoneError
