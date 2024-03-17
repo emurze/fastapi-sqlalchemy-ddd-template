@@ -11,7 +11,7 @@ from tests.shared.conftest_data.domain import Example, IExampleUnitOfWork
 
 
 class ExampleInMemoryRepository(InMemoryRepository, IGenericRepository):
-    model = Example
+    aggregate_root = Example
     field_gens = {"id": id_int_gen}
 
 
@@ -23,7 +23,7 @@ class ExampleInMemoryUnitOfWork(InMemoryUnitOfWork, IExampleUnitOfWork):
 
 
 class ExampleSqlAlchemyRepository(SqlAlchemyRepository, IGenericRepository):
-    model = Example
+    aggregate_root = Example
 
 
 class ExampleSqlAlchemyUnitOfWork(SqlAlchemyUnitOfWork, IExampleUnitOfWork):

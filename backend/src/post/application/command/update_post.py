@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from post.domain.repositories import IPostUnitOfWork
 from shared.application.commands import Command, CommandResult
 from shared.domain.errors import Error
+from shared.domain.pydantic_v1 import ValidationError
 
 
 @dataclass(kw_only=True)
@@ -23,6 +24,10 @@ async def update_post_handler(
         if post is None:
             return CommandResult(error=Error.not_found())
 
-        post.update(**command.as_dict(exclude={"id"}))
+        try:
+            post.update(**command.as_dict(exclude={"id"}))
+        except ValidationError as e:
+            return CommandResult(error=Error.validation(e.errors()))
+
         await uow.commit()
         return CommandResult()

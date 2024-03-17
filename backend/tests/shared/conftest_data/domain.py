@@ -1,8 +1,8 @@
 import abc
 from typing import Self
 
-from pydantic import Field
-from pydantic.dataclasses import dataclass
+from pydantic.v1 import Field
+from pydantic.v1.dataclasses import dataclass
 
 from shared.domain.entities import AggregateRoot
 from shared.domain.repositories import IGenericRepository

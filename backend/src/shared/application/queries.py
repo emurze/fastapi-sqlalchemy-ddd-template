@@ -1,17 +1,17 @@
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
-from shared.application.utils import DataclassMixin
+from shared.application.dtos import DTO
 from shared.domain.errors import Error, NoneError
 from shared.domain.events import Event
 
 
-class Query(DataclassMixin):
+class Query(DTO):
     pass
 
 
-@dataclass
-class QueryResult(DataclassMixin):
+@dataclass(kw_only=True)
+class QueryResult(DTO):
     payload: Any = None
     events: list[Event] = field(default_factory=list)
     error: Error | NoneError = NoneError

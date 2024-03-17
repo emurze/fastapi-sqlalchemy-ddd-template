@@ -12,10 +12,6 @@ class SqlAlchemyRepository(IGenericRepository):
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-
-        assert (
-            self.aggregate_root
-        ), f"Aggregate root is not set for {type(self)} repository"  # test it
         self.model = cast(Any, self.aggregate_root)
 
     async def add(self, entity: AggregateRoot) -> int:
@@ -43,7 +39,8 @@ class SqlAlchemyRepository(IGenericRepository):
             query = query.with_for_update()
 
         res = await self.session.execute(query)
-        return res.scalars().first()
+        model = res.scalars().first()
+        return model if model is None else self.model(**model.as_dict())
 
     async def count(self) -> int:
         query = select(func.Count(self.model))

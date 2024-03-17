@@ -38,7 +38,6 @@ async def get_post(post_id: int, bus: BusDep):
     status_code=status.HTTP_201_CREATED,
     response_model=s.CreatePostResponse,
     responses={
-        status.HTTP_400_BAD_REQUEST: {"model": FailedJsonResponse},
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": FailedJsonResponse},
     },
 )
@@ -86,4 +85,5 @@ async def update_post(post_id: int, dto: s.PostRequest, bus: BusDep):
         status_code = status.HTTP_201_CREATED
         return Response(result.payload, s.CreatePostResponse, status_code)
 
+    handle_errors(update_result, [ErrorType.VALIDATION])
     return {"id": post_id}

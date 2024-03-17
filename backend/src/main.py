@@ -12,8 +12,9 @@ from health.presentation.api import router as health_router
 from post.presentation.api import router as post_router
 
 from container import container
+from shared.infra.logging import configure_logging
 from shared.infra.sqlalchemy_orm.base import base
-from shared.presentation.exceptions import system_error_exception_handler
+from shared.presentation import exception_handlers as eh
 
 config = container.config()
 
@@ -31,6 +32,7 @@ async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
     clear_mappers()
 
 
+configure_logging()
 app = FastAPI(
     title=config.project_title,
     lifespan=lifespan,
@@ -40,7 +42,7 @@ app = FastAPI(
 app.include_router(post_router)
 app.include_router(health_router)
 
-app.add_exception_handler(SystemError, system_error_exception_handler)
+app.add_exception_handler(SystemError, eh.server_error_exception_handler)
 
 origins = [
     "http://frontend:3000",

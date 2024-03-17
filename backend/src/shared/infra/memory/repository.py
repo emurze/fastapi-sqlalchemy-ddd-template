@@ -34,9 +34,6 @@ class InMemoryRepository(IGenericRepository):
     def __init__(self, gen_manager: type[Any] = GeneratorsManager) -> None:
         self._models: dict[int, AggregateRoot] = {}
         self._gen_manager = gen_manager(self.field_gens)
-        assert (
-            self.aggregate_root
-        ), f"Aggregate root is not set for {type(self)} repository"  # test it
         self.model = cast(Any, self.aggregate_root)
 
     async def add(self, entity: AggregateRoot) -> int:

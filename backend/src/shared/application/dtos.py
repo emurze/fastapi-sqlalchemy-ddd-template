@@ -3,7 +3,7 @@ from typing import Optional, Any, Self
 
 
 @dataclass
-class DataclassMixin:
+class DTO:
     @classmethod
     def get_attrs(cls) -> tuple:
         return cls.__dataclass_fields__ # noqa
@@ -31,7 +31,6 @@ class DataclassMixin:
                 is_not_none(value := getattr(self, attr)),
             ))
         }
-        print(res)
         return res
 
     @classmethod

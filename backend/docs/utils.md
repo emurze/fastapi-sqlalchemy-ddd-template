@@ -110,9 +110,9 @@ class PostgresConfig(BaseSettings):
     db_port: PositiveInt
 
     def get_dsn(
-        self,
-        webapi: WebAPIConfig = get_webapi(),
-        driver: str = "postgresql+asyncpg",
+            self,
+            webapi: WebAPIConfig = get_webapi(),
+            driver: str = "postgresql+asyncpg",
     ) -> str:
         return str(
             PostgresDsn.build(

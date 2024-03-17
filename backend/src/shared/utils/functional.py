@@ -16,7 +16,5 @@ def invisible_field(default_factory: Callable):
     )
 
 
-def get_const(_field, name: str):
-    for const in _field.metadata:
-        if const_value := getattr(const, name):
-            return const_value
+def get_const(_field, constraint_name: str):
+    return getattr(_field, constraint_name)

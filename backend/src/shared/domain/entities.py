@@ -1,19 +1,20 @@
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
-
+from shared.domain.pydantic_v1 import dataclass
 from shared.domain.value_objects import Deferred, deferred
 
 
-@dataclass(kw_only=True)
+class EntityConfig:
+    validate_assignment = True
+
+
+@dataclass(config=EntityConfig)
 class Entity:
-    model_config = ConfigDict(arbitrary_types_allowed=True)
     id: deferred[int] = Deferred
 
     def __init__(self, **kw) -> None:
         super().__init__(**kw)
 
     def update(self, **kw) -> None:
-        assert kw.get("id") is None, "Entity can't update id"
+        assert kw.get("id") is None, "Entity can't update its identity."
         for key, value in kw.items():
             setattr(self, key, value)
 
@@ -33,12 +34,4 @@ class Entity:
 class AggregateRoot(Entity):
     """Consists of 1+ entities. Spans transaction boundaries."""
 
-    # events: list = invisible_field(default_factory=list)
-    #
-    # def register_event(self, event: Event) -> None:
-    #     self.events.append(event)
-    #
-    # def collect_events(self):
-    #     pass
-
-
+    # EVENT COLLECTION
