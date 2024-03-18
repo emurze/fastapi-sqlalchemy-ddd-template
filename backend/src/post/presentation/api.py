@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
 from starlette import status
@@ -12,6 +14,7 @@ from shared.presentation.dependencies import BusDep
 from shared.presentation.json_dtos import FailedJsonResponse
 from shared.presentation.utils import handle_errors, Response
 
+lg = logging.getLogger(__name__)
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
@@ -26,6 +29,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 )
 @cache(expire=15)
 async def get_post(post_id: int, bus: BusDep):
+    lg.info('Running get post')
     query = GetPostQuery(id=post_id)
     query_result = await bus.handle(query)
     handle_errors(query_result, [ErrorType.NOT_FOUND])
@@ -42,6 +46,7 @@ async def get_post(post_id: int, bus: BusDep):
     },
 )
 async def create_post(dto: s.PostRequest, bus: BusDep):
+    lg.info('Running create post')
     command = CreatePostCommand(**dto.model_dump())
     create_result = await bus.handle(command)
     handle_errors(create_result, [ErrorType.VALIDATION, ErrorType.CONFLICT])
@@ -57,6 +62,7 @@ async def create_post(dto: s.PostRequest, bus: BusDep):
     },
 )
 async def delete_post(post_id: int, bus: BusDep):
+    lg.info('Running delete post')
     command = DeletePostCommand(id=post_id)
     await bus.handle(command)
 
@@ -75,6 +81,7 @@ async def delete_post(post_id: int, bus: BusDep):
     },
 )
 async def update_post(post_id: int, dto: s.PostRequest, bus: BusDep):
+    lg.info('Running update post')
     full_dto_dict = dto.model_dump() | {"id": post_id}
     command = UpdatePostCommand(**full_dto_dict)
     update_result = await bus.handle(command)

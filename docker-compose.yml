@@ -5,15 +5,13 @@ services:
     image: api:v1
     container_name: api
     command: >
-      poetry run bash -c "cd src && 
-                          poe row-migrate && 
-                          python -O -m uvicorn --host 0.0.0.0 --port 8080 main:app --reload"
+      poetry run bash -c "cd src && poe row-migrate && python main.py"
     networks:
       - backend
     ports:
       - '8080:8080'
     env_file:
-      - ./backend/.env/.app.env
+      - backend/.env/dev/.app.env
     volumes:
       - ./backend/htmlcov:/service/htmlcov
       - ./backend/src:/service/src
@@ -30,7 +28,7 @@ services:
     ports:
       - '5432:5432'
     env_file:
-      - ./backend/.env/.db.env
+      - backend/.env/dev/.db.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -43,7 +41,7 @@ services:
     ports:
       - '8888:80'
     env_file:
-      - ./backend/.env/.pgadmin.env
+      - backend/.env/dev/.pgadmin.env
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     restart: unless-stopped

@@ -1,6 +1,9 @@
 from pydantic import SecretStr, Field
 from pydantic_settings import BaseSettings
 
+from config import TopLevelConfig
+from shared.infra.logging import LogLevel
+
 
 class TestDatabaseConfig(BaseSettings):
     test_db_name: str
@@ -39,8 +42,16 @@ class TestCacheConfig(BaseSettings):
 
 
 class TestTopLevelConfig(BaseSettings):
-    secret_key: SecretStr
     project_title: str = Field(validation_alias="test_project_title")
-    log_level: str
     db_dsn: str = Field(default_factory=TestDatabaseConfig.get_dsn)
     cache_dsn: str = Field(default_factory=TestCacheConfig.get_dsn)
+
+
+def get_top_config() -> TopLevelConfig:
+    test_config = TestTopLevelConfig()
+    return TopLevelConfig(
+        log_level_in=LogLevel.debug,
+        project_title=test_config.project_title,
+        db_dsn=test_config.db_dsn,
+        cache_dsn=test_config.cache_dsn,
+    )

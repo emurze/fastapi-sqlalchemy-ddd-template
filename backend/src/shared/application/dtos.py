@@ -1,9 +1,10 @@
-from dataclasses import dataclass
 from typing import Optional, Any, Self
 
 
-@dataclass
 class DTO:
+    def __init__(self, **kw) -> None:
+        super().__init__(**kw)
+
     @classmethod
     def get_attrs(cls) -> tuple:
         return cls.__dataclass_fields__ # noqa
@@ -34,7 +35,5 @@ class DTO:
         return res
 
     @classmethod
-    def model_from(cls, dto: Any) -> Self:
-        attr_names = (x for x in cls.get_attrs() if not x[0].startswith("_"))
-        attrs = {name: getattr(dto, name) for name in attr_names}
-        return cls(**attrs)  # noqa
+    def model_from(cls, obj: Any) -> Self:
+        return cls(**{name: getattr(obj, name) for name in cls.get_attrs()})

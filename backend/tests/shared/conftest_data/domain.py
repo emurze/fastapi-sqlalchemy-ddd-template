@@ -1,14 +1,12 @@
 import abc
 from typing import Self
 
-from pydantic.v1 import Field
-from pydantic.v1.dataclasses import dataclass
-
 from shared.domain.entities import AggregateRoot
+from shared.domain.pydantic_v1 import py_dataclass, Field
 from shared.domain.repositories import IGenericRepository
 
 
-@dataclass(kw_only=True)
+@py_dataclass(kw_only=True)
 class Example(AggregateRoot):
     name: str = Field(max_length=10)
 

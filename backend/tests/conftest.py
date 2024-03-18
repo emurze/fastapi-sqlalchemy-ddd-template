@@ -16,13 +16,13 @@ from starlette.testclient import TestClient
 
 from sqlalchemy.orm import clear_mappers
 
-from tests.config import TestTopLevelConfig
+from tests.config import get_top_config
 from tests import container as co
 
 from container import container as app_container
 from redis import asyncio as aioredis
 
-config = TestTopLevelConfig()
+config = get_top_config()
 engine = create_async_engine(config.db_dsn, echo=True, poolclass=NullPool)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
 

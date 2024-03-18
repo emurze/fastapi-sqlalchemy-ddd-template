@@ -1,4 +1,6 @@
-from shared.domain.pydantic_v1 import dataclass
+from typing import Self, Any
+
+from shared.domain.pydantic_v1 import py_dataclass
 from shared.domain.value_objects import Deferred, deferred
 
 
@@ -6,7 +8,7 @@ class EntityConfig:
     validate_assignment = True
 
 
-@dataclass(config=EntityConfig)
+@py_dataclass(config=EntityConfig)
 class Entity:
     id: deferred[int] = Deferred
 
@@ -18,19 +20,26 @@ class Entity:
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def as_dict(self) -> dict:
+    @classmethod
+    def get_dict_from(cls, obj: Any) -> dict:
         """
-        Ignore deferred fields
+        Ignores deferred fields
         """
         return {
             attr: value
-            for attr in self.__dataclass_fields__  # noqa
-            if (value := getattr(self, attr)) != Deferred
-                and not attr.startswith("_")
+            for attr in cls.__dataclass_fields__  # noqa
+            if (value := getattr(obj, attr)) != Deferred
         }
 
+    @classmethod
+    def model_from(cls, obj: Any) -> Self:
+        return cls(**cls.get_dict_from(obj))
 
-@dataclass(kw_only=True)
+    def as_dict(self) -> dict:
+        return self.get_dict_from(self)
+
+
+@py_dataclass(kw_only=True)
 class AggregateRoot(Entity):
     """Consists of 1+ entities. Spans transaction boundaries."""
 

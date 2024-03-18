@@ -45,3 +45,7 @@ class Error:
 class NoneError:
     type = None
     details = None
+
+
+class EntityAlreadyExistsError(Exception):
+    pass

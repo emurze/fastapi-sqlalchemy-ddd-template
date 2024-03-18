@@ -1,6 +1,8 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
@@ -16,11 +18,13 @@ from shared.infra.logging import configure_logging
 from shared.infra.sqlalchemy_orm.base import base
 from shared.presentation import exception_handlers as eh
 
+lg = logging.getLogger(__name__)
 config = container.config()
 
 
 @asynccontextmanager
 async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
+    configure_logging(config.log_level)
     redis = aioredis.from_url(
         config.cache_dsn,
         encoding="utf8",
@@ -32,7 +36,6 @@ async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
     clear_mappers()
 
 
-configure_logging()
 app = FastAPI(
     title=config.project_title,
     lifespan=lifespan,
@@ -54,3 +57,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+if __name__ == '__main__':
+    extra_kw = {}
+
+    if config.debug:
+        extra_kw["reload"] = True
+
+    uvicorn.run(
+        app="main:app",
+        host=config.host,
+        port=config.port,
+        log_level=config.log_level,
+        **extra_kw,
+    )

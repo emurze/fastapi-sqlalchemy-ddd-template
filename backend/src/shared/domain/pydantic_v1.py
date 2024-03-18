@@ -3,4 +3,4 @@ from pydantic.v1.dataclasses import dataclass as v1_dataclass
 
 Field = V1Field
 ValidationError = V1ValidationError
-dataclass = v1_dataclass
+py_dataclass = v1_dataclass

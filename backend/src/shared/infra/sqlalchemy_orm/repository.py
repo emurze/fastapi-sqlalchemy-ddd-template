@@ -1,10 +1,15 @@
+import logging
 from typing import Any, cast
 
 from sqlalchemy import select, insert, delete, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.domain.entities import AggregateRoot
+from shared.domain.errors import EntityAlreadyExistsError
 from shared.domain.repositories import IGenericRepository
+
+lg = logging.getLogger(__name__)
 
 
 class SqlAlchemyRepository(IGenericRepository):
@@ -15,13 +20,16 @@ class SqlAlchemyRepository(IGenericRepository):
         self.model = cast(Any, self.aggregate_root)
 
     async def add(self, entity: AggregateRoot) -> int:
-        stmt = (
-            insert(self.model)
-            .values(**entity.as_dict())
-            .returning(self.model.id)
-        )
-        result_id = await self.session.execute(stmt)
-        return result_id.scalar_one()
+        try:
+            stmt = (
+                insert(self.model)
+                .values(**entity.as_dict())
+                .returning(self.model.id)
+            )
+            result_id = await self.session.execute(stmt)
+            return result_id.scalar_one()
+        except IntegrityError:
+            raise EntityAlreadyExistsError()
 
     async def delete(self, entity: AggregateRoot) -> None:
         await self.session.delete(entity)
@@ -40,7 +48,7 @@ class SqlAlchemyRepository(IGenericRepository):
 
         res = await self.session.execute(query)
         model = res.scalars().first()
-        return model if model is None else self.model(**model.as_dict())
+        return model if model is None else self.model.model_from(model)
 
     async def count(self) -> int:
         query = select(func.Count(self.model))
