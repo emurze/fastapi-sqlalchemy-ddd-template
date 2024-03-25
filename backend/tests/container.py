@@ -1,11 +1,9 @@
 from dependency_injector.providers import Singleton
 
-from post.infra.repositories import (
-    PostInMemoryUnitOfWork,
-    PostInMemoryRepository,
-)
+from blog.infra.repositories import PostInMemoryRepository
 from container import AppContainer
-from shared.infra.dependency_injector.utils import Link
+from seedwork.infra.injector import Link
+from seedwork.infra.uows import InMemoryUnitOfWork
 
 
 def override_app_container(container, config, engine, session_factory) -> None:
@@ -24,7 +22,8 @@ def get_memory_test_container() -> AppContainer:
 
     # Post
     post_repo = Link(PostInMemoryRepository)
-    post_uow = Singleton(PostInMemoryUnitOfWork, posts=post_repo)
     container.post_repository.override(post_repo)
-    container.post_uow.override(post_uow)
+
+    uow = Singleton(InMemoryUnitOfWork, posts=post_repo)
+    container.uow.override(uow)
     return container

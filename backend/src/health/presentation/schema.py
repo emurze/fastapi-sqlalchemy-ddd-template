@@ -1,4 +1,4 @@
-from shared.presentation.json_dtos import Schema
+from seedwork.presentation.json_dtos import Schema
 
 
 class HealthResponse(Schema):

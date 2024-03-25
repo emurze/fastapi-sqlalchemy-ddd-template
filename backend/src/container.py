@@ -8,23 +8,23 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from post.application.command.create_post import create_post_handler
-from post.application.command.delete_post import delete_post_handler
-from post.application.command.update_post import update_post_handler
-from post.application.query.get_post import get_post_handler
-from post.infra import repositories as post_repos
+from blog.application.command.create_post import create_post_handler
+from blog.application.command.delete_post import delete_post_handler
+from blog.application.command.update_post import update_post_handler
+from blog.infra.repositories import PostSqlAlchemyRepository
 from config import TopLevelConfig
-from shared.application.messagebus import MessageBus
-from shared.infra.dependency_injector.utils import Link, Group, InjectIn
-from shared.utils.functional import get_first_param_annotation
+from seedwork.application.messagebus import MessageBus
+from seedwork.infra.functional import get_first_param_annotation
+from seedwork.infra.injector import InjectIn, Group
+from seedwork.infra.uows import SqlAlchemyUnitOfWork
 
 
 def get_config() -> TopLevelConfig:
     return TopLevelConfig()
 
 
-def get_engine(config: TopLevelConfig) -> AsyncEngine:
-    return create_async_engine(config.db_dsn, echo=True)
+def get_engine(top_config: TopLevelConfig) -> AsyncEngine:
+    return create_async_engine(top_config.db_dsn, echo=top_config.db_echo)
 
 
 def get_session_factory(engine: AsyncEngine) -> Callable:
@@ -58,21 +58,18 @@ class AppContainer(containers.DeclarativeContainer):
     db_session_factory = Singleton(get_session_factory, db_engine)
 
     # Infrastructure
-    post_repository = Link(post_repos.PostSqlAlchemyRepository)
-    post_uow = Singleton(
-        post_repos.PostSqlAlchemyUnitOfWork,
+    uow = Singleton(
+        SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        posts=post_repository,
+        posts=PostSqlAlchemyRepository,
     )
 
     # Application
-    query_handlers = Group(
-        InjectIn(get_post_handler, post_uow),
-    )
+    query_handlers = Group()
     command_handlers = Group(
-        InjectIn(create_post_handler, post_uow),
-        InjectIn(delete_post_handler, post_uow),
-        InjectIn(update_post_handler, post_uow),
+        InjectIn(create_post_handler, uow),
+        InjectIn(delete_post_handler, uow),
+        InjectIn(update_post_handler, uow),
     )
     event_handlers = Group()
     message_bus = Singleton(
@@ -81,3 +78,4 @@ class AppContainer(containers.DeclarativeContainer):
 
 
 container = AppContainer()
+config = container.config()

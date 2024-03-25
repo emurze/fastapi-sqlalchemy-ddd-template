@@ -7,15 +7,12 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
 )
-from shared.application.messagebus import MessageBus
-from shared.infra.sqlalchemy_orm.base import base
-from shared.infra.sqlalchemy_orm.common import suppress_echo
+from seedwork.application.messagebus import MessageBus
 from collections.abc import Iterator, AsyncIterator
 
 from starlette.testclient import TestClient
 
-from sqlalchemy.orm import clear_mappers
-
+from seedwork.infra.database import suppress_echo, Base
 from tests.config import get_top_config
 from tests import container as co
 
@@ -33,24 +30,14 @@ co.override_app_container(app_container, config, engine, session_factory)
 
 
 @pytest.fixture(scope="function")
-def _mappers() -> Iterator[None]:
-    """
-    Cleans and resets SQLAlchemy mapper configurations for each test.
-    """
-    base.run_mappers()
-    yield
-    clear_mappers()
-
-
-@pytest.fixture(scope="function")
 async def _restart_tables() -> None:
     """
     Cleans tables before each test.
     """
     async with engine.begin() as conn:
         async with suppress_echo(engine):
-            await conn.run_sync(base.metadata.drop_all)
-            await conn.run_sync(base.metadata.create_all)
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
         await conn.commit()
 
 
@@ -76,7 +63,7 @@ def bus() -> MessageBus:
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_container(_mappers, _restart_tables):
+def sqlalchemy_container(_restart_tables):
     """
     Provides sqlalchemy repositories and units of work.
     """

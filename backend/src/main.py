@@ -8,18 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
-from sqlalchemy.orm import clear_mappers
 
 from health.presentation.api import router as health_router
-from post.presentation.api import router as post_router
+from blog.presentation.api import router as post_router
 
-from container import container
-from shared.infra.logging import configure_logging
-from shared.infra.sqlalchemy_orm.base import base
-from shared.presentation import exception_handlers as eh
-
-lg = logging.getLogger(__name__)
-config = container.config()
+from container import container, config
+from seedwork.infra.logging import configure_logging
+from shared_kernel.presentation import exception_handlers as eh
 
 
 @asynccontextmanager
@@ -31,11 +26,10 @@ async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
         decode_responses=True,
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-    base.run_mappers()
     yield
-    clear_mappers()
 
 
+lg = logging.getLogger(__name__)
 app = FastAPI(
     title=config.project_title,
     lifespan=lifespan,

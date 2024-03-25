@@ -16,6 +16,7 @@ services:
       - ./backend/htmlcov:/service/htmlcov
       - ./backend/src:/service/src
       - ./backend/tests:/service/tests
+      - ./backend/migrations:/service/migrations
     restart: unless-stopped
     depends_on:
       - db
@@ -56,7 +57,7 @@ services:
       - backend
     volumes:
       - cache_data:/data
-      - ./backend/src/shared/infra/redis/cache/conf/redis.conf:/etc/redis.conf
+      - ./backend/cache:/etc/redis.conf
     restart: unless-stopped
 
 volumes:
