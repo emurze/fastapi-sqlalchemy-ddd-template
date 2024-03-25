@@ -7,10 +7,10 @@ from blog.application.command import CreatePostCommand
 from blog.application.command.delete_post import DeletePostCommand
 from blog.application.command.update_post import UpdatePostCommand
 from blog.presentation import schema as s
-from shared_kernel.domain.errors import ErrorType
-from shared_kernel.presentation.dependencies import BusDep
-from shared_kernel.presentation.json_dtos import FailedJsonResponse
-from shared_kernel.presentation.utils import handle_errors, Response
+from seedwork.domain.errors import ErrorType
+from seedwork.presentation.json_dtos import FailedJsonResponse
+from seedwork.presentation.utils import handle_errors, Response
+from seedwork.presentation.dependencies import BusDep
 
 lg = logging.getLogger(__name__)
 router = APIRouter(prefix="/posts", tags=["posts"])

@@ -1,7 +1,7 @@
 from seedwork.domain.repositories import IGenericRepository
-from seedwork.infra.repositories import InMemoryRepository, SqlAlchemyRepository
-from shared_kernel.utils.functional import id_int_gen
-from tests.shared.confdata.entities import Example
+from seedwork.infra.functional import id_int_gen
+from seedwork.infra.repository import InMemoryRepository, SqlAlchemyRepository
+from tests.seedwork.confdata.entities import Example
 
 
 class ExampleInMemoryRepository(InMemoryRepository, IGenericRepository):

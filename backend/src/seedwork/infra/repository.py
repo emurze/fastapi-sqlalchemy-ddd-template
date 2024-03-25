@@ -9,22 +9,24 @@ from seedwork.domain.errors import EntityAlreadyExistsError
 from seedwork.domain.repositories import IGenericRepository
 
 from collections.abc import Callable
-from typing import Any, Generator, cast
+from typing import Any, Generator
 
 
 class SqlAlchemyRepository(IGenericRepository):
-    model: type[Entity]
+    aggregate_root: type[Entity]
     mapper: type
 
     def __init__(self, session: AsyncSession) -> None:
+        self.model = self.aggregate_root
         self.session = session
+        self._identity_map = {}
 
     async def add(self, entity: Entity) -> NoReturn | int:
         try:
             stmt = (
-                insert(self.model)
+                insert(self.aggregate_root)
                 .values(**entity.as_dict())
-                .returning(self.model.id)
+                .returning(self.aggregate_root.id)
             )
             result_id = await self.session.execute(stmt)
             return result_id.scalar_one()
@@ -102,9 +104,10 @@ class InMemoryRepository(IGenericRepository):
     field_gens: dict[str, Callable]
 
     def __init__(self, gen_manager: type[Any] = GeneratorsManager) -> None:
+        self.model = self.aggregate_root
         self._models: dict[int, Entity] = {}
         self._gen_manager = gen_manager(self.field_gens)
-        self.model = cast(Any, self.aggregate_root)
+        self._identity_map = {}
 
     async def add(self, entity: Entity) -> int:
         kw_gen_values = self._gen_manager.iterate_gens(entity.as_dict())

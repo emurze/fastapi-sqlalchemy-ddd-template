@@ -6,12 +6,10 @@ from pydantic import ValidationError
 from blog.domain.entitites import Post
 from seedwork.application.commands import Command, CommandResult
 from seedwork.application.dtos import DTO
-from shared_kernel.domain.errors import Error, EntityAlreadyExistsError
-
+from seedwork.domain.errors import Error, EntityAlreadyExistsError
 from seedwork.domain.uows import IUnitOfWork
 
 
-@dataclass(kw_only=True)
 class CreatePostCommand(Command):
     id: Optional[int] = None
     title: str
@@ -19,7 +17,6 @@ class CreatePostCommand(Command):
     draft: bool = False
 
 
-@dataclass(kw_only=True)
 class CreatePostPayload(DTO):
     id: int
 

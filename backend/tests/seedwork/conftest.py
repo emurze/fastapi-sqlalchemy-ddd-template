@@ -2,7 +2,7 @@ import pytest
 
 from seedwork.infra.database import suppress_echo
 from tests.conftest import engine
-from tests.shared.confdata.models import mapped_registry
+from tests.seedwork.confdata.models import mapped_registry
 
 
 @pytest.fixture(scope="function")

@@ -55,7 +55,7 @@ class TopLevelConfig(BaseSettings):
 
     @property
     def log_level(self) -> str:
-        if self.log_level_input:
+        if self.log_level_in:
             return self.log_level_in.lower()
 
         if self.debug:

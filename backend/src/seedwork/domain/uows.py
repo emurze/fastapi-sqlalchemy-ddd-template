@@ -1,6 +1,8 @@
 import abc
 from typing import Self
 
+from blog.domain.repositories import IPostRepository
+
 
 class IGenericUnitOfWork(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -15,3 +17,6 @@ class IGenericUnitOfWork(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def rollback(self) -> None: ...
 
+
+class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
+    posts: IPostRepository

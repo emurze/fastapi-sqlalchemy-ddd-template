@@ -14,7 +14,7 @@ from blog.presentation.api import router as post_router
 
 from container import container, config
 from seedwork.infra.logging import configure_logging
-from shared_kernel.presentation import exception_handlers as eh
+from seedwork.presentation import exception_handlers as eh
 
 
 @asynccontextmanager

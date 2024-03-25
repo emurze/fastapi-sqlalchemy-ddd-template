@@ -1,8 +1,8 @@
 from blog.domain.entitites import Publisher
 from blog.domain.repositories import IPostRepository
 from blog.infra.mappers import PostMapper
-from seedwork.infra.repositories import SqlAlchemyRepository, InMemoryRepository
-from shared_kernel.utils.functional import id_int_gen
+from seedwork.infra.functional import id_int_gen
+from seedwork.infra.repository import SqlAlchemyRepository, InMemoryRepository
 
 
 class PostSqlAlchemyRepository(SqlAlchemyRepository, IPostRepository):

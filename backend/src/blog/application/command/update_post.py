@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pydantic import ValidationError
 
 from seedwork.application.commands import Command, CommandResult
-from shared_kernel.domain.errors import Error
+from seedwork.domain.errors import Error
 from seedwork.domain.uows import IUnitOfWork
 
 

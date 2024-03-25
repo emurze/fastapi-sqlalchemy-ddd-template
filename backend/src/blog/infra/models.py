@@ -3,8 +3,8 @@ from sqlalchemy import ForeignKey, Integer, Column
 from sqlalchemy.orm import registry, relationship
 
 from blog.domain.entitites import Post, Publisher
+from seedwork.infra.functional import get_const
 from seedwork.infra.database import Base
-from shared_kernel.utils.functional import get_const
 
 mapper_registry = registry()
 

@@ -4,7 +4,7 @@ from black import Optional
 from fastapi import HTTPException
 from starlette.responses import JSONResponse
 
-from shared_kernel.presentation.json_dtos import STATUS_CODES
+from seedwork.presentation.json_dtos import STATUS_CODES
 
 
 def handle_errors(result, errors: Optional[list] = None) -> None:
