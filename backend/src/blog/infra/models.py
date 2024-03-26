@@ -23,12 +23,12 @@ class PostModel(Model):
         nullable=False,
     )
     draft = sa.Column("draft", sa.Boolean, default=False)
-    publisher_id = Column(Integer, ForeignKey('publisher.id'))
-
-    publisher: 'PublisherModel' = relationship(
-        'PublisherModel',
-        back_populates="posts",
-    )
+    # publisher_id = Column(Integer, ForeignKey('publisher.id'))
+    #
+    # publisher: 'PublisherModel' = relationship(
+    #     'PublisherModel',
+    #     back_populates="posts",
+    # )
 
 
 class PublisherModel(Model):
@@ -41,8 +41,8 @@ class PublisherModel(Model):
         nullable=False,
     )
 
-    posts: list[PostModel] = relationship(
-        PostModel,
-        back_populates="publisher",
-        innerjoin=True,
-    )
+    # posts: list[PostModel] = relationship(
+    #     PostModel,
+    #     back_populates="publisher",
+    #     innerjoin=True,
+    # )

@@ -25,9 +25,11 @@ class Mapper(IMapper):
     model_class: type[Model]
 
     def entity_to_model(self, entity: Entity) -> Model:
+        # todo: Foreign Key problems
         return self.model_class(**entity.model_dump())
 
     def model_to_entity(self, model: Model) -> Entity:
+        # todo: Foreign Key problems
         return self.entity_class.model_validate(model)
 
 

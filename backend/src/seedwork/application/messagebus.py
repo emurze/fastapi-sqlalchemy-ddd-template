@@ -11,7 +11,7 @@ Message: TypeAlias = Command | Query | Event
 Result: TypeAlias = CommandResult | QueryResult | EventResult
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class MessageBus:
     uow: IUnitOfWork
     command_handlers: dict[type[Command], Callable]
@@ -20,27 +20,37 @@ class MessageBus:
     queue: list = field(default_factory=list)
 
     async def handle(self, new_message: Message) -> NoReturn | Result:
+        result = None
         self.queue.append(new_message)
         while self.queue:
             message = self.queue.pop(0)
             if isinstance(message, Command):
-                return await self._handle_command(message)
+                result = await self._handle_command(message)
             elif isinstance(message, Query):
-                return await self._handle_query(message)
+                result = await self._handle_query(message)
             elif isinstance(message, Event):
-                return await self._handle_event(message)
+                await self._handle_event(message)
             else:
                 raise TypeError("Param type isn't in [Command, Query, Event]")
+        return result
 
     async def _handle_command(self, command: Command) -> CommandResult:
         handler = self.command_handlers[type(command)]
-        self.queue += self.uow.collect_events()
-        return await handler(command)
+        result = await handler(command)
+        events = self.uow.collect_events()
+        print(*events)
+        self.queue += events
+        self.queue += result.events
+        return result
 
     async def _handle_query(self, query: Query) -> QueryResult:
         handler = self.query_handlers[type(query)]
-        return await handler(query)
+        result = await handler(query)
+        self.queue += self.uow.collect_events()  # 7??
+        self.queue += result.events
+        return result
 
     async def _handle_event(self, event: Event) -> EventResult:
+        # ???
         handler = self.event_handlers[type(event)]
         return await handler(event)

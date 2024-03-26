@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
 from blog.application.command.create_post import create_post_handler
 from blog.application.command.delete_post import delete_post_handler
 from blog.application.command.update_post import update_post_handler
+from blog.application.event.notify_developers import notify_developers
 from blog.infra.repositories import PostSqlAlchemyRepository
 from config import TopLevelConfig
 from seedwork.application.messagebus import MessageBus
@@ -74,7 +75,9 @@ class AppContainer(containers.DeclarativeContainer):
         InjectIn(delete_post_handler, uow),
         InjectIn(update_post_handler, uow),
     )
-    event_handlers = Group()
+    event_handlers = Group(
+        InjectIn(notify_developers)
+    )
     message_bus = Singleton(
         get_bus,
         uow=uow,

@@ -17,10 +17,12 @@ class SqlAlchemyUnitOfWork(IGenericUnitOfWork):
     def __init__(self, session_factory: Callable, **repo_classes) -> None:
         self.session_factory = session_factory
         self._repo_classes = repo_classes
+        self._repos = []
 
     async def __aenter__(self) -> Self:
+        print("UOW ENTER")
         self.session = self.session_factory()
-        self._set_repos_as_attrs(self._repo_classes, self.session)
+        self._repos = self._set_repos_as_attrs(self.session)
         return self
 
     async def __aexit__(self, *args) -> None:
@@ -33,12 +35,19 @@ class SqlAlchemyUnitOfWork(IGenericUnitOfWork):
     async def rollback(self) -> None:
         await self.session.rollback()
 
-    def _set_repos_as_attrs(self, repos: dict, session: AsyncSession) -> None:
-        for attr, repo_cls in repos.items():
-            setattr(self, attr, repo_cls(session))
+    def _set_repos_as_attrs(self, session: AsyncSession) -> list:
+        _repos = []
+        for attr, repo_cls in self._repo_classes.items():
+            setattr(self, attr, repo := repo_cls(session))
+            _repos.append(repo)
+        return _repos
 
     def collect_events(self) -> Iterator[Event]:
+        print(f"UOW {self=}")
+        print(f"{self.session=}")
+        print(f"{self._repos=}")
         for repo in self._repos:
+            print(self._repos)
             for event in repo.collect_events():
                 yield event
 

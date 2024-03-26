@@ -10,10 +10,9 @@ class Entity(BaseModel):
     model_config = ConfigDict(validate_assignment=True, from_attributes=True)
     id: deferred[int] = Deferred
 
-    @classmethod
-    def _get_deferred_fields(cls) -> Iterator[str]:
-        for key, value in cls.model_fields.items():
-            if value.default == Deferred:
+    def _get_deferred_fields(self) -> Iterator[str]:
+        for key in self.model_fields.keys():
+            if getattr(self, key) == Deferred:
                 yield key
 
     def insert_deferred_values(self, model: Any) -> None:
@@ -51,4 +50,5 @@ class AggregateRoot(Entity):
     def collect_events(self) -> list[Event]:
         events = self._events
         self._events = []
+        print(f"AGGREGATE ROOT {self._events=}")
         return events
