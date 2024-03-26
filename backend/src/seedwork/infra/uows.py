@@ -1,24 +1,26 @@
 import copy
-from typing import TypeVar
+from typing import Iterator
 
 from collections.abc import Callable
 from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from seedwork.domain.events import Event
+from seedwork.domain.repositories import IGenericRepository
 from seedwork.domain.uows import IGenericUnitOfWork
-
-Repo = TypeVar("Repo")
 
 
 class SqlAlchemyUnitOfWork(IGenericUnitOfWork):
-    def __init__(self, session_factory: Callable, **repos: type[Repo]) -> None:
+    _repos: list[IGenericRepository]
+
+    def __init__(self, session_factory: Callable, **repo_classes) -> None:
         self.session_factory = session_factory
-        self._repos = repos
+        self._repo_classes = repo_classes
 
     async def __aenter__(self) -> Self:
         self.session = self.session_factory()
-        self._set_repos_as_attrs(self.session)
+        self._set_repos_as_attrs(self._repo_classes, self.session)
         return self
 
     async def __aexit__(self, *args) -> None:
@@ -31,9 +33,14 @@ class SqlAlchemyUnitOfWork(IGenericUnitOfWork):
     async def rollback(self) -> None:
         await self.session.rollback()
 
-    def _set_repos_as_attrs(self, session: AsyncSession) -> None:
-        for attr, repo_cls in self._repos.items():
+    def _set_repos_as_attrs(self, repos: dict, session: AsyncSession) -> None:
+        for attr, repo_cls in repos.items():
             setattr(self, attr, repo_cls(session))
+
+    def collect_events(self) -> Iterator[Event]:
+        for repo in self._repos:
+            for event in repo.collect_events():
+                yield event
 
 
 class InMemoryUnitOfWork(IGenericUnitOfWork):
@@ -41,10 +48,12 @@ class InMemoryUnitOfWork(IGenericUnitOfWork):
     Persists memory in each repository.
     """
 
-    def __init__(self, **repos: type[Repo]) -> None:
+    _repos: list[IGenericRepository]
+
+    def __init__(self, **repo_classes: type[IGenericRepository]) -> None:
         self._is_committed = False
-        self._repos = self._set_repos_as_attrs(repos)
-        self._memory_state: list[tuple[Repo, list]] = [
+        self._repos = self._set_repos_as_attrs(repo_classes)
+        self._memory_state: list[tuple[IGenericRepository, list]] = [
             (repo, []) for repo in self._repos
         ]
 
@@ -76,11 +85,16 @@ class InMemoryUnitOfWork(IGenericUnitOfWork):
         for repository, models in self._memory_state:
             repository._models = copy.deepcopy(models)
 
-    def _set_repos_as_attrs(self, repos: dict[str, type[Repo]]) -> list[Repo]:
+    def _set_repos_as_attrs(self, cls_repos: dict) -> list[IGenericRepository]:
         _repos = []
 
-        for attr, repo_cls in repos.items():
+        for attr, repo_cls in cls_repos.items():
             setattr(self, attr, repo := repo_cls())
             _repos.append(repo)
 
         return _repos
+
+    def collect_events(self) -> Iterator[Event]:
+        for repo in self._repos:
+            for event in repo.collect_events():
+                yield event

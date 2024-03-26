@@ -1,7 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from tests.shared.confdata.entities import Example
+from seedwork.domain.value_objects import Deferred
+from tests.seedwork.confdata.entities import Example
 
 
 @pytest.mark.unit
@@ -26,9 +27,9 @@ def test_can_revalidate_on_update() -> None:
 
 
 @pytest.mark.unit
-def test_as_dict_has_no_onw_deferred_field() -> None:
+def test_as_dict_has_deferred_fields() -> None:
     example = Example(name="example")
-    assert example.as_dict() == {"name": "example"}
+    assert example.model_dump() == {"id": Deferred, "name": "example"}
 
 
 @pytest.mark.unit

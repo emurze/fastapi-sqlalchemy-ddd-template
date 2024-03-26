@@ -1,41 +1,29 @@
-# import pytest
-#
-# from shared.domain.repositories import IGenericRepository
-# from tests.shared.infra.memory import test_repository as memory_impl
-#
-#
-# @pytest.mark.integration
-# async def test_can_create_and_get(repo: IGenericRepository) -> None:
-#     await memory_impl.test_can_create_and_get(repo)
-#
-#
-# @pytest.mark.integration
-# async def test_get_not_found_error(repo: IGenericRepository) -> None:
-#     await memory_impl.test_get_not_found_error(repo)
-#
-#
-# @pytest.mark.integration
-# async def test_can_get_for_update(repo: IGenericRepository) -> None:
-#     await memory_impl.test_can_get_for_update(repo)
-#
-#
-# @pytest.mark.integration
-# async def test_get_for_update_not_found_error(
-#     repo: IGenericRepository,
-# ) -> None:
-#     await memory_impl.test_get_for_update_not_found_error(repo)
-#
-#
-# @pytest.mark.integration
-# async def test_list(repo: IGenericRepository) -> None:
-#     await memory_impl.test_list(repo)
-#
-#
-# @pytest.mark.integration
-# async def test_delete_all(repo: IGenericRepository) -> None:
-#     await memory_impl.test_delete_all(repo)
-#
-#
-# @pytest.mark.integration
-# async def test_delete_one(repo: IGenericRepository) -> None:
-#     await memory_impl.test_delete_one(repo)
+import pytest
+
+from tests.seedwork.confdata.uow import IExampleRepository
+from tests.seedwork.infra.memory import test_repository as memory
+
+
+@pytest.mark.integration
+async def test_add_update_example(repo: IExampleRepository) -> None:
+    await memory.test_add_update_example(repo)
+
+
+@pytest.mark.integration
+async def test_delete(repo: IExampleRepository) -> None:
+    await memory.test_delete(repo)
+
+
+@pytest.mark.integration
+async def test_delete_by_id(repo: IExampleRepository) -> None:
+    await memory.test_delete_by_id(repo)
+
+
+@pytest.mark.integration
+async def test_get_by_id(repo: IExampleRepository) -> None:
+    await memory.test_get_by_id(repo)
+
+
+@pytest.mark.integration
+async def test_get_by_id_not_found_none_res(repo: IExampleRepository) -> None:
+    await memory.test_get_by_id_not_found_none_res(repo)

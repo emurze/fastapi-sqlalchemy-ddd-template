@@ -7,4 +7,4 @@ class Deferred(Enum):
 
 
 T = TypeVar("T")
-deferred: TypeAlias = Union[T, type[Deferred]]
+deferred: TypeAlias = Union[type[Deferred], T]

@@ -14,6 +14,7 @@ from blog.application.command.update_post import update_post_handler
 from blog.infra.repositories import PostSqlAlchemyRepository
 from config import TopLevelConfig
 from seedwork.application.messagebus import MessageBus
+from seedwork.domain.uows import IUnitOfWork
 from seedwork.infra.functional import get_first_param_annotation
 from seedwork.infra.injector import InjectIn, Group
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
@@ -32,11 +33,13 @@ def get_session_factory(engine: AsyncEngine) -> Callable:
 
 
 def get_bus(
+    uow: IUnitOfWork,
     query_handlers: list[tuple],
     command_handlers: list[tuple],
     event_handlers: list[tuple],
 ) -> MessageBus:
     return MessageBus(
+        uow=uow,
         query_handlers={
             get_first_param_annotation(handler): wrapped
             for wrapped, handler in query_handlers
@@ -73,7 +76,11 @@ class AppContainer(containers.DeclarativeContainer):
     )
     event_handlers = Group()
     message_bus = Singleton(
-        get_bus, query_handlers, command_handlers, event_handlers
+        get_bus,
+        uow=uow,
+        query_handlers=query_handlers,
+        command_handlers=command_handlers,
+        event_handlers=event_handlers
     )
 
 

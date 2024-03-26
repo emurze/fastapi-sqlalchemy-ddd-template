@@ -1,21 +1,26 @@
 import pytest
 
-from tests.shared.confdata.uow import IUnitOfWork
-from tests.shared.infra.memory import test_uow as uow_imp
+from tests.seedwork.confdata.entities import Example
+from tests.seedwork.confdata.uow import ISeedWorkUnitOfWork
 
 
 @pytest.mark.integration
-async def test_can_rollback(uow: IUnitOfWork) -> None:
-    await uow_imp.test_can_rollback(uow)
+async def test_uow_can_commit(uow: ISeedWorkUnitOfWork) -> None:
+    async with uow:
+        await uow.examples.add(Example(name="Hello"))
+        await uow.commit()
+
+    async with uow:
+        example = await uow.examples.get_by_id(1)
+        assert example.name == "Hello"
 
 
 @pytest.mark.integration
-async def test_can_commit(uow: IUnitOfWork) -> None:
-    await uow_imp.test_can_commit(uow)
+async def test_uow_can_rollback(uow: ISeedWorkUnitOfWork) -> None:
+    async with uow:
+        await uow.examples.add(Example(name="Hello"))
+        await uow.commit()
 
-
-@pytest.mark.integration
-async def test_can_commit_rollback_rollback_commit_commit_rollback(
-    uow,
-) -> None:
-    await uow_imp.test_can_commit_rollback_rollback_commit_commit_rollback(uow)
+    async with uow:
+        example = await uow.examples.get_by_id(1)
+        assert example.name == "Hello"

@@ -1,7 +1,9 @@
 import abc
+from collections.abc import Iterator
 from typing import Self
 
 from blog.domain.repositories import IPostRepository
+from seedwork.domain.events import Event
 
 
 class IGenericUnitOfWork(metaclass=abc.ABCMeta):
@@ -16,6 +18,9 @@ class IGenericUnitOfWork(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     async def rollback(self) -> None: ...
+
+    @abc.abstractmethod
+    def collect_events(self) -> Iterator[Event]: ...
 
 
 class IUnitOfWork(IGenericUnitOfWork, abc.ABC):

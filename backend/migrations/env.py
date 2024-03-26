@@ -10,7 +10,7 @@ from alembic import context
 sys.path.append(os.path.join(sys.path[0], 'src'))
 
 from container import config as app_config
-from seedwork.infra.database import Base
+from seedwork.infra.database import Model
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,7 +25,7 @@ config.set_main_option(
     "sqlalchemy.url", app_config.db_dsn + "?async_fallback=True"
 )
 
-target_metadata = [Base.metadata]
+target_metadata = [Model.metadata]
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

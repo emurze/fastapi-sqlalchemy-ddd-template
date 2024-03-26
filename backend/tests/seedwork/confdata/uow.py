@@ -8,5 +8,5 @@ class IExampleRepository(IGenericRepository, abc.ABC):
     pass
 
 
-class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
+class ISeedWorkUnitOfWork(IGenericUnitOfWork, abc.ABC):
     examples: IExampleRepository

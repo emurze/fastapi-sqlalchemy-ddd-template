@@ -10,6 +10,7 @@ from seedwork.domain.errors import Error, EntityAlreadyExistsError
 from seedwork.domain.uows import IUnitOfWork
 
 
+@dataclass(kw_only=True)
 class CreatePostCommand(Command):
     id: Optional[int] = None
     title: str
@@ -17,6 +18,7 @@ class CreatePostCommand(Command):
     draft: bool = False
 
 
+@dataclass(kw_only=True)
 class CreatePostPayload(DTO):
     id: int
 
@@ -27,7 +29,7 @@ async def create_post_handler(
 ) -> CommandResult:
     async with uow:
         try:
-            post = Post(**(command.as_dict(exclude_none=True)))
+            post = Post(**command.as_dict(exclude={'id'}))
         except ValidationError as e:
             return CommandResult(error=Error.validation(e.errors()))
 

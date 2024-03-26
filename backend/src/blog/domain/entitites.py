@@ -13,3 +13,4 @@ class Post(AggregateRoot):
     content: str = Field(max_length=256)
     draft: bool = False
     publisher: Publisher
+

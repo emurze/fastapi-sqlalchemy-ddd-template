@@ -3,13 +3,13 @@ from sqlalchemy import ForeignKey, Integer, Column
 from sqlalchemy.orm import registry, relationship
 
 from blog.domain.entitites import Post, Publisher
+from seedwork.infra.database import Model
 from seedwork.infra.functional import get_const
-from seedwork.infra.database import Base
 
 mapper_registry = registry()
 
 
-class PostModel(Base):
+class PostModel(Model):
     __tablename__ = "post"
     id = sa.Column("id", sa.BigInteger, primary_key=True)
     title = sa.Column(
@@ -31,7 +31,7 @@ class PostModel(Base):
     )
 
 
-class PublisherModel(Base):
+class PublisherModel(Model):
     __tablename__ = "publisher"
     id = sa.Column("id", sa.BigInteger, primary_key=True)
     name = sa.Column(

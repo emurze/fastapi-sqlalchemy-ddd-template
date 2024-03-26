@@ -1,5 +1,4 @@
 import abc
-from typing import List
 
 from seedwork.domain.entities import Entity
 
@@ -24,15 +23,6 @@ class IGenericRepository(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     async def count(self) -> int: ...
-
-    @abc.abstractmethod
-    async def list(self) -> List[Entity]: ...
-
-    @abc.abstractmethod
-    async def persist(self, entity: Entity) -> None: ...
-
-    @abc.abstractmethod
-    async def persist_all(self) -> None: ...
 
     @abc.abstractmethod
     def collect_events(self): ...

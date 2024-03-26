@@ -1,23 +1,23 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from seedwork.domain.repositories import IGenericRepository
-from tests.conftest import session_factory
-from tests.shared.confdata.entities import IExampleUnitOfWork
-from tests.shared.confdata.repositories import (
-    ExampleSqlAlchemyUnitOfWork,
-    ExampleSqlAlchemyRepository,
-)
+from tests.seedwork.confdata.container import SqlAlchemySeedWorkContainer
+from tests.seedwork.confdata.uow import ISeedWorkUnitOfWork, IExampleRepository
 
 
 @pytest.fixture(scope="function")
-def repo(session: AsyncSession, _restart_example_table) -> IGenericRepository:
-    return ExampleSqlAlchemyRepository(session)
+def sqlalchemy_seedwork_container():
+    return SqlAlchemySeedWorkContainer()
 
 
 @pytest.fixture(scope="function")
-def uow(_restart_example_table) -> IExampleUnitOfWork:
-    return ExampleSqlAlchemyUnitOfWork(
-        session_factory=session_factory,
-        examples=ExampleSqlAlchemyRepository,
-    )
+def uow(
+    sqlalchemy_seedwork_container,
+    _restart_example_table,
+) -> ISeedWorkUnitOfWork:
+    return sqlalchemy_seedwork_container.uow()
+
+
+@pytest.fixture(scope="function")
+async def repo(uow: ISeedWorkUnitOfWork) -> IExampleRepository:
+    async with uow:
+        yield uow.examples

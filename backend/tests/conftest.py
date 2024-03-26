@@ -13,7 +13,7 @@ from collections.abc import Iterator, AsyncIterator
 from starlette.testclient import TestClient
 
 from seedwork.infra.database import suppress_echo
-from seedwork.infra.database import Base
+from seedwork.infra.database import Model
 from tests.config import get_top_config
 from tests import container as co
 
@@ -37,8 +37,8 @@ async def _restart_tables() -> None:
     """
     async with engine.begin() as conn:
         async with suppress_echo(engine):
-            await conn.run_sync(Base.metadata.drop_all)
-            await conn.run_sync(Base.metadata.create_all)
+            await conn.run_sync(Model.metadata.drop_all)
+            await conn.run_sync(Model.metadata.create_all)
         await conn.commit()
 
 

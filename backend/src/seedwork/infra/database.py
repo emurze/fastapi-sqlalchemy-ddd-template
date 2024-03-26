@@ -5,8 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 
 
-class Base(DeclarativeBase):
+class Model(DeclarativeBase):
     __allow_unmapped__ = True
+    id: int
 
 
 @asynccontextmanager
