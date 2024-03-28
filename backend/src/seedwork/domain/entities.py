@@ -50,5 +50,4 @@ class AggregateRoot(Entity):
     def collect_events(self) -> list[Event]:
         events = self._events
         self._events = []
-        print(f"AGGREGATE ROOT {self._events=}")
         return events

@@ -12,9 +12,11 @@ from redis import asyncio as aioredis
 from health.presentation.api import router as health_router
 from blog.presentation.api import router as post_router
 
-from container import container, config
+from container import container
 from seedwork.infra.logging import configure_logging
 from seedwork.presentation import exception_handlers as eh
+
+config = container.config()
 
 
 @asynccontextmanager

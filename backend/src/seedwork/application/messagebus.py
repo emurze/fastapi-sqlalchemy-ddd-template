@@ -38,9 +38,9 @@ class MessageBus:
         handler = self.command_handlers[type(command)]
         result = await handler(command)
         events = self.uow.collect_events()
-        print(*events)
         self.queue += events
         self.queue += result.events
+        print(f"Events {self.queue}")
         return result
 
     async def _handle_query(self, query: Query) -> QueryResult:

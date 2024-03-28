@@ -19,11 +19,9 @@ def get_memory_test_container() -> AppContainer:
     """
 
     container = AppContainer()
-
-    # Post
-    post_repo = Link(PostInMemoryRepository)
-    container.post_repository.override(post_repo)
-
-    uow = Singleton(InMemoryUnitOfWork, posts=post_repo)
+    uow = Singleton(
+        InMemoryUnitOfWork,
+        posts=PostInMemoryRepository,
+    )
     container.uow.override(uow)
     return container

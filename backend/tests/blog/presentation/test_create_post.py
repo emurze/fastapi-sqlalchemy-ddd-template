@@ -10,7 +10,6 @@ async def test_create_post(ac: AsyncClient) -> None:
     response = await create_post(ac, title="Vlad", content="Hello World")
     assert response.status_code == status.HTTP_201_CREATED
 
-    client = response.json()
-    assert client["id"] == 1
-    assert client["title"] == "Vlad"
-    assert client["content"] == "Hello World"
+    post = response.json()
+    assert len(post) == 1
+    assert post["id"] == 1

@@ -48,6 +48,12 @@ async def _restart_cache() -> None:
     await cache_conn.flushdb(asynchronous=False)
 
 
+@pytest.fixture(scope="function")
+async def _restart_pubsub() -> None:
+    cache_conn = aioredis.Redis.from_url(config.pubsub_dsn)
+    await cache_conn.flushdb(asynchronous=False)
+
+
 # Application fixtures
 
 
@@ -93,7 +99,11 @@ async def session() -> AsyncIterator[AsyncSession]:
 
 
 @pytest.fixture(scope="function")
-async def ac(_restart_cache, _restart_tables) -> Iterator[TestClient]:
+async def ac(
+    _restart_cache,
+    _restart_pubsub,
+    _restart_tables,
+) -> Iterator[TestClient]:
     """
     Provides a configured async test client for end-to-end tests.
     """

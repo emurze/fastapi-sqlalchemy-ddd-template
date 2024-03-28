@@ -12,7 +12,6 @@ from tests.seedwork.confdata.repositories import (
 
 class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
     db_session_factory = Link(session_factory)
-
     uow = Singleton(
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,

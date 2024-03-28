@@ -4,12 +4,12 @@ from datetime import datetime
 from collections.abc import Callable
 from dataclasses import field
 from inspect import signature
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
 
-def get_first_param_annotation(func: Callable):
+def get_first_param_type(func: Callable):
     handler_signature = signature(func)
     kwargs_iterator = iter(handler_signature.parameters.items())
     _, first_param = next(kwargs_iterator)
@@ -27,8 +27,14 @@ def get_const(model: type[BaseModel], path: str) -> Any:
     _field = model.model_fields[_field_name]
 
     for item in _field.metadata:
-        value = getattr(item, constraint_name)
-        return value
+        return getattr(item, constraint_name)
+
+
+T = TypeVar("T")
+
+
+def mixin_for(_: T) -> T:
+    return object
 
 
 def id_int_gen() -> Iterator[int]:

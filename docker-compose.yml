@@ -60,8 +60,20 @@ services:
       - ./backend/cache:/etc/redis.conf
     restart: unless-stopped
 
+  pubsub:
+    image: 'redis:7'
+    container_name: 'pubsub'
+    command: redis-server /etc/redis.conf
+    networks:
+      - backend
+    volumes:
+      - pubsub_data:/data
+      - ./backend/pubsub:/etc/redis.conf
+    restart: unless-stopped
+
 volumes:
   cache_data:
+  pubsub_data:
   pgadmin_data:
   postgres_data:
 

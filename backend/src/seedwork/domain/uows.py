@@ -4,6 +4,7 @@ from typing import Self
 
 from blog.domain.repositories import IPostRepository
 from seedwork.domain.events import Event
+from seedwork.domain.repositories import IGenericRepository
 
 
 class IGenericUnitOfWork(metaclass=abc.ABCMeta):

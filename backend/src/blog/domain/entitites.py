@@ -1,6 +1,5 @@
 from pydantic import Field
 
-from blog.domain.events import PostAlreadyExist
 from seedwork.domain.entities import AggregateRoot, LocalEntity
 
 
@@ -14,7 +13,3 @@ class Post(AggregateRoot):
     content: str = Field(max_length=256)
     draft: bool = False
     # publisher: Publisher
-
-    def publish(self) -> None:
-        self.register_event(PostAlreadyExist("VLADOS"))
-

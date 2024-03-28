@@ -44,6 +44,7 @@ class SqlAlchemyRepository(IGenericRepository):
         self._identity_map = {}
 
     async def add(self, entity: Entity) -> NoReturn | int:
+        self._identity_map[entity.id] = entity
         try:
             stmt = (
                 insert(self.model_class)
@@ -54,7 +55,6 @@ class SqlAlchemyRepository(IGenericRepository):
             result = await self.session.execute(stmt)
             model = result.scalar_one()
             entity.insert_deferred_values(model)
-            self._identity_map[entity.id] = entity
             return entity.id
         except IntegrityError:
             raise EntityAlreadyExistsError()

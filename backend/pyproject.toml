@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fastapi-sqlalchemy-ddd"
+name = "online_shop"
 version = "0.1.0"
 description = ""
 authors = ["emurze <grayemurze@gmail.com>"]

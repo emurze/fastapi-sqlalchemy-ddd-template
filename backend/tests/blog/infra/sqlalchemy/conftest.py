@@ -1,14 +1,18 @@
-# import pytest
-# from sqlalchemy.ext.asyncio import AsyncSession
-#
-# from blog.domain.repositories import IPostUnitOfWork, IPostRepository
-#
-#
-# @pytest.fixture(scope="function")
-# def uow(sqlalchemy_container) -> IPostUnitOfWork:
-#     return sqlalchemy_container.post_uow()
-#
-#
-# @pytest.fixture(scope="function")
-# def post_repo(sqlalchemy_container, session: AsyncSession) -> IPostRepository:
-#     return sqlalchemy_container.post_repo(session)
+import pytest
+
+from blog.domain.repositories import IPostRepository
+from seedwork.domain.uows import IUnitOfWork
+
+
+@pytest.fixture(scope="function")
+def uow(sqlalchemy_container, _restart_tables) -> IUnitOfWork:
+    uow = sqlalchemy_container.uow()
+    print(uow.session_factory.kw['bind'].url)
+    print(dir(uow.session_factory))
+    return uow
+
+
+@pytest.fixture(scope="function")
+async def repo(uow: IUnitOfWork) -> IPostRepository:
+    async with uow:
+        yield uow.posts

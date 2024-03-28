@@ -11,16 +11,22 @@ from seedwork.domain.repositories import IGenericRepository
 from seedwork.domain.uows import IGenericUnitOfWork
 
 
-class SqlAlchemyUnitOfWork(IGenericUnitOfWork):
+class CollectEventsMixin:
     _repos: list[IGenericRepository]
 
+    def collect_events(self) -> Iterator[Event]:
+        for repo in self._repos:
+            for event in repo.collect_events():
+                yield event
+
+
+class SqlAlchemyUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
     def __init__(self, session_factory: Callable, **repo_classes) -> None:
         self.session_factory = session_factory
-        self._repo_classes = repo_classes
-        self._repos = []
+        self._repo_classes: dict = repo_classes
+        self._repos: list[IGenericRepository] = []
 
     async def __aenter__(self) -> Self:
-        print("UOW ENTER")
         self.session = self.session_factory()
         self._repos = self._set_repos_as_attrs(self.session)
         return self
@@ -42,26 +48,15 @@ class SqlAlchemyUnitOfWork(IGenericUnitOfWork):
             _repos.append(repo)
         return _repos
 
-    def collect_events(self) -> Iterator[Event]:
-        print(f"UOW {self=}")
-        print(f"{self.session=}")
-        print(f"{self._repos=}")
-        for repo in self._repos:
-            print(self._repos)
-            for event in repo.collect_events():
-                yield event
 
-
-class InMemoryUnitOfWork(IGenericUnitOfWork):
+class InMemoryUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
     """
     Persists memory in each repository.
     """
 
-    _repos: list[IGenericRepository]
-
     def __init__(self, **repo_classes: type[IGenericRepository]) -> None:
         self._is_committed = False
-        self._repos = self._set_repos_as_attrs(repo_classes)
+        self._repos: list = self._set_repos_as_attrs(repo_classes)
         self._memory_state: list[tuple[IGenericRepository, list]] = [
             (repo, []) for repo in self._repos
         ]
@@ -96,14 +91,7 @@ class InMemoryUnitOfWork(IGenericUnitOfWork):
 
     def _set_repos_as_attrs(self, cls_repos: dict) -> list[IGenericRepository]:
         _repos = []
-
         for attr, repo_cls in cls_repos.items():
             setattr(self, attr, repo := repo_cls())
             _repos.append(repo)
-
         return _repos
-
-    def collect_events(self) -> Iterator[Event]:
-        for repo in self._repos:
-            for event in repo.collect_events():
-                yield event

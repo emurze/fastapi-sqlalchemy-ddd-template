@@ -9,7 +9,7 @@ from alembic import context
 
 sys.path.append(os.path.join(sys.path[0], 'src'))
 
-from container import config as app_config
+from main import config as app_config
 from seedwork.infra.database import Model
 
 # this is the Alembic Config object, which provides

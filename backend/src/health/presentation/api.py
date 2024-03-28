@@ -14,6 +14,6 @@ router = APIRouter(prefix="/health", tags=["health"])
     response_model=s.HealthResponse,
     status_code=status.HTTP_200_OK,
 )
-async def health_check():
+async def check_health():
     lg.info('Running health check')
     return {"message": "I'm healthy!"}
