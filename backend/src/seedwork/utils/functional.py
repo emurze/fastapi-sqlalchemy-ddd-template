@@ -22,12 +22,9 @@ def invisible_field(default_factory: Callable):
     )
 
 
-def get_const(model: type[BaseModel], path: str) -> Any:
-    _field_name, constraint_name = path.split('.')
-    _field = model.model_fields[_field_name]
-
-    for item in _field.metadata:
-        return getattr(item, constraint_name)
+class classproperty(property):  # noqa
+    def __get__(self, cls, owner):  # noqa
+        return classmethod(self.fget).__get__(None, owner)()  # noqa
 
 
 T = TypeVar("T")
