@@ -4,11 +4,11 @@ from starlette import status
 from seedwork.domain.errors import ErrorType
 
 
-class Schema(BaseModel):
+class Scheme(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FailedJsonResponse(Schema):
+class FailedJsonResponse(Scheme):
     detail: str
 
 

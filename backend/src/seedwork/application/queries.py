@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from typing import Any
 
 from seedwork.application.dtos import DTO
@@ -10,8 +9,7 @@ class Query(DTO):
     pass
 
 
-@dataclass(kw_only=True)
 class QueryResult(DTO):
     payload: Any = None
-    events: list[Event] = field(default_factory=list)
+    events: list[Event] = []
     error: Error | NoneError = NoneError
