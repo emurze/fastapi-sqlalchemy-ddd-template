@@ -1,15 +1,18 @@
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, fields
 from typing import Any, Self
 
 
-@dataclass(slots=True)
 class DTO:
+    """
+    Inherit this DTO superclass to enhance your dataclass implementations.
+    """
+
     def as_dict(
         self,
         exclude: set | None = None,
-        exclude_none: bool = False,
+        exclude_none: bool = True,
     ) -> dict:
-        dto_dict = asdict(self)
+        dto_dict = asdict(self)  # noqa
 
         if exclude:
             for item in exclude:
@@ -20,8 +23,8 @@ class DTO:
 
         return dto_dict
 
-    def from_model(self, model: Any) -> Self:
-        for field in fields(self):
-            model_value = getattr(model, field.name)
-            setattr(self, field.name, model_value)
-        return self
+    @classmethod
+    def from_model(cls, model: Any) -> Self:
+        dto_cls_fields = fields(cls)  # noqa
+        model_kw = {f.name: getattr(model, f.name) for f in dto_cls_fields}
+        return cls(**model_kw)  # noqa

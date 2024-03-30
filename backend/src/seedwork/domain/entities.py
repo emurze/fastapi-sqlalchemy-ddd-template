@@ -1,4 +1,4 @@
-from typing import Iterator, Any, TypeVar, Generic, Self
+from typing import Iterator, Any, TypeVar, Generic, cast
 
 from pydantic import ConfigDict, BaseModel
 from pydantic.fields import FieldInfo
@@ -10,7 +10,7 @@ from seedwork.utils.functional import classproperty
 EntityId = TypeVar("EntityId")
 
 
-class Column:
+class FieldWrapper:
     def __init__(self, field: FieldInfo, entity: type[BaseModel]) -> None:
         self._entity = entity
         self._field = field
@@ -25,10 +25,8 @@ class EntityWrapper:
         self._entity = entity
 
     def __getattr__(self, field_name: str) -> Any:
-        return Column(self._entity.model_fields[field_name], self._entity)
-
-    def __getitem__(self, field_name: str) -> Any:
-        return self.__getattr__(field_name)
+        field_info = self._entity.model_fields[field_name]
+        return FieldWrapper(field_info, self._entity)
 
 
 class Entity(BaseModel, Generic[EntityId]):
@@ -51,8 +49,9 @@ class Entity(BaseModel, Generic[EntityId]):
         return super().model_dump(*args, **kw)
 
     @classproperty
-    def c(self: type[Self]) -> EntityWrapper:
-        return EntityWrapper(self)
+    def c(self) -> EntityWrapper:
+        cls = cast(type[BaseModel], self)
+        return EntityWrapper(cls)
 
     def update(self, **kw) -> None:
         assert kw.get("id") is None, "Entity can't update its identity."
@@ -60,8 +59,7 @@ class Entity(BaseModel, Generic[EntityId]):
             setattr(self, key, value)
 
     def __str__(self) -> str:
-        default_str = super().__str__()
-        return f"{type(self).__name__}({', '.join(default_str.split())})"
+        return f"{type(self).__name__}({', '.join(super().__str__().split())})"
 
 
 class LocalEntity(Entity):

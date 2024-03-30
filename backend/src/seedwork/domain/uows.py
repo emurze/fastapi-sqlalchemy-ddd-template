@@ -2,9 +2,8 @@ import abc
 from collections.abc import Iterator
 from typing import Self
 
-from blog.domain.repositories import IPostRepository
+from auth.domain.repositories import IAccountRepository
 from seedwork.domain.events import Event
-from seedwork.domain.repositories import IGenericRepository
 
 
 class IGenericUnitOfWork(metaclass=abc.ABCMeta):
@@ -25,4 +24,4 @@ class IGenericUnitOfWork(metaclass=abc.ABCMeta):
 
 
 class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
-    posts: IPostRepository
+    accounts: IAccountRepository

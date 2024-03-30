@@ -9,16 +9,15 @@ mapper_registry = registry()
 
 class PostModel(Model):
     __tablename__ = "post"
-    __mapper__ = Post.c
     id = sa.Column("id", sa.BigInteger, primary_key=True)
     title = sa.Column(
         "title",
-        sa.String(__mapper__.title.max_length),
+        sa.String(Post.c.title.max_length),
         nullable=False,
     )
     content = sa.Column(
         "content",
-        sa.String(__mapper__.content.max_length),
+        sa.String(Post.c.content.max_length),
         nullable=False,
     )
     draft = sa.Column("draft", sa.Boolean, default=False)
@@ -28,14 +27,7 @@ class PostModel(Model):
 
 class AuthorModel(Model):
     __tablename__ = "author"
-    __mapper__ = Author.c
     id = sa.Column("id", sa.BigInteger, primary_key=True)
-    name = sa.Column(
-        "name",
-        sa.String(__mapper__.name.max_length),
-        unique=True,
-        nullable=False,
-    )
     posts: list[PostModel] = relationship(
         PostModel,
         back_populates="author",

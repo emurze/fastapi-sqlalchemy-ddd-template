@@ -27,6 +27,15 @@ test_integration-backend:
 test_e2e-backend:
 	poe --root backend test_e2e
 
+test_domain-backend:
+	poe --root backend test_domain
+
+test_application-backend:
+	poe --root backend test_application
+
+test_infra-backend:
+	poe --root backend test_infra
+
 test_coverage-backend:
 	poe --root backend test_coverage
 

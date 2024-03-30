@@ -2,20 +2,16 @@ import pytest
 from asgi_lifespan import LifespanManager
 from httpx import AsyncClient
 from sqlalchemy import NullPool
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    async_sessionmaker,
-    AsyncSession,
-)
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from seedwork.application.messagebus import MessageBus
-from collections.abc import Iterator, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TypeAlias
 
-from starlette.testclient import TestClient
-
+from seedwork.domain.uows import IUnitOfWork
 from seedwork.infra.database import suppress_echo
 from seedwork.infra.database import Model
 from tests.config import get_top_config
-from tests import container as co
+from tests.container import override_app_container, get_memory_test_container
 
 from container import container as app_container
 from redis import asyncio as aioredis
@@ -24,10 +20,8 @@ config = get_top_config()
 engine = create_async_engine(config.db_dsn, echo=True, poolclass=NullPool)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-co.override_app_container(app_container, config, engine, session_factory)
-
-
-# Cleaners
+override_app_container(app_container, config, engine, session_factory)
+sqlalchemy_container: TypeAlias = app_container
 
 
 @pytest.fixture(scope="function")
@@ -54,48 +48,21 @@ async def _restart_pubsub() -> None:
     await cache_conn.flushdb(asynchronous=False)
 
 
-# Application fixtures
-
-
 @pytest.fixture(scope="function")
 def bus() -> MessageBus:
-    """
-    Fixture for Application tests.
-    """
-    memory_container = co.get_memory_test_container()
+    memory_container = get_memory_test_container()
     return memory_container.message_bus()
 
 
-# Infrastructure fixtures
+@pytest.fixture(scope="function")
+def memory_uow() -> IUnitOfWork:
+    memory_container = get_memory_test_container()
+    return memory_container.uow()
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_container(_restart_tables):
-    """
-    Provides sqlalchemy repositories and units of work.
-    """
-    return app_container
-
-
-@pytest.fixture(scope="function")
-def memory_container():
-    """
-    Provides memory repositories and units of work.
-    """
-    return co.get_memory_test_container()
-
-
-@pytest.fixture(scope="function")
-async def session() -> AsyncIterator[AsyncSession]:
-    """
-    This session is typically injected into repository classes for performing
-    database operations.
-    """
-    async with session_factory() as new_session:
-        yield new_session
-
-
-# End To End fixtures
+def sqlalchemy_uow(_restart_tables) -> IUnitOfWork:
+    return sqlalchemy_container.uow()
 
 
 @pytest.fixture(scope="function")
@@ -103,7 +70,7 @@ async def ac(
     _restart_cache,
     _restart_pubsub,
     _restart_tables,
-) -> Iterator[TestClient]:
+) -> AsyncIterator[AsyncClient]:
     """
     Provides a configured async test client for end-to-end tests.
     """

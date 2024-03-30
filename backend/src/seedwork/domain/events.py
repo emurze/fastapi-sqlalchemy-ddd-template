@@ -1,4 +1,5 @@
+from seedwork.application.dtos import DTO
 
 
-class Event:
+class Event(DTO):
     pass

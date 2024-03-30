@@ -1,5 +1,4 @@
 import itertools
-from dataclasses import dataclass
 from typing import NoReturn
 
 from sqlalchemy import select, insert, delete, func
@@ -9,38 +8,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from seedwork.domain.entities import Entity
 from seedwork.domain.errors import EntityAlreadyExistsError
 from seedwork.domain.events import Event
-from seedwork.domain.mapper import IMapper
+from seedwork.domain.mapper import IDataMapper
 from seedwork.domain.repositories import IGenericRepository
 
 from collections.abc import Callable, Iterator
 from typing import Any, Generator
 
 from seedwork.domain.value_objects import Deferred
-from seedwork.infra.database import Model
-
-
-@dataclass(frozen=True, slots=True)
-class Mapper(IMapper):
-    entity_class: type[Entity]
-    model_class: type[Model]
-
-    def entity_to_model(self, entity: Entity) -> Model:
-        # todo: Foreign Key problems
-        return self.model_class(**entity.model_dump())
-
-    def model_to_entity(self, model: Model) -> Entity:
-        # todo: Foreign Key problems
-        return self.entity_class.model_validate(model)
 
 
 class SqlAlchemyRepository(IGenericRepository):
-    entity_class: type[Entity]
-    model_class: type[Model]
-    mapper_class: type[IMapper] = Mapper
+    mapper_class: type[IDataMapper]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self._mapper = self.mapper_class(self.entity_class, self.model_class)
+        self.mapper = self.mapper_class()
+        self.model_class = self.mapper.model_class
         self._identity_map = {}
 
     async def add(self, entity: Entity) -> NoReturn | int:
@@ -86,7 +69,7 @@ class SqlAlchemyRepository(IGenericRepository):
         if model is None:
             return None
 
-        entity = self._mapper.model_to_entity(model)
+        entity = self.mapper.model_to_entity(model)
 
         # Saves store_entity events
         if store_entity := self._identity_map.get(entity.id):
@@ -129,10 +112,12 @@ class GeneratorsManager:
 
 
 class InMemoryRepository(IGenericRepository):
-    entity_class: type[Entity]
+    mapper_class: type[IDataMapper]
     field_gens: dict[str, Callable]
 
     def __init__(self, gen_manager: type[Any] = GeneratorsManager) -> None:
+        self.mapper = self.mapper_class()
+        self.entity_class = self.mapper.entity_class
         self._objects: dict[int, Entity] = {}
         self._gen_manager = gen_manager(self.field_gens)
 

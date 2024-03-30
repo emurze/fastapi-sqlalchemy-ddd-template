@@ -6,10 +6,7 @@ from seedwork.domain.uows import IUnitOfWork
 
 @pytest.fixture(scope="function")
 def uow(sqlalchemy_container, _restart_tables) -> IUnitOfWork:
-    uow = sqlalchemy_container.uow()
-    print(uow.session_factory.kw['bind'].url)
-    print(dir(uow.session_factory))
-    return uow
+    return sqlalchemy_container.uow()
 
 
 @pytest.fixture(scope="function")

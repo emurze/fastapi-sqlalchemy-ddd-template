@@ -9,6 +9,7 @@ class PostRequest(Schema):
     title: str
     content: str
     draft: bool = False
+    author_id: int
 
 
 class PostResponse(Schema):
@@ -16,3 +17,4 @@ class PostResponse(Schema):
     title: str
     content: str
     draft: bool = False
+    author_id: int

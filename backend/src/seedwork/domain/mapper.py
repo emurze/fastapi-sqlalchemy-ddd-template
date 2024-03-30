@@ -4,7 +4,10 @@ from typing import Any as Model
 from seedwork.domain.entities import Entity
 
 
-class IMapper(abc.ABC):
+class IDataMapper(abc.ABC):
+    entity_class: type[Entity]
+    model_class: type[Model]
+
     @abc.abstractmethod
     def entity_to_model(self, entity: Entity) -> Model: ...
 

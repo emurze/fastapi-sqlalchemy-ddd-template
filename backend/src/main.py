@@ -10,7 +10,6 @@ from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
 from health.presentation.api import router as health_router
-from blog.presentation.api import router as post_router
 
 from container import container
 from seedwork.infra.logging import configure_logging
@@ -38,7 +37,6 @@ app = FastAPI(
     secret_key=config.secret_key,
     container=container,
 )
-app.include_router(post_router)
 app.include_router(health_router)
 
 app.add_exception_handler(SystemError, eh.server_error_exception_handler)

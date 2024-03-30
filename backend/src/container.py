@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TypeAlias
+from typing import TypeAlias, Any
 
 from dependency_injector import containers
 from dependency_injector.providers import Singleton
@@ -9,16 +9,13 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from blog.application.command.create_post import create_post_handler
-from blog.application.command.delete_post import delete_post_handler
-from blog.application.command.update_post import update_post_handler
-from blog.application.event.notify_developers import notify_developers
-from blog.infra.repositories import PostSqlAlchemyRepository
+from auth.application.command.register_account import register_account_handler
+from auth.infra.repositories import AccountSqlAlchemyRepository
 from config import TopLevelConfig
 from seedwork.application.messagebus import MessageBus, Message
 from seedwork.domain.uows import IUnitOfWork
-from seedwork.infra.functional import get_first_param_type
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
+from seedwork.utils.functional import get_first_param_type
 
 WrappedHandler: TypeAlias = Callable
 
@@ -65,23 +62,22 @@ class AppContainer(containers.DeclarativeContainer):
     db_session_factory = Singleton(get_session_factory, db_engine)
 
     # Infrastructure
-    uow = Singleton(
+    uow: Any = Singleton(
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        posts=PostSqlAlchemyRepository,
+        accounts=AccountSqlAlchemyRepository,
     )
 
     # Application
-    query_handlers = Singleton(get_dict)
+    query_handlers = Singleton(
+        get_dict,
+    )
     command_handlers = Singleton(
         get_dict,
-        Singleton(get_handler, create_post_handler, uow=uow),
-        Singleton(get_handler, update_post_handler, uow=uow),
-        Singleton(get_handler, delete_post_handler, uow=uow)
+        Singleton(get_handler, register_account_handler, uow=uow),
     )
     event_handlers = Singleton(
         get_dict,
-        Singleton(get_handler, notify_developers),
     )
     message_bus = Singleton(
         get_bus,
