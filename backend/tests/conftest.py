@@ -10,6 +10,7 @@ from typing import TypeAlias
 from seedwork.domain.uows import IUnitOfWork
 from seedwork.infra.database import suppress_echo
 from seedwork.infra.database import Model
+from seedwork.infra.uows import SqlAlchemyUnitOfWork
 from tests.config import get_top_config
 from tests.container import override_app_container, get_memory_test_container
 
@@ -61,7 +62,13 @@ def memory_uow() -> IUnitOfWork:
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_uow(_restart_tables) -> IUnitOfWork:
+def sqlalchemy_bus() -> MessageBus:
+    return sqlalchemy_container.message_bus()
+
+
+@pytest.fixture(scope="function")
+def sqlalchemy_uow() -> IUnitOfWork:
+    print("1", sqlalchemy_container.uow())
     return sqlalchemy_container.uow()
 
 

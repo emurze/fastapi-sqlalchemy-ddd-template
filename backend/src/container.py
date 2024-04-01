@@ -2,7 +2,8 @@ from collections.abc import Callable
 from typing import TypeAlias, Any
 
 from dependency_injector import containers
-from dependency_injector.providers import Singleton
+from dependency_injector.providers import Singleton, ThreadSafeSingleton, \
+    ThreadLocalSingleton, Factory
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     async_sessionmaker,
@@ -43,13 +44,11 @@ def get_session_factory(engine: AsyncEngine) -> Callable:
 
 
 def get_bus(
-    uow: IUnitOfWork,
     query_handlers: dict[type[Message], WrappedHandler],
     command_handlers: dict[type[Message], WrappedHandler],
     event_handlers: dict[type[Message], WrappedHandler],
 ) -> MessageBus:
     return MessageBus(
-        uow=uow,
         query_handlers=query_handlers,
         command_handlers=command_handlers,
         event_handlers=event_handlers,
@@ -62,7 +61,8 @@ class AppContainer(containers.DeclarativeContainer):
     db_session_factory = Singleton(get_session_factory, db_engine)
 
     # Infrastructure
-    uow: Any = Singleton(
+    uow_factory: Any = Factory(
+        Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
         accounts=AccountSqlAlchemyRepository,
@@ -74,14 +74,17 @@ class AppContainer(containers.DeclarativeContainer):
     )
     command_handlers = Singleton(
         get_dict,
-        Singleton(get_handler, register_account_handler, uow=uow),
+        Singleton(
+            get_handler,
+            register_account_handler,
+            uow_factory=uow_factory
+        )
     )
     event_handlers = Singleton(
         get_dict,
     )
     message_bus = Singleton(
         get_bus,
-        uow=uow,
         query_handlers=query_handlers,
         command_handlers=command_handlers,
         event_handlers=event_handlers,

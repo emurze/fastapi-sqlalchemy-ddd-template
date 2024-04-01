@@ -1,48 +1,38 @@
-from dataclasses import dataclass
-
 import pytest
+from pydantic import ValidationError
 
 from seedwork.application.dtos import DTO
 
 
-@dataclass(frozen=True, slots=True)
 class CatDto(DTO):
     id: int
     name: str
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
-class CatWithNoneDto(DTO):
-    id: int | None = None
-    name: str
+@pytest.mark.unit
+def test_dto_can_be_initialized() -> None:
+    CatDto(id=100, name="Bars")
 
 
 @pytest.mark.unit
-def test_as_dict_can_create_dict() -> None:
-    cat_dto = CatDto(id=1, name="Bobby")
-    assert cat_dto.as_dict() == {"id": 1, "name": "Bobby"}
+def test_dto_has_dynamic_validation() -> None:
+    with pytest.raises(ValidationError):
+        CatDto(id="melon", name="hello")
 
 
 @pytest.mark.unit
-def test_as_dict_can_miss_none_values_by_default() -> None:
-    cat_dto = CatWithNoneDto(name="Bobby")
-    assert cat_dto.as_dict() == {"name": "Bobby"}
+def test_dto_is_immutable() -> None:
+    cat = CatDto(id=1, name="hello")
+    with pytest.raises(ValidationError):
+        cat.name = "hello world"
 
 
 @pytest.mark.unit
-def test_as_dict_cannot_miss_none_values() -> None:
-    cat_dto = CatWithNoneDto(name="Bobby")
-    assert cat_dto.as_dict(exclude_none=True) == {"name": "Bobby"}
+def test_dto_allows_arbitrary_types() -> None:
+    class Ref:
+        pass
 
+    class Dog(DTO):
+        ref: Ref
 
-@pytest.mark.unit
-def test_as_dict_can_exclude_keys() -> None:
-    cat_dto = CatDto(id=1, name="Bobby")
-    assert cat_dto.as_dict(exclude={"name"}) == {"id": 1}
-
-
-@pytest.mark.unit
-def test_from_model_can_create_dto() -> None:
-    cat_dto = CatDto(id=1, name="Bobby")
-    new_cat_dto = CatDto.from_model(cat_dto)
-    assert new_cat_dto.as_dict() == {"id": 1, "name": "Bobby"}
+    assert Dog(ref=Ref())

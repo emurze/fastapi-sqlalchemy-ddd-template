@@ -20,7 +20,7 @@ def get_memory_test_container() -> AppContainer:
 
     container = AppContainer()
     container.uow.override(
-        providers.Singleton(
+        providers.Factory(
             InMemoryUnitOfWork,
             accounts=AccountInMemoryRepository,
         )

@@ -54,7 +54,7 @@ app.add_middleware(
 
 
 if __name__ == '__main__':
-    extra_kw = {}
+    extra_kw: dict = {}
 
     if config.debug:
         extra_kw["reload"] = True

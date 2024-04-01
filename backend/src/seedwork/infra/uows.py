@@ -1,5 +1,6 @@
+import asyncio
 import copy
-from typing import Iterator
+from typing import Iterator, Any
 
 from collections.abc import Callable
 from typing import Self
@@ -22,13 +23,11 @@ class CollectEventsMixin:
 
 class SqlAlchemyUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
     def __init__(self, session_factory: Callable, **repo_classes) -> None:
-        self.session_factory = session_factory
-        self._repo_classes: dict = repo_classes
-        self._repos: list[IGenericRepository] = []
+        self.session = session_factory()
+        self._repo_classes = repo_classes
+        self._repos = self._set_repos_as_attrs(self.session)
 
     async def __aenter__(self) -> Self:
-        self.session = self.session_factory()
-        self._repos = self._set_repos_as_attrs(self.session)
         return self
 
     async def __aexit__(self, *args) -> None:
@@ -37,6 +36,9 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
 
     async def commit(self) -> None:
         await self.session.commit()
+
+    async def execute(self, command: Any) -> Any:
+        return await self.session.execute(command)
 
     async def rollback(self) -> None:
         await self.session.rollback()

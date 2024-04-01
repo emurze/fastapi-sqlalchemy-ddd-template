@@ -13,7 +13,6 @@ Result: TypeAlias = CommandResult | QueryResult | EventResult
 
 @dataclass(slots=True)
 class MessageBus:
-    uow: IUnitOfWork
     command_handlers: dict[type[Command], Callable]
     query_handlers: dict[type[Query], Callable]
     event_handlers: dict[type[Event], Callable]
@@ -36,8 +35,8 @@ class MessageBus:
 
     async def _handle_command(self, command: Command) -> CommandResult:
         handler = self.command_handlers[type(command)]
+        print(f"{handler=}")
         result = await handler(command)
-        self.queue += self.uow.collect_events()
         self.queue += result.events
         print(f"Events {self.queue}")
         return result
@@ -45,7 +44,6 @@ class MessageBus:
     async def _handle_query(self, query: Query) -> QueryResult:
         handler = self.query_handlers[type(query)]
         result = await handler(query)
-        self.queue += self.uow.collect_events()  # 7??
         self.queue += result.events
         return result
 
