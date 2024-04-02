@@ -5,7 +5,6 @@ from seedwork.application.commands import Command, CommandResult
 from seedwork.application.events import EventResult
 from seedwork.application.queries import Query, QueryResult
 from seedwork.domain.events import Event
-from seedwork.domain.uows import IUnitOfWork
 
 Message: TypeAlias = Command | Query | Event
 Result: TypeAlias = CommandResult | QueryResult | EventResult
@@ -35,7 +34,6 @@ class MessageBus:
 
     async def _handle_command(self, command: Command) -> CommandResult:
         handler = self.command_handlers[type(command)]
-        print(f"{handler=}")
         result = await handler(command)
         self.queue += result.events
         print(f"Events {self.queue}")

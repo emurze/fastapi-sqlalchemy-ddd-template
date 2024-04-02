@@ -1,4 +1,5 @@
 from dependency_injector import providers
+from dependency_injector.providers import Factory
 
 from auth.infra.repositories import AccountInMemoryRepository
 from src.container import AppContainer
@@ -21,6 +22,7 @@ def get_memory_test_container() -> AppContainer:
     container = AppContainer()
     container.uow.override(
         providers.Factory(
+            Factory,
             InMemoryUnitOfWork,
             accounts=AccountInMemoryRepository,
         )

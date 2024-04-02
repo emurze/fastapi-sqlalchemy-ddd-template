@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Any, Optional
 
 from seedwork.application.dtos import DTO
-from seedwork.domain.errors import Error, NoneError
+from seedwork.domain.errors import Error
 from seedwork.domain.events import Event
 
 
@@ -12,4 +12,4 @@ class Query(DTO):
 class QueryResult(DTO):
     payload: Any = None
     events: list[Event] = []
-    error: Error | NoneError = NoneError
+    error: Optional[Error] = None

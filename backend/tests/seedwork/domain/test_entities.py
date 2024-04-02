@@ -94,14 +94,14 @@ class TestAggregateRoot:
     @pytest.mark.unit
     def test_register_event_can_register_only_one_event_at_time(self) -> None:
         example = Example(name="hello")
-        example.register_event(NameChanged("helloo"))
+        example.register_event(NameChanged(new_name="helloo"))
         assert len(example._events) == 1
         assert example._events[0] == NameChanged(new_name="helloo")
 
     @pytest.mark.unit
     def test_collect_events_dont_duplicate_events(self) -> None:
         example = Example(name="hello")
-        example.register_event(NameChanged("helloo"))
+        example.register_event(NameChanged(new_name="helloo"))
         events = example.collect_events()
         assert len(events) == 1
         assert events[0] == NameChanged(new_name="helloo")
@@ -109,6 +109,6 @@ class TestAggregateRoot:
     @pytest.mark.unit
     def test_collect_events_can_clean_events_after_collecting(self) -> None:
         example = Example(name="hello")
-        example.register_event(NameChanged("helloo"))
+        example.register_event(NameChanged(new_name="helloo"))
         example.collect_events()
         assert len(example._events) == 0

@@ -124,3 +124,15 @@ class FakePostRepository(IPostRepository):
    * future tests for it will be small
 
 2. Not always you need all of it like when you have a simple CRUD.
+
+### Error Handling Flow
+
+1. Presentation validation
+2. Validated data maps to consistent(pydantic) command
+3. Application returns result with errors from domain, infrastructure
+4. Presentation raises result errors
+
+### Slang
+
+1. Architecture style is a pattern that is followed by a entire application.
+2. Architecture pattern is a pattern that is followed by a part of code.

@@ -1,5 +1,7 @@
+from typing import Any
+
 from dependency_injector import containers
-from dependency_injector.providers import Singleton
+from dependency_injector.providers import Singleton, Factory
 
 from seedwork.infra.injector import Link
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
@@ -12,15 +14,19 @@ from tests.seedwork.confdata.repositories import (
 
 class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
     db_session_factory = Link(session_factory)
-    uow = Singleton(
+    uow: Any = Factory(
+        Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
         examples=ExampleSqlAlchemyRepository,
     )
 
 
-class MemorySeedWorkContainer(containers.DeclarativeContainer):
-    uow = Singleton(
-        InMemoryUnitOfWork,
-        examples=ExampleInMemoryRepository,
+def override_to_in_memory_container(container):
+    container.uow.override(
+        Factory(
+            Factory,
+            InMemoryUnitOfWork,
+            examples=ExampleInMemoryRepository,
+        )
     )

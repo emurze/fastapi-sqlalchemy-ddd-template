@@ -2,8 +2,7 @@ from collections.abc import Callable
 from typing import TypeAlias, Any
 
 from dependency_injector import containers
-from dependency_injector.providers import Singleton, ThreadSafeSingleton, \
-    ThreadLocalSingleton, Factory
+from dependency_injector.providers import Singleton, Factory
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     async_sessionmaker,
@@ -14,21 +13,10 @@ from auth.application.command.register_account import register_account_handler
 from auth.infra.repositories import AccountSqlAlchemyRepository
 from config import TopLevelConfig
 from seedwork.application.messagebus import MessageBus, Message
-from seedwork.domain.uows import IUnitOfWork
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
 from seedwork.utils.functional import get_first_param_type
 
 WrappedHandler: TypeAlias = Callable
-
-
-def get_handler(handler, *args, **kw) -> dict[type[Message], WrappedHandler]:
-    def wrapper(message):
-        return handler(message, *args, **kw)
-    return {get_first_param_type(handler): wrapper}
-
-
-def get_dict(*handlers: dict) -> dict[type[Message], WrappedHandler]:
-    return {k: v for handler in handlers for k, v in handler.items()}
 
 
 def get_config() -> TopLevelConfig:
@@ -55,13 +43,30 @@ def get_bus(
     )
 
 
+def get_dict(*handlers: dict) -> dict[type[Message], WrappedHandler]:
+    return {k: v for handler in handlers for k, v in handler.items()}
+
+
+def get_handler(handler, *args, **kw) -> dict[type[Message], WrappedHandler]:
+    async def wrapper(message):
+        new_kw = None
+
+        if uow_factory := kw.get('uow'):
+            new_kw = kw.copy()
+            new_kw['uow'] = uow_factory()
+
+        return await handler(message, *args, **(new_kw or kw))
+
+    return {get_first_param_type(handler): wrapper}
+
+
 class AppContainer(containers.DeclarativeContainer):
     config = Singleton(get_config)
     db_engine = Singleton(get_engine, config)
     db_session_factory = Singleton(get_session_factory, db_engine)
 
     # Infrastructure
-    uow_factory: Any = Factory(
+    uow: Any = Factory(
         Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
@@ -69,20 +74,12 @@ class AppContainer(containers.DeclarativeContainer):
     )
 
     # Application
-    query_handlers = Singleton(
-        get_dict,
-    )
+    query_handlers = Singleton(get_dict)
     command_handlers = Singleton(
         get_dict,
-        Singleton(
-            get_handler,
-            register_account_handler,
-            uow_factory=uow_factory
-        )
+        Singleton(get_handler, register_account_handler, uow=uow)
     )
-    event_handlers = Singleton(
-        get_dict,
-    )
+    event_handlers = Singleton(get_dict)
     message_bus = Singleton(
         get_bus,
         query_handlers=query_handlers,

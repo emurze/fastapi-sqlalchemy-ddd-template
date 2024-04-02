@@ -1,23 +1,18 @@
-from typing import TypeAlias
+from typing import Any, TypeVar
 
 from black import Optional
 from fastapi import HTTPException
-from starlette.responses import JSONResponse
 
 from seedwork.presentation.json_dtos import STATUS_CODES
 
+T = TypeVar('T')
 
-def handle_errors(result, errors: Optional[list] = None) -> None:
+
+def handle_errors(result: Any, errors: Optional[list] = None) -> None:
+    assert errors is not None, "Please pass the errors being processed."
+
     if result.error and result.error.type in errors:
         raise HTTPException(
             status_code=STATUS_CODES[result.error.type],
             detail=result.error.detail,
         )
-
-
-def _get_response(payload, schema, status_code: int) -> JSONResponse:
-    model = schema.model_validate(payload)
-    return JSONResponse(model.model_dump(), status_code)
-
-
-Response: TypeAlias = _get_response

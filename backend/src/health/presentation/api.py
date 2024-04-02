@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter
 from starlette import status
 
-from health.presentation import schemes as s
+from health.presentation import schemas as s
 
 lg = logging.getLogger(__name__)
 router = APIRouter(prefix="/health", tags=["health"])

@@ -42,10 +42,5 @@ class Error:
         return cls(type=ErrorType.SYSTEM, detail=detail)
 
 
-class NoneError:
-    type = None
-    details = None
-
-
 class EntityAlreadyExistsError(Exception):
     pass

@@ -9,6 +9,7 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
+from auth.presentation.api import auth_router
 from health.presentation.api import router as health_router
 
 from container import container
@@ -38,6 +39,7 @@ app = FastAPI(
     container=container,
 )
 app.include_router(health_router)
+app.include_router(auth_router)
 
 app.add_exception_handler(SystemError, eh.server_error_exception_handler)
 
