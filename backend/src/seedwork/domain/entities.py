@@ -30,7 +30,11 @@ class EntityWrapper:
 
 
 class Entity(BaseModel, Generic[EntityId]):
-    model_config = ConfigDict(validate_assignment=True, from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
+    )
     id: deferred[EntityId] = Deferred
 
     def _get_deferred_fields(self) -> Iterator[str]:

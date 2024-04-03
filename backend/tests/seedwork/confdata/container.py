@@ -1,7 +1,7 @@
 from typing import Any
 
 from dependency_injector import containers
-from dependency_injector.providers import Singleton, Factory
+from dependency_injector.providers import Factory
 
 from seedwork.infra.injector import Link
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
@@ -22,11 +22,9 @@ class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
     )
 
 
-def override_to_in_memory_container(container):
-    container.uow.override(
-        Factory(
-            Factory,
-            InMemoryUnitOfWork,
-            examples=ExampleInMemoryRepository,
-        )
+class MemorySeedWorkContainer(containers.DeclarativeContainer):
+    uow: Any = Factory(
+        Factory,
+        InMemoryUnitOfWork,
+        examples=ExampleInMemoryRepository,
     )

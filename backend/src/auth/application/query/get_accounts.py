@@ -10,5 +10,6 @@ class GetAccountsQuery(Query):
 
 
 async def get_accounts_handler(query: GetAccountsQuery, session: AsyncSession):
+    # Try to implement query builder pattern
     stmt = select()
     await session.execute(stmt)
