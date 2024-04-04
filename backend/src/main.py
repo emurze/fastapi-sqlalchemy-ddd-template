@@ -13,18 +13,16 @@ from auth.presentation.api import auth_router
 from health.presentation.api import router as health_router
 
 from container import container
-from seedwork.infra.logging import configure_logging
-from seedwork.presentation import exception_handlers as eh
 
 config = container.config()
+config.configure_logging()
 
 
 @asynccontextmanager
 async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
-    configure_logging(config.log_level)
     redis = aioredis.from_url(
         config.cache_dsn,
-        encoding="utf8",
+        encoding=config.encoding,
         decode_responses=True,
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
@@ -33,22 +31,21 @@ async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
 
 lg = logging.getLogger(__name__)
 app = FastAPI(
-    title=config.project_title,
+    docs_url=config.docs_url,
+    redoc_url=config.redoc_url,
+    title=config.title,
+    version=config.version,
     lifespan=lifespan,
     secret_key=config.secret_key,
     container=container,
+    config=config,
 )
 app.include_router(health_router)
 app.include_router(auth_router)
 
-app.add_exception_handler(SystemError, eh.server_error_exception_handler)
-
-origins = [
-    "http://frontend:3000",
-]
 app.add_middleware(
     CORSMiddleware,  # noqa
-    allow_origins=origins,
+    allow_origins=config.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,6 +58,8 @@ if __name__ == '__main__':
     if config.debug:
         extra_kw["reload"] = True
 
+    # todo: run this for production
+    # gunicorn example:app -w 4 -k uvicorn.workers.UvicornWorker
     uvicorn.run(
         app="main:app",
         host=config.host,

@@ -13,7 +13,7 @@ def override_app_container(container, config, engine, session_factory) -> None:
     container.db_session_factory.override(Link(session_factory))
 
 
-def get_memory_test_container() -> AppContainer:
+def get_memory_container() -> AppContainer:
     """
     Override infrastructure from SQLAlchemy to memory repositories
     and units of work
@@ -21,7 +21,7 @@ def get_memory_test_container() -> AppContainer:
 
     container = AppContainer()
     container.uow.override(
-        providers.Factory(
+        providers.Singleton(
             Factory,
             InMemoryUnitOfWork,
             accounts=AccountInMemoryRepository,

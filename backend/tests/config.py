@@ -1,8 +1,7 @@
 from pydantic import SecretStr, Field
 from pydantic_settings import BaseSettings
 
-from config import TopLevelConfig
-from seedwork.infra.logging import LogLevel
+from src.config import TopLevelConfig, LogLevel
 
 
 class TestPubsubConfig(BaseSettings):
@@ -61,22 +60,19 @@ class TestCacheConfig(BaseSettings):
 
 
 class TestTopLevelConfig(BaseSettings):
-    project_title_in: str = Field(validation_alias="project_title")
-    db_dsn: str = Field(default_factory=TestDatabaseConfig.get_dsn)
-    cache_dsn: str = Field(default_factory=TestCacheConfig.get_dsn)
-    pubsub_dsn: str = Field(default_factory=TestPubsubConfig.get_dsn)
-
-    @property
-    def project_title(self) -> str:
-        return f"Test {self.project_title_in}"
+    test_title: str = "Test"
+    test_log_level: str = LogLevel.info
+    test_db_dsn: str = Field(default_factory=TestDatabaseConfig.get_dsn)
+    test_cache_dsn: str = Field(default_factory=TestCacheConfig.get_dsn)
+    test_pubsub_dsn: str = Field(default_factory=TestPubsubConfig.get_dsn)
 
 
 def get_top_config() -> TopLevelConfig:
     test_config = TestTopLevelConfig()
     return TopLevelConfig(
-        log_level=LogLevel.debug,
-        project_title=test_config.project_title,
-        db_dsn=test_config.db_dsn,
-        cache_dsn=test_config.cache_dsn,
-        pubsub_dsn=test_config.pubsub_dsn,
+        log_level=test_config.test_log_level,  # type: ignore
+        title=test_config.test_title,
+        db_dsn=test_config.test_db_dsn,
+        cache_dsn=test_config.test_cache_dsn,
+        pubsub_dsn=test_config.test_pubsub_dsn,
     )

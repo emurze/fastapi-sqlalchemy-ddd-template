@@ -26,4 +26,5 @@ async def register_account_handler(
             return CommandResult(error=Error.validation(e.errors()))
 
         await uow.commit()
-        return CommandResult(payload=RegisterAccountPayload(id=account_id))
+
+    return CommandResult(payload=RegisterAccountPayload(id=account_id))

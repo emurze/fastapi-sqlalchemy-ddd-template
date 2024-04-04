@@ -2,7 +2,7 @@ import pytest
 
 from seedwork.infra.database import suppress_echo
 from tests.conftest import engine
-from tests.seedwork.confdata.database import TestModel
+from tests.seedwork.confdata.infra.database import TestModel
 
 
 @pytest.fixture(scope="function")

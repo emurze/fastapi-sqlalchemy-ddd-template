@@ -1,7 +1,7 @@
 import pytest
 
-from tests.seedwork.confdata.entities import Example
-from tests.seedwork.confdata.uow import IExampleRepository
+from tests.seedwork.confdata.domain.entities import Example
+from tests.seedwork.confdata.infra.uow import IExampleRepository
 
 
 @pytest.mark.unit

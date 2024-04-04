@@ -24,7 +24,12 @@ def get_config() -> TopLevelConfig:
 
 
 def get_engine(top_config: TopLevelConfig) -> AsyncEngine:
-    return create_async_engine(top_config.db_dsn, echo=top_config.db_echo)
+    return create_async_engine(
+        top_config.db_dsn,
+        echo=top_config.db_echo,
+        pool_size=top_config.pool_size,
+        max_overflow=top_config.pool_max_overflow,
+    )
 
 
 def get_session_factory(engine: AsyncEngine) -> Callable:
@@ -48,7 +53,13 @@ def get_dict(*handlers: dict) -> dict[type[Message], WrappedHandler]:
 
 
 def get_handler(handler, *args, **kw) -> dict[type[Message], WrappedHandler]:
-    async def wrapper(message):
+    async def wrapper(message: Message) -> Any:
+        """
+        Wraps the provided handler function to accept a message
+        and ensures the creation of a new unit of work
+        if a factory with "uow" name is provided.
+        """
+
         new_kw = None
 
         if uow_factory := kw.get('uow'):
@@ -66,7 +77,7 @@ class AppContainer(containers.DeclarativeContainer):
     db_session_factory = Singleton(get_session_factory, db_engine)
 
     # Infrastructure
-    uow: Any = Factory(
+    uow: Any = Singleton(
         Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,

@@ -1,11 +1,11 @@
 import pytest
 
-from tests.seedwork.confdata.entities import Example
-from tests.seedwork.confdata.uow import ISeedWorkUnitOfWork
+from tests.seedwork.confdata.domain.entities import Example
+from tests.seedwork.confdata.infra.uow import ITestUnitOfWork
 
 
 @pytest.mark.integration
-async def test_uow_can_commit(uow: ISeedWorkUnitOfWork) -> None:
+async def test_uow_can_commit(uow: ITestUnitOfWork) -> None:
     async with uow:
         await uow.examples.add(Example(name="Hello"))
         await uow.commit()
@@ -16,7 +16,7 @@ async def test_uow_can_commit(uow: ISeedWorkUnitOfWork) -> None:
 
 
 @pytest.mark.integration
-async def test_uow_can_rollback(uow: ISeedWorkUnitOfWork) -> None:
+async def test_uow_can_rollback(uow: ITestUnitOfWork) -> None:
     async with uow:
         await uow.examples.add(Example(name="Hello"))
         await uow.commit()
@@ -28,7 +28,7 @@ async def test_uow_can_rollback(uow: ISeedWorkUnitOfWork) -> None:
 
 @pytest.mark.integration
 async def test_uow_can_commit_commit_rollback_rollback_commit(
-    uow: ISeedWorkUnitOfWork,
+    uow: ITestUnitOfWork,
 ) -> None:
     # COMMIT
     async with uow:

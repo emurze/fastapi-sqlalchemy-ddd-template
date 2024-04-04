@@ -423,3 +423,19 @@ class PublisherRepository(
 3. relationship(secondary=TableName), ManyToMany ???
 
 4. contains_eager ???
+
+
+### NullPool constraints you to make your tests small.
+
+- Because db has max_connections property that is limited
+
+- You can write only one concurrent test for your uow
+
+
+### Transactions rewrites session instance
+
+- It's allowed only in sequence of transaction, not in concurrent(async) flow
+
+- But Async flow requires creating one new uow per handler, so that a uow is always async-safe
+
+### Pool should have pool_size=10, max_overflow=0,

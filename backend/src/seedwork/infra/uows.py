@@ -28,10 +28,12 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
 
     async def __aenter__(self) -> Self:
         self.session = self._session_factory()
+        print(f'ENTER {self.session}')
         self._repos = self._set_repos_as_attrs(self.session)
         return self
 
     async def __aexit__(self, *args) -> None:
+        print(f'EXIT {self.session}')
         await self.rollback()
         await self.session.close()
 

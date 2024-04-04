@@ -11,12 +11,13 @@ from seedwork.domain.uows import IUnitOfWork
 from seedwork.infra.database import suppress_echo
 from seedwork.infra.database import Model
 from tests.config import get_top_config
-from tests.container import override_app_container, get_memory_test_container
+from tests.container import override_app_container, get_memory_container
 
 from container import container as app_container
 from redis import asyncio as aioredis
 
 config = get_top_config()
+config.configure_logging()
 engine = create_async_engine(config.db_dsn, echo=True, poolclass=NullPool)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -50,13 +51,13 @@ async def _restart_pubsub() -> None:
 
 @pytest.fixture(scope="function")
 def bus() -> MessageBus:
-    memory_container = get_memory_test_container()
+    memory_container = get_memory_container()
     return memory_container.message_bus()
 
 
 @pytest.fixture(scope="function")
 def memory_uow() -> IUnitOfWork:
-    memory_container = get_memory_test_container()
+    memory_container = get_memory_container()
     return memory_container.uow()
 
 

@@ -22,7 +22,8 @@ services:
       - db
 
   db:
-    image: emurze/testdb_postgres:16
+    build: backend/conf/postgres
+    image: emurze/postgres:16
     container_name: db
     networks:
       - backend
@@ -57,7 +58,7 @@ services:
       - backend
     volumes:
       - cache_data:/data
-      - ./backend/cache:/etc/redis.conf
+      - ./backend/conf/cache:/etc/redis.conf
     restart: unless-stopped
 
   pubsub:
@@ -68,7 +69,7 @@ services:
       - backend
     volumes:
       - pubsub_data:/data
-      - ./backend/pubsub:/etc/redis.conf
+      - ./backend/conf/pubsub:/etc/redis.conf
     restart: unless-stopped
 
 volumes:

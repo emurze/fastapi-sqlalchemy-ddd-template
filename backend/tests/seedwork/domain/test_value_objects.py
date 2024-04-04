@@ -2,7 +2,12 @@ import pytest
 
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.validators import EmailStr
-from seedwork.domain.value_objects import Address
+from seedwork.domain.value_objects import ValueObject
+
+
+class Address(ValueObject):
+    city: str
+    country: str
 
 
 class Entity(AggregateRoot):
@@ -17,11 +22,6 @@ class TestEmail:
         entity = Entity(
             id=1,
             email="loza@gmail.com",
-            address=Address(
-                street="Lolo",
-                city="Lolo",
-                state="Lolo",
-                country="Lolo",
-            )
+            address=Address(city="Lolo", country="Lolo")
         )
         print(entity)

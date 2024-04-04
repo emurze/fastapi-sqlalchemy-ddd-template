@@ -2,8 +2,8 @@ import pytest
 from pydantic import ValidationError
 
 from seedwork.domain.value_objects import Deferred
-from tests.seedwork.confdata.entities import Example
-from tests.seedwork.confdata.events import NameChanged
+from tests.seedwork.confdata.domain.entities import Example
+from tests.seedwork.confdata.domain.events import NameChanged
 
 
 class TestUpdate:

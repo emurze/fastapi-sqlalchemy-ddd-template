@@ -1,6 +1,6 @@
 import pytest
 
-from tests.seedwork.confdata.uow import IExampleRepository
+from tests.seedwork.confdata.infra.uow import IExampleRepository
 from tests.seedwork.infra.memory import test_repository as memory
 
 

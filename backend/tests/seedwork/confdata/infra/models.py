@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 
-from tests.seedwork.confdata.database import TestModel
-from tests.seedwork.confdata.entities import Example
+from tests.seedwork.confdata.infra.database import TestModel
+from tests.seedwork.confdata.domain.entities import Example
 
 
 class ExampleModel(TestModel):

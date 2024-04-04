@@ -1,9 +1,21 @@
+import logging
+
+from enum import StrEnum
 from typing import Optional
 
 from pydantic import SecretStr, Field
 from pydantic_settings import BaseSettings
 
-from seedwork.infra.logging import LogLevel
+LOG_FORMAT_DEBUG = (
+    "%(levelname)s:     %(message)s  %(pathname)s:%(funcName)s:%(lineno)d"
+)
+
+
+class LogLevel(StrEnum):
+    info = "INFO"
+    warning = "WARNING"
+    error = "ERROR"
+    debug = "DEBUG"
 
 
 class PubsubConfig(BaseSettings):
@@ -62,15 +74,27 @@ class DatabaseConfig(BaseSettings):
 
 
 class TopLevelConfig(BaseSettings):
+    debug: bool = False
+    docs_url: str = "/docs"
+    redoc_url: str = "/redoc"
+    openapi_prefix: str = ""
+    openapi_url: str = "/openapi.json"
     secret_key: SecretStr
-    project_title: str
+    title: str = "Online shop"
+    version: str = "0.0.0"
     host: str
     port: int
-    debug: Optional[bool] = None
+    encoding: str = "utf8"
+    allowed_origins: list[str] = ["http://frontend:3000"]
+
+    pool_size: int = 10
+    pool_max_overflow: int = 0
     db_echo: bool = False
     db_dsn: str = Field(default_factory=DatabaseConfig.get_dsn)
+
     cache_dsn: str = Field(default_factory=CacheConfig.get_dsn)
     pubsub_dsn: str = Field(default_factory=PubsubConfig.get_dsn)
+
     log_level_in: Optional[str] = Field(None, validation_alias="log_level")
 
     @property
@@ -82,3 +106,18 @@ class TopLevelConfig(BaseSettings):
             return LogLevel.debug.lower()
 
         return LogLevel.warning.lower()
+
+    def configure_logging(self) -> None:
+        log_level = self.log_level.upper()
+        log_levels = list(LogLevel)
+
+        if log_level not in log_levels:
+            # We use LogLevel.error as the default log level
+            logging.basicConfig(level=LogLevel.error)
+            return
+
+        if log_level == LogLevel.debug:
+            logging.basicConfig(level=log_level, format=LOG_FORMAT_DEBUG)
+            return
+
+        logging.basicConfig(level=log_level)

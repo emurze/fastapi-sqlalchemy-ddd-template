@@ -1,6 +1,6 @@
 from seedwork.domain.mapper import IDataMapper
-from tests.seedwork.confdata.entities import Example
-from tests.seedwork.confdata.models import ExampleModel
+from tests.seedwork.confdata.domain.entities import Example
+from tests.seedwork.confdata.infra.models import ExampleModel
 
 
 class ExampleMapper(IDataMapper):
