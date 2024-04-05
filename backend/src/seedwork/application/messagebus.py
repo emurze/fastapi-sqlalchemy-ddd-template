@@ -34,7 +34,8 @@ class MessageBus:
 
     async def _handle_command(self, command: Command) -> CommandResult:
         handler = self.command_handlers[type(command)]
-        result = await handler(command)
+        result, uow = await handler(command)
+        self.queue += uow.collect_events()
         self.queue += result.events
         print(f"Events {self.queue}")
         return result

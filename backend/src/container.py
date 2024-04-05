@@ -1,3 +1,4 @@
+import time
 from collections.abc import Callable
 from typing import TypeAlias, Any
 
@@ -10,9 +11,11 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from auth.application.command.register_account import register_account_handler
+from auth.application.event.notify_developers import notify_developers
 from auth.infra.repositories import AccountSqlAlchemyRepository
 from config import TopLevelConfig
-from seedwork.application.messagebus import MessageBus, Message
+from seedwork.application.messagebus import MessageBus, Message, Result
+from seedwork.domain.uows import IUnitOfWork
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
 from seedwork.utils.functional import get_first_param_type
 
@@ -53,7 +56,7 @@ def get_dict(*handlers: dict) -> dict[type[Message], WrappedHandler]:
 
 
 def get_handler(handler, *args, **kw) -> dict[type[Message], WrappedHandler]:
-    async def wrapper(message: Message) -> Any:
+    async def wrapper(message: Message) -> tuple[Result, IUnitOfWork]:
         """
         Wraps the provided handler function to accept a message
         and ensures the creation of a new unit of work
@@ -61,12 +64,14 @@ def get_handler(handler, *args, **kw) -> dict[type[Message], WrappedHandler]:
         """
 
         new_kw = None
+        uow = None
 
         if uow_factory := kw.get('uow'):
+            uow = uow_factory()
             new_kw = kw.copy()
-            new_kw['uow'] = uow_factory()
+            new_kw['uow'] = uow
 
-        return await handler(message, *args, **(new_kw or kw))
+        return await handler(message, *args, **(new_kw or kw)), uow
 
     return {get_first_param_type(handler): wrapper}
 
@@ -90,7 +95,10 @@ class AppContainer(containers.DeclarativeContainer):
         get_dict,
         Singleton(get_handler, register_account_handler, uow=uow)
     )
-    event_handlers = Singleton(get_dict)
+    event_handlers = Singleton(
+        get_dict,
+        Singleton(get_handler, notify_developers)
+    )
     message_bus = Singleton(
         get_bus,
         query_handlers=query_handlers,

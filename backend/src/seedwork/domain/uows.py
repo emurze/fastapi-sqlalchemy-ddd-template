@@ -1,5 +1,5 @@
 import abc
-from collections.abc import Iterator, Callable
+from collections.abc import Iterator
 from typing import Self
 
 from auth.domain.repositories import IAccountRepository
@@ -25,6 +25,3 @@ class IGenericUnitOfWork(metaclass=abc.ABCMeta):
 
 class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
     accounts: IAccountRepository
-
-
-UnitOfWorkFactory = Callable[[], IUnitOfWork]

@@ -20,6 +20,8 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+      - rabbitmq
+      - cache
 
   db:
     build: backend/conf/postgres
@@ -61,16 +63,16 @@ services:
       - ./backend/conf/cache:/etc/redis.conf
     restart: unless-stopped
 
-  pubsub:
-    image: 'redis:7'
-    container_name: 'pubsub'
-    command: redis-server /etc/redis.conf
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.13.1-management-alpine
+    env_file:
+      - backend/.env/dev/.rabbitmq.env
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - backend
-    volumes:
-      - pubsub_data:/data
-      - ./backend/conf/pubsub:/etc/redis.conf
-    restart: unless-stopped
 
 volumes:
   cache_data:
