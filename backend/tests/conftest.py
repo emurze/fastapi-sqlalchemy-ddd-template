@@ -3,6 +3,7 @@ from asgi_lifespan import LifespanManager
 from httpx import AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+
 from seedwork.application.messagebus import MessageBus
 from collections.abc import AsyncIterator
 from typing import TypeAlias
@@ -17,8 +18,9 @@ from container import container as app_container
 from redis import asyncio as aioredis
 
 config = get_top_config()
-config.configure_logging()
-engine = create_async_engine(config.db_dsn, echo=True, poolclass=NullPool)
+engine = create_async_engine(
+    config.db_dsn, echo=config.db_echo, poolclass=NullPool
+)
 session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 override_app_container(app_container, config, engine, session_factory)
@@ -44,12 +46,6 @@ async def _restart_cache() -> None:
 
 
 @pytest.fixture(scope="function")
-async def _restart_pubsub() -> None:
-    cache_conn = aioredis.Redis.from_url(config.pubsub_dsn)
-    await cache_conn.flushdb(asynchronous=False)
-
-
-@pytest.fixture(scope="function")
 def bus() -> MessageBus:
     memory_container = get_memory_container()
     return memory_container.message_bus()
@@ -62,19 +58,18 @@ def memory_uow() -> IUnitOfWork:
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_bus() -> MessageBus:
+def sqlalchemy_bus(_restart_tables) -> MessageBus:
     return sqlalchemy_container.message_bus()
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_uow() -> IUnitOfWork:
-    return sqlalchemy_container.uow()
+def sqlalchemy_uow(_restart_tables) -> IUnitOfWork:
+    return sqlalchemy_container.uow()()
 
 
 @pytest.fixture(scope="function")
 async def ac(
     _restart_cache,
-    _restart_pubsub,
     _restart_tables,
 ) -> AsyncIterator[AsyncClient]:
     """

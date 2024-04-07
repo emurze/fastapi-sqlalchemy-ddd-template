@@ -36,14 +36,14 @@ pytest-cov = "^4.1.0"
 
 [tool.poe.tasks]
 # Testing
-test             = "docker exec -it api poetry run bash -c 'cd tests && pytest -m unit && pytest -m integration && pytest -m e2e'"
-test_domain      = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k domain'"
-test_infra       = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k infra'"
-test_application = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -k application'"
-test_unit        = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m unit'"
-test_integration = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m integration'"
-test_e2e         = "docker exec -it api bash -c 'cd tests && poetry run pytest -s -m e2e'"
-test_coverage    = "docker exec -it api bash -c 'poetry run pytest -s --cov=src --cov-report=html tests'"
+test             = "docker exec -it api poetry run bash -c 'pytest -m unit && pytest -m integration && pytest -m e2e'"
+test_domain      = "docker exec -it api poetry run pytest -s -k domain"
+test_infra       = "docker exec -it api poetry run pytest -s -k infra"
+test_application = "docker exec -it api poetry run pytest -s -k application"
+test_unit        = "docker exec -it api poetry run pytest -s -m unit"
+test_integration = "docker exec -it api poetry run pytest -s -m integration"
+test_e2e         = "docker exec -it api poetry run pytest -s -m e2e"
+test_coverage    = "docker exec -it api poetry run pytest -s --cov=src --cov-report=html tests'"
 
 # Linting, Formatting, and Type Checking
 format           = "poetry run black . -l 79 tests src"

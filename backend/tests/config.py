@@ -62,6 +62,7 @@ class TestCacheConfig(BaseSettings):
 class TestTopLevelConfig(BaseSettings):
     test_title: str = "Test"
     test_log_level: str = LogLevel.info
+    test_db_echo: bool = False
     test_db_dsn: str = Field(default_factory=TestDatabaseConfig.get_dsn)
     test_cache_dsn: str = Field(default_factory=TestCacheConfig.get_dsn)
     test_pubsub_dsn: str = Field(default_factory=TestPubsubConfig.get_dsn)
@@ -73,6 +74,7 @@ def get_top_config() -> TopLevelConfig:
         log_level=test_config.test_log_level,  # type: ignore
         title=test_config.test_title,
         db_dsn=test_config.test_db_dsn,
+        db_echo=test_config.test_db_echo,
         cache_dsn=test_config.test_cache_dsn,
         pubsub_dsn=test_config.test_pubsub_dsn,
     )

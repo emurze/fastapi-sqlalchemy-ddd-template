@@ -21,12 +21,9 @@ async def register_account_handler(
 ) -> CommandResult:
     async with uow:
         try:
-            account = Account(name=command.name)
-            account.publish()
-            account_id = await uow.accounts.add(account)
+            account_id = await uow.accounts.add(Account(name=command.name))
         except ValidationError as e:
             return CommandResult(error=Error.validation(e.errors()))
 
         await uow.commit()
-
-    return CommandResult(payload=RegisterAccountPayload(id=account_id))
+        return CommandResult(payload=RegisterAccountPayload(id=account_id))

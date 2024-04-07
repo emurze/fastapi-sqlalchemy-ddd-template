@@ -15,16 +15,17 @@ from collections.abc import Callable, Iterator
 from typing import Any, Generator
 
 from seedwork.domain.value_objects import Deferred
+from seedwork.infra.database import Model
 
 
 class SqlAlchemyRepository(IGenericRepository):
     mapper_class: type[IDataMapper]
+    model_class: type[Model]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.mapper = self.mapper_class()
-        self.model_class = self.mapper.model_class
-        self._identity_map = {}
+        self._identity_map: dict = {}
 
     async def add(self, entity: Entity) -> NoReturn | int:
         self._identity_map[entity.id] = entity
@@ -50,19 +51,21 @@ class SqlAlchemyRepository(IGenericRepository):
         query = delete(self.model_class).filter_by(id=entity_id)
         await self.session.execute(query)
 
+    @staticmethod
+    def _get_by_id_query(query):
+        return query
+
     async def get_by_id(
         self,
         entity_id: int,
-        for_share: bool = False,
         for_update: bool = False,
     ) -> Entity | None:
         query = select(self.model_class).filter_by(id=entity_id)
 
-        if for_share:
-            query = query.with_for_update(key_share=True, read=True)
-        elif for_update:
+        if for_update:
             query = query.with_for_update()
 
+        query = self._get_by_id_query(query)
         res = await self.session.execute(query)
         model = res.scalars().first()
 
@@ -117,13 +120,12 @@ class InMemoryRepository(IGenericRepository):
 
     def __init__(self, gen_manager: type[Any] = GeneratorsManager) -> None:
         self.mapper = self.mapper_class()
-        self.entity_class = self.mapper.entity_class
         self._objects: dict[int, Entity] = {}
         self._gen_manager = gen_manager(self.field_gens)
 
     async def add(self, entity: Entity) -> int:
         kw_gen_values = self._gen_manager.iterate_gens(entity.model_dump())
-        extended_instance = self.entity_class(**kw_gen_values)
+        extended_instance = type(entity)(**kw_gen_values)
         entity.insert_deferred_values(extended_instance)
         self._objects[extended_instance.id] = extended_instance
         return extended_instance.id

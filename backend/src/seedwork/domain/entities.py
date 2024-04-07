@@ -4,7 +4,7 @@ from pydantic import ConfigDict, BaseModel
 from pydantic.fields import FieldInfo
 
 from seedwork.domain.events import Event
-from seedwork.domain.value_objects import Deferred, deferred
+from seedwork.domain.value_objects import Deferred, defer
 from seedwork.utils.functional import classproperty
 
 EntityId = TypeVar("EntityId")
@@ -35,7 +35,7 @@ class Entity(BaseModel, Generic[EntityId]):
         validate_assignment=True,
         arbitrary_types_allowed=True,
     )
-    id: deferred[EntityId] = Deferred
+    id: defer[EntityId] = Deferred
 
     def _get_deferred_fields(self) -> Iterator[str]:
         for key in self.model_fields.keys():

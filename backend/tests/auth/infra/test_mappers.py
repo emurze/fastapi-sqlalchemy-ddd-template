@@ -2,8 +2,8 @@ import pytest
 
 from auth.domain.entities import Account
 from auth.domain.value_objects import AccountId
-from auth.infra.mappers import AccountMapper
 from auth.infra.models import AccountModel
+from auth.infra.repositories import AccountMapper
 
 
 class TestAccountMapper:

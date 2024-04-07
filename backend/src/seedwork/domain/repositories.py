@@ -17,7 +17,6 @@ class IGenericRepository(metaclass=abc.ABCMeta):
     async def get_by_id(
         self,
         entity_id: int,
-        for_share: bool = False,
         for_update: bool = False,
     ) -> Entity | None: ...
 

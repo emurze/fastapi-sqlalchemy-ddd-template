@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from typing import Self
 
 from auth.domain.repositories import IAccountRepository
+from orders.domain.repositories import IOrderRepository
 from seedwork.domain.events import Event
 
 
@@ -25,3 +26,4 @@ class IGenericUnitOfWork(metaclass=abc.ABCMeta):
 
 class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
     accounts: IAccountRepository
+    orders: IOrderRepository
