@@ -2,11 +2,11 @@ from collections.abc import AsyncGenerator, Iterator
 from contextlib import asynccontextmanager
 
 from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase
 
 
-class Model(DeclarativeBase):
+class Model(AsyncAttrs, DeclarativeBase):
     __allow_unmapped__ = True
     id: int
 
@@ -16,6 +16,14 @@ class Model(DeclarativeBase):
 
     def as_dict(self) -> dict:
         return {key: getattr(self, key) for key in self.get_fields()}
+
+    def __repr__(self) -> str:
+        cls = type(self)
+        kwargs = ', '.join(
+            f'{col.name}={getattr(self, col.name)!r}'
+            for col in inspect(cls).c
+        )
+        return f"{cls.__name__}({kwargs})"
 
 
 @asynccontextmanager

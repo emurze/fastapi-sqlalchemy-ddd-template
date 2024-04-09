@@ -1,4 +1,3 @@
-import sqlalchemy as sa
 from sqlalchemy import Integer, Column, ForeignKey
 from sqlalchemy.orm import relationship, Mapped
 
@@ -13,7 +12,7 @@ class CustomerModel(Model):
 
 class OrderModel(Model):
     __tablename__ = 'order'
-    id = sa.Column(sa.Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey("customer.id"), nullable=False)
     items: Mapped[list['OrderItemModel']] = relationship("OrderItemModel")
 
@@ -23,4 +22,4 @@ class OrderItemModel(Model):
     id = Column(Integer, primary_key=True)
     quantity = Column(Integer, nullable=False)
     price = Column(Integer, nullable=False)
-    order_id = Column(sa.Integer, ForeignKey('order.id'), nullable=False)
+    order_id = Column(Integer, ForeignKey('order.id'), nullable=False)

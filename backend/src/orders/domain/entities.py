@@ -2,6 +2,7 @@ from pydantic import PositiveInt
 
 from auth.domain.value_objects import AccountId
 from orders.domain.value_objects import OrderId, CustomerId
+from seedwork.domain.collection import alist
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.value_objects import defer, Deferred, ValueObject
 
@@ -16,8 +17,15 @@ class Customer(AggregateRoot):
 
 class Order(AggregateRoot):
     id: defer[OrderId] = Deferred
-    items: list['OrderItem'] = []
+    items: alist
     customer_id: CustomerId
+
+    def add_item(self, **kw) -> None:
+        self.items.append(OrderItem(**kw))
+
+    async def run_by_items(self) -> None:
+        for item in await self.items:
+            print(item)
 
 
 class OrderItem(ValueObject):

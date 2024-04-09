@@ -1,6 +1,6 @@
 import abc
 from collections.abc import Iterator
-from typing import Self
+from typing import Self, Any
 
 from auth.domain.repositories import IAccountRepository
 from orders.domain.repositories import IOrderRepository
@@ -25,5 +25,6 @@ class IGenericUnitOfWork(metaclass=abc.ABCMeta):
 
 
 class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
+    session: Any
     accounts: IAccountRepository
     orders: IOrderRepository
