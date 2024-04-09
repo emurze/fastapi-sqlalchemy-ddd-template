@@ -29,6 +29,7 @@ class SqlAlchemyRepository(IGenericRepository):
 
     async def add(self, entity: Entity) -> NoReturn | int:
         try:
+            # todo: entities items
             print(entity.model_dump(exclude_deferred=True))
             stmt = (
                 insert(self.model_class)
@@ -42,7 +43,7 @@ class SqlAlchemyRepository(IGenericRepository):
             self._identity_map[entity.id] = entity
             return entity.id
         except IntegrityError:
-            # todo: self._identity_map[entity.id] = entity
+            # todo: self._identity_map[entity.id] = entity ?
             raise EntityAlreadyExistsError()
 
     async def delete(self, entity: Entity) -> None:
@@ -87,6 +88,11 @@ class SqlAlchemyRepository(IGenericRepository):
         query = select(func.Count(self.model_class))
         res = await self.session.execute(query)
         return res.scalar_one()
+
+    async def list(self) -> list[Entity]:
+        query = select(self.model_class)
+        res = await self.session.execute(query)
+        return [*res.scalars()]
 
     def collect_events(self) -> Iterator[Event]:
         return itertools.chain.from_iterable(

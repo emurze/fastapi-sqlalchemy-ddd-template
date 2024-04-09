@@ -14,12 +14,17 @@ class OrderMapper(IDataMapper):
             **entity.model_dump(exclude={"items"}, exclude_deferred=True)
         )
         model.items += (OrderItemModel(**x.model_dump()) for x in entity.items)
+        # todo: Loading is required?
         return model
 
     def model_to_entity(self, model: OrderModel) -> Order:
+        async def l():
+            await model.awaitable_attrs.items
+            # todo: map to mapper, draw all schema
+
         return Order(
             **model.as_dict(),
-            items=alist(command=[], query=lambda: model.awaitable_attrs.items)
+            items=alist(lambda: model.awaitable_attrs.items)
         )
 
 

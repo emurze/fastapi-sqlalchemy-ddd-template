@@ -1,61 +1,69 @@
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from typing import TypeVar, Generic, Optional, TypeAlias, Any
+from collections.abc import Callable, Coroutine
+from typing import TypeVar, Generic, Optional, TypeAlias, Any, Self
 
 T = TypeVar('T')
+CoroutineFactory = Callable[[], Coroutine]
 
 
-@dataclass
 class _AsyncList(Generic[T]):
-    list_: list[T] = field(default_factory=list)
-    coro: Optional[Callable] = None
+    """
+    Example:
+        for batch in await product.items.load():
+            for item in await batch.items.load():
+                print(item)
+    """
 
-    def __post_init__(self) -> None:
-        if self.coro is None:
-            async def wrapper() -> list[T]:
-                return []
+    def __init__(self, data: CoroutineFactory | list[T] | None = None) -> None:
+        if callable(data):
+            self._coro = data
+        elif isinstance(data, list):
+            self._coro = lambda: self._coro_list(data.copy())
+        else:
+            self._coro = self._coro_list
 
-            self.coro = wrapper
+        self._list: list[T] = []
+        self._loaded: bool = False
 
-    def append(self, item: T) -> None:
-        # any interaction, load elems
-        self.list_.append(item)
+    @staticmethod
+    async def _coro_list(data: Optional[list[T]] = None) -> list[T]:
+        return data or []
 
-    def insert(self, index: int, item: T) -> None:
-        # load elems
-        self.list_.insert(index, item)
+    @staticmethod
+    def check_loaded(func: Callable) -> Callable:
+        def wrapper(self, *args, **kw) -> Any:
+            assert self._loaded, (
+                "You can do operations when you have already loaded the list"
+            )
+            return func(self, *args, **kw)
+        return wrapper
 
-    def clear(self) -> None:
-        # load elems
-        self.list_.clear()
+    @check_loaded
+    def append(self, value: T) -> None:
+        self._list.append(value)
 
-    def extend(self, data: list) -> None:
-        # load elems
-        self.list_.extend(data)
-
-    def __repr__(self) -> str:
-        # load elems
-        return f'{self.list_!r}'
-
-    def __str__(self) -> str:
-        # load elems
-        return repr(self)
+    def __getitem__(self, key: int) -> T:
+        return self._list[key]
 
     def __eq__(self, other: Any) -> bool:
-        # load elems
-        if isinstance(other, _AsyncList):
-            return self.list_ == other.list_
+        if isinstance(other, list):
+            return self._list == other
         return False
 
-    def __iter__(self):
-        # load elems
-        yield from self.list_
+    def __repr__(self) -> str:
+        return f"{self._list}"
 
-    @property
-    async def as_async(self):
-        res = await self.coro()
-        self.list_ += res
-        return res
+    def __str__(self) -> str:
+        return repr(self)
+
+    async def load(self) -> Self:
+        """
+        Idempotently load list from coroutine.
+        """
+        if not self._loaded:
+            res = await self._coro()
+            self._list = res
+            self._loaded = True
+        return self
 
 
 alist: TypeAlias = _AsyncList

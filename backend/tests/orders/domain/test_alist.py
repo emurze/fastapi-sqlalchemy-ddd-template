@@ -11,34 +11,33 @@ async def coro():
 @dataclass
 class User:
     id: int
-    items: alist
-
-    async def find(self, value: int) -> bool:
-        for item in await self.items.as_async:
-            if item == value:
-                return True
-        return False
-
-    def add_item(self, value: int) -> None:
-        self.items.append(value)
+    items: alist[int]
 
 
 @pytest.mark.integration
 async def test_can_return_coro_result() -> None:
     user = User(id=1, items=alist(coro=coro))
-    res = await user.items.as_async
-    assert res == [10, 20, 30]
+    assert [10, 20, 30] == await user.items.load()
 
 
 @pytest.mark.integration
-async def test_can_find() -> None:
+async def test_can_append_value() -> None:
     user = User(id=1, items=alist(coro=coro))
-    res = await user.find(20)
-    assert res is True
+    await user.items.load()
+
+    user.items.append(100)
+    assert user.items == [10, 20, 30, 100]
 
 
 @pytest.mark.integration
-async def test_can_append() -> None:
+async def test_can_compare() -> None:
     user = User(id=1, items=alist(coro=coro))
-    user.add_item(1)
-    assert user.items == [1]
+    await user.items.load()
+    assert user.items == [10, 20, 30]
+
+
+@pytest.mark.integration
+async def test_cannot_append_value_to_unloaded_list() -> None:
+    user = User(id=1, items=alist(coro=coro))
+    with pytest.raises(AssertionError):
+        user.items.append(100_000)

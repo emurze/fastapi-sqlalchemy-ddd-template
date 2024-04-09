@@ -17,14 +17,14 @@ class Customer(AggregateRoot):
 
 class Order(AggregateRoot):
     id: defer[OrderId] = Deferred
-    items: alist
+    items: alist['OrderItem'] = alist()
     customer_id: CustomerId
 
     def add_item(self, **kw) -> None:
         self.items.append(OrderItem(**kw))
 
     async def run_by_items(self) -> None:
-        for item in await self.items:
+        for item in await self.items.load():
             print(item)
 
 
