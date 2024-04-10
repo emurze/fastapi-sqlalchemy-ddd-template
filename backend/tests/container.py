@@ -1,7 +1,7 @@
 from dependency_injector import providers
 from dependency_injector.providers import Factory
 
-from auth.infra.repositories import AccountInMemoryRepository
+from iam.infra.repositories import AccountInMemoryRepository
 from src.container import AppContainer
 from seedwork.infra.injector import Link
 from seedwork.infra.uows import InMemoryUnitOfWork

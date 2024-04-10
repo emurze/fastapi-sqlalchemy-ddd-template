@@ -1,13 +1,12 @@
-from typing import Iterator, Any, TypeVar, Generic, cast
+from typing import Any, TypeVar, Generic, cast
 
 from pydantic import ConfigDict, BaseModel
 from pydantic.fields import FieldInfo
 
 from seedwork.domain.events import Event
-from seedwork.domain.value_objects import Deferred, defer
 from seedwork.utils.functional import classproperty
 
-EntityId = TypeVar("EntityId")
+EntityId = TypeVar("EntityId")  # UUID
 
 
 class FieldWrapper:
@@ -35,22 +34,7 @@ class Entity(BaseModel, Generic[EntityId]):
         validate_assignment=True,
         arbitrary_types_allowed=True,
     )
-    id: defer[EntityId] = Deferred
-
-    def _get_deferred_fields(self) -> Iterator[str]:
-        for key in self.model_fields.keys():
-            if getattr(self, key) == Deferred:
-                yield key
-
-    def insert_deferred_values(self, model: Any) -> None:
-        for field in self._get_deferred_fields():
-            setattr(self, field, getattr(model, field))
-
-    def model_dump(self, *args, exclude_deferred: bool = False, **kw) -> dict:
-        if exclude_deferred:
-            deferred_fields = set(self._get_deferred_fields())
-            kw["exclude"] = kw.get("exclude", set()) | deferred_fields
-        return super().model_dump(*args, **kw)
+    id: EntityId
 
     @classproperty
     def c(self) -> EntityWrapper:

@@ -1,4 +1,4 @@
-from auth.application.query.get_accounts import GetAccountsQuery
+from iam.application.query.get_accounts import GetAccountsQuery
 from seedwork.application.messagebus import MessageBus
 
 

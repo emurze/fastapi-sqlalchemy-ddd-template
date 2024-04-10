@@ -10,11 +10,10 @@ class TestOrderMapper:
     mapper = OrderMapper()
 
     @pytest.mark.unit
-    def test_entity_to_model(self) -> None:
-        # todo: fix
+    async def test_entity_to_model(self) -> None:
         order_item = OrderItem(price=100, quantity=10)
         entity = Order(id=1, customer_id=1, items=alist([order_item]))
-        model = self.mapper.entity_to_model(entity)
+        model = await self.mapper.entity_to_model(entity)
         assert model.id == 1
         assert model.items[0].price == 100
         assert model.items[0].quantity == 10

@@ -1,7 +1,7 @@
 import itertools
 from typing import NoReturn
 
-from sqlalchemy import select, insert, delete, func
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,10 +11,8 @@ from seedwork.domain.events import Event
 from seedwork.domain.mapper import IDataMapper
 from seedwork.domain.repositories import IGenericRepository
 
-from collections.abc import Callable, Iterator
-from typing import Any, Generator
+from collections.abc import Iterator
 
-from seedwork.domain.value_objects import Deferred
 from seedwork.infra.database import Model
 
 
@@ -29,53 +27,34 @@ class SqlAlchemyRepository(IGenericRepository):
 
     async def add(self, entity: Entity) -> NoReturn | int:
         try:
-            # todo: entities items
-            print(entity.model_dump(exclude_deferred=True))
-            stmt = (
-                insert(self.model_class)
-                .values(**entity.model_dump(exclude_deferred=True))
-                .returning(self.model_class)
-                # todo: returns only deferred fields
-            )
-            result = await self.session.execute(stmt)
-            model = result.scalar_one()
-            entity.insert_deferred_values(model)
             self._identity_map[entity.id] = entity
+            model = await self.mapper.entity_to_model(entity)
+            self.session.add(model)
             return entity.id
-        except IntegrityError:
-            # todo: self._identity_map[entity.id] = entity ?
+        except IntegrityError:  # where is IntegrityError ?
             raise EntityAlreadyExistsError()
 
     async def delete(self, entity: Entity) -> None:
-        query = delete(self.model_class).filter_by(id=entity.id)
-        await self.session.execute(query)
+        model = await self.session.get(self.model_class, entity.id)
+        await self.session.delete(model)
 
     async def delete_by_id(self, entity_id: int) -> None:
-        query = delete(self.model_class).filter_by(id=entity_id)
-        await self.session.execute(query)
-
-    @staticmethod
-    def _get_by_id_query(query):
-        return query
+        model = await self.session.get(self.model_class, entity_id)
+        await self.session.delete(model)
 
     async def get_by_id(
         self,
         entity_id: int,
         for_update: bool = False,
     ) -> Entity | None:
-        query = select(self.model_class).filter_by(id=entity_id)
-
-        if for_update:
-            query = query.with_for_update()
-
-        query = self._get_by_id_query(query)
-        res = await self.session.execute(query)
-        model = res.scalars().first()
+        model = await self.session.get(
+            self.model_class, entity_id, with_for_update=for_update
+        )
 
         if model is None:
             return None
 
-        entity = self.mapper.model_to_entity(model)
+        entity = await self.mapper.model_to_entity(model)
 
         # Saves store_entity events
         if store_entity := self._identity_map.get(entity.id):
@@ -84,6 +63,15 @@ class SqlAlchemyRepository(IGenericRepository):
         self._identity_map[entity.id] = entity
         return entity
 
+    def collect_events(self) -> Iterator[Event]:
+        return itertools.chain.from_iterable(
+            entity.collect_events() for entity in self._identity_map.values()
+        )
+
+    # persist
+    # TypeVar("T")
+
+    # Query
     async def count(self) -> int:
         query = select(func.Count(self.model_class))
         res = await self.session.execute(query)
@@ -94,49 +82,17 @@ class SqlAlchemyRepository(IGenericRepository):
         res = await self.session.execute(query)
         return [*res.scalars()]
 
-    def collect_events(self) -> Iterator[Event]:
-        return itertools.chain.from_iterable(
-            entity.collect_events() for entity in self._identity_map.values()
-        )
-
-
-class GeneratorsManager:
-    """
-    Imitates database triggers and sequences
-    """
-
-    initialized_gens: dict[str, Generator]
-
-    def __init__(self, field_gens: dict[str, Callable]):
-        self.initialized_gens = self.initialize_gens(field_gens)
-
-    @staticmethod
-    def initialize_gens(field_gens) -> dict[str, Generator]:
-        return {field: gen() for field, gen in field_gens.items()}
-
-    def iterate_gens(self, kw: dict) -> dict:
-        return kw | {
-            field: next(gen)
-            for field, gen in self.initialized_gens.items()
-            if kw.get(field) == Deferred
-        }
-
 
 class InMemoryRepository(IGenericRepository):
     mapper_class: type[IDataMapper]
-    field_gens: dict[str, Callable]
 
-    def __init__(self, gen_manager: type[Any] = GeneratorsManager) -> None:
+    def __init__(self) -> None:
         self.mapper = self.mapper_class()
         self._objects: dict[int, Entity] = {}
-        self._gen_manager = gen_manager(self.field_gens)
 
     async def add(self, entity: Entity) -> int:
-        kw_gen_values = self._gen_manager.iterate_gens(entity.model_dump())
-        extended_instance = type(entity)(**kw_gen_values)
-        entity.insert_deferred_values(extended_instance)
-        self._objects[extended_instance.id] = extended_instance
-        return extended_instance.id
+        self._objects[entity.id] = entity
+        return entity.id
 
     async def delete(self, entity: Entity) -> None:
         del self._objects[entity.id]
@@ -147,8 +103,7 @@ class InMemoryRepository(IGenericRepository):
     async def get_by_id(
         self,
         entity_id: int,
-        for_share: bool = False,
-        for_update: bool = False
+        for_update: bool = False,
     ) -> Entity | None:
         try:
             return next(

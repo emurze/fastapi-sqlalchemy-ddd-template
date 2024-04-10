@@ -37,6 +37,7 @@ pytest-cov = "^4.1.0"
 [tool.poe.tasks]
 # Testing
 test             = "docker exec -it api poetry run bash -c 'pytest -m unit && pytest -m integration && pytest -m e2e'"
+test_all         = "docker exec -it api poetry run pytest -s"
 test_domain      = "docker exec -it api poetry run pytest -s -k domain"
 test_infra       = "docker exec -it api poetry run pytest -s -k infra"
 test_application = "docker exec -it api poetry run pytest -s -k application"

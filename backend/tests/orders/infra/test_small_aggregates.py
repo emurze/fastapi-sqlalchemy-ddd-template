@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from auth.infra.models import AccountModel
+from iam.infra.models import AccountModel
 from orders.infra.models import OrderItemModel, OrderModel, CustomerModel
 from tests.conftest import session_factory
 

@@ -5,20 +5,20 @@ from seedwork.domain.collection import alist
 
 from seedwork.domain.mapper import IDataMapper
 from seedwork.infra.repository import SqlAlchemyRepository, InMemoryRepository
-from seedwork.utils.functional import id_int_gen
 
 
 class OrderMapper(IDataMapper):
-    def entity_to_model(self, entity: Order) -> OrderModel:
-        model = OrderModel(
-            **entity.model_dump(exclude={"items"}, exclude_deferred=True)
+    async def entity_to_model(self, entity: Order) -> OrderModel:
+        print(await entity.items.load())
+        model = OrderModel(**entity.model_dump(exclude={"items"}))
+        model.items += (
+            OrderItemModel(**x.model_dump()) for x in await entity.items.load()
         )
-        model.items += (OrderItemModel(**x.model_dump()) for x in entity.items)
         # todo: Loading is required?
         return model
 
     def model_to_entity(self, model: OrderModel) -> Order:
-        async def l():
+        async def _():
             await model.awaitable_attrs.items
             # todo: map to mapper, draw all schema
 
@@ -35,6 +35,3 @@ class OrderSqlAlchemyRepository(SqlAlchemyRepository, IOrderRepository):
 
 class OrderInMemoryRepository(InMemoryRepository, IOrderRepository):
     mapper_class = OrderMapper
-    field_gens = {
-        "id": id_int_gen,
-    }

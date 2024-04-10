@@ -1,9 +1,8 @@
-from auth.domain.repositories import IAccountRepository
-from auth.domain.entities import Account
-from auth.infra.models import AccountModel
+from iam.domain.repositories import IAccountRepository
+from iam.domain.entities import Account
+from iam.infra.models import AccountModel
 
 from seedwork.infra.repository import SqlAlchemyRepository, InMemoryRepository
-from seedwork.utils.functional import id_int_gen
 from seedwork.domain.mapper import IDataMapper
 
 
@@ -24,6 +23,3 @@ class AccountSqlAlchemyRepository(SqlAlchemyRepository, IAccountRepository):
 
 class AccountInMemoryRepository(InMemoryRepository, IAccountRepository):
     mapper_class = AccountMapper
-    field_gens = {
-        "id": id_int_gen,
-    }

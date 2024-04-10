@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 
-from auth.domain.entities import Account
+from iam.domain.entities import Account
 from seedwork.infra.database import Model
 
 

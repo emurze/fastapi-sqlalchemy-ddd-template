@@ -18,23 +18,6 @@ class LogLevel(StrEnum):
     debug = "DEBUG"
 
 
-class PubsubConfig(BaseSettings):
-    pubsub_driver: str = "redis"
-    pubsub_host: str
-    pubsub_port: int
-    pubsub_db: int
-
-    @classmethod
-    def get_dsn(cls) -> str:
-        self = cls()
-        return "{}://{}:{}/{}".format(
-            self.pubsub_driver,
-            self.pubsub_host,
-            self.pubsub_port,
-            self.pubsub_db,
-        )
-
-
 class CacheConfig(BaseSettings):
     cache_driver: str = "redis"
     cache_host: str
@@ -93,7 +76,6 @@ class TopLevelConfig(BaseSettings):
     db_dsn: str = Field(default_factory=DatabaseConfig.get_dsn)
 
     cache_dsn: str = Field(default_factory=CacheConfig.get_dsn)
-    pubsub_dsn: str = Field(default_factory=PubsubConfig.get_dsn)
 
     log_level_in: Optional[str] = Field(None, validation_alias="log_level")
 

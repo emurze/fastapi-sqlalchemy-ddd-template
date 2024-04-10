@@ -9,9 +9,9 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from auth.application.command.register_account import register_account_handler
-from auth.application.event.notify_developers import notify_developers
-from auth.infra.repositories import AccountSqlAlchemyRepository
+from iam.application.command.register_account import register_account_handler
+from iam.application.event.notify_developers import notify_developers
+from iam.infra.repositories import AccountSqlAlchemyRepository
 from config import TopLevelConfig
 from orders.infra.repositories import OrderSqlAlchemyRepository
 from seedwork.application.messagebus import MessageBus, Message, Result

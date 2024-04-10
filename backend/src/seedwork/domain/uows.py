@@ -2,7 +2,7 @@ import abc
 from collections.abc import Iterator
 from typing import Self, Any
 
-from auth.domain.repositories import IAccountRepository
+from iam.domain.repositories import IAccountRepository
 from orders.domain.repositories import IOrderRepository
 from seedwork.domain.events import Event
 

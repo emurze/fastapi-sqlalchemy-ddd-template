@@ -1,12 +1,7 @@
-import itertools as it
-from collections.abc import Iterator
-from datetime import datetime
 from collections.abc import Callable
 from dataclasses import field
 from inspect import signature
-from typing import Any, TypeVar
-
-from pydantic import BaseModel
+from typing import TypeVar
 
 
 def get_first_param_type(func: Callable):
@@ -31,13 +26,4 @@ T = TypeVar("T")
 
 
 def mixin_for(_: T) -> T:
-    return object
-
-
-def id_int_gen() -> Iterator[int]:
-    return it.count(start=1)
-
-
-def create_at_gen() -> Iterator[datetime]:
-    while True:
-        yield datetime.utcnow()
+    return object  # type: ignore

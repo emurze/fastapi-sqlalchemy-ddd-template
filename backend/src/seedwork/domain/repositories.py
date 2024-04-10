@@ -26,5 +26,7 @@ class IGenericRepository(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     async def list(self) -> list[Entity]: ...
 
+    # PERSIST
+
     @abc.abstractmethod
     def collect_events(self): ...

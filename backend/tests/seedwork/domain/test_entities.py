@@ -1,7 +1,6 @@
 import pytest
 from pydantic import ValidationError
 
-from seedwork.domain.value_objects import Deferred
 from tests.seedwork.confdata.domain.entities import Example
 from tests.seedwork.confdata.domain.events import NameChanged
 
@@ -40,16 +39,6 @@ class TestConstraints:
 
 
 class TestDeferred:
-    @pytest.mark.unit
-    def test_model_dump_returns_deferred_fields(self) -> None:
-        example = Example(name="example")
-        assert example.model_dump() == {"id": Deferred, "name": "example"}
-
-    @pytest.mark.unit
-    def test_model_dump_can_exclude_deferred_fields(self) -> None:
-        example = Example(name="example")
-        assert example.model_dump(exclude_deferred=True) == {"name": "example"}
-
     @pytest.mark.unit
     def test_can_insert_deferred_values_after_initialization(self) -> None:
         example = Example(name="example")

@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from auth.domain.entities import Account
+from iam.domain.entities import Account
 from seedwork.application.commands import Command, CommandResult
 from seedwork.application.dtos import DTO
 from seedwork.domain.errors import Error

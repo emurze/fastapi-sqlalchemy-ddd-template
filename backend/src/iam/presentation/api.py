@@ -1,15 +1,15 @@
 from fastapi import APIRouter
 
-from auth.application.command.register_account import RegisterAccountCommand
-from auth.presentation import schemas as shm
+from iam.application.command.register_account import RegisterAccountCommand
+from iam.presentation import schemas as shm
 from seedwork.domain.errors import ErrorType
 from seedwork.presentation.dependencies import BusDep
 from seedwork.presentation.utils import handle_errors
 
-auth_router = APIRouter(prefix="/auth", tags=["auth"])
+iam_router = APIRouter(prefix="/iam", tags=["iam"])
 
 
-@auth_router.post('/account/', response_model=shm.RegisterAccountResponse)
+@iam_router.post('/account/', response_model=shm.RegisterAccountResponse)
 async def register_account(dto: shm.RegisterAccountRequest, bus: BusDep):
     command = RegisterAccountCommand.model_validate(dto)
     result = await bus.handle(command)

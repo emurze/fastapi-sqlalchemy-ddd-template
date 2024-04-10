@@ -4,23 +4,6 @@ from pydantic_settings import BaseSettings
 from src.config import TopLevelConfig, LogLevel
 
 
-class TestPubsubConfig(BaseSettings):
-    test_pubsub_driver: str = "redis"
-    test_pubsub_host: str
-    test_pubsub_port: int
-    test_pubsub_db: int
-
-    @classmethod
-    def get_dsn(cls) -> str:
-        self = cls()
-        return "{}://{}:{}/{}".format(
-            self.test_pubsub_driver,
-            self.test_pubsub_host,
-            self.test_pubsub_port,
-            self.test_pubsub_db,
-        )
-
-
 class TestDatabaseConfig(BaseSettings):
     test_db_name: str
     test_db_user: str
@@ -65,7 +48,6 @@ class TestTopLevelConfig(BaseSettings):
     test_db_echo: bool = False
     test_db_dsn: str = Field(default_factory=TestDatabaseConfig.get_dsn)
     test_cache_dsn: str = Field(default_factory=TestCacheConfig.get_dsn)
-    test_pubsub_dsn: str = Field(default_factory=TestPubsubConfig.get_dsn)
 
 
 def get_top_config() -> TopLevelConfig:
@@ -76,5 +58,4 @@ def get_top_config() -> TopLevelConfig:
         db_dsn=test_config.test_db_dsn,
         db_echo=test_config.test_db_echo,
         cache_dsn=test_config.test_cache_dsn,
-        pubsub_dsn=test_config.test_pubsub_dsn,
     )

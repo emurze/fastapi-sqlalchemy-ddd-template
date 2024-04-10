@@ -1,14 +1,14 @@
 from pydantic import PositiveInt
 
-from auth.domain.value_objects import AccountId
+from iam.domain.value_objects import AccountId
 from orders.domain.value_objects import OrderId, CustomerId
 from seedwork.domain.collection import alist
 from seedwork.domain.entities import AggregateRoot
-from seedwork.domain.value_objects import defer, Deferred, ValueObject
+from seedwork.domain.value_objects import ValueObject
 
 
 class Customer(AggregateRoot):
-    id: defer[CustomerId] = Deferred
+    id: CustomerId
     account_id: AccountId
 
     def make_order(self, **kw) -> 'Order':
@@ -16,7 +16,7 @@ class Customer(AggregateRoot):
 
 
 class Order(AggregateRoot):
-    id: defer[OrderId] = Deferred
+    id: OrderId
     items: alist['OrderItem'] = alist()
     customer_id: CustomerId
 
