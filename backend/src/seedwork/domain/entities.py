@@ -1,12 +1,12 @@
-from typing import Any, TypeVar, Generic, cast
+from typing import Any, cast
+from uuid import UUID
 
 from pydantic import ConfigDict, BaseModel
 from pydantic.fields import FieldInfo
 
 from seedwork.domain.events import Event
+from seedwork.domain.services import UUIDField
 from seedwork.utils.functional import classproperty
-
-EntityId = TypeVar("EntityId")  # UUID
 
 
 class FieldWrapper:
@@ -28,13 +28,13 @@ class EntityWrapper:
         return FieldWrapper(field_info, self._entity)
 
 
-class Entity(BaseModel, Generic[EntityId]):
+class Entity(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
         validate_assignment=True,
         arbitrary_types_allowed=True,
     )
-    id: EntityId
+    id: UUID = UUIDField
 
     @classproperty
     def c(self) -> EntityWrapper:
@@ -54,7 +54,7 @@ class LocalEntity(Entity):
     """Entity inside an aggregate."""
 
 
-class AggregateRoot(Entity[EntityId]):
+class AggregateRoot(Entity):
     """Consists of 1+ entities. Spans transaction boundaries."""
 
     _events: list[Event] = []

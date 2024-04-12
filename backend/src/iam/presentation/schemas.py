@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from seedwork.presentation.json_dtos import Schema
 
 
@@ -6,4 +8,4 @@ class RegisterAccountRequest(Schema):
 
 
 class RegisterAccountResponse(Schema):
-    id: int
+    id: UUID

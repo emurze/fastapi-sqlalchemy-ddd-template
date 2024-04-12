@@ -3,7 +3,7 @@ import pytest
 from orders.domain.entities import Order, OrderItem
 from orders.infra.models import OrderModel, OrderItemModel
 from orders.infra.repositories import OrderMapper
-from seedwork.domain.collection import alist
+from seedwork.domain.async_structs import alist
 
 
 class TestOrderMapper:
@@ -27,4 +27,3 @@ class TestOrderMapper:
         assert order.id == 1
         assert order.items[0].price == 100
         assert order.items[0].quantity == 10
-

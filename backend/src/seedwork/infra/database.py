@@ -2,14 +2,13 @@ from collections.abc import AsyncGenerator, Iterator
 from contextlib import asynccontextmanager
 
 from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncAttrs
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 
+from seedwork.utils.functional import mixin_for
 
-class Model(AsyncAttrs, DeclarativeBase):
-    __allow_unmapped__ = True
-    id: int
 
+class ModelBase(mixin_for(DeclarativeBase)):  # type: ignore
     @classmethod
     def get_fields(cls) -> Iterator[str]:
         return (field.name for field in inspect(cls).c)

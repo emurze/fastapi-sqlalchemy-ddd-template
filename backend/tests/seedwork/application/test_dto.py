@@ -1,17 +1,20 @@
+from uuid import UUID
+
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
 
 from seedwork.application.dtos import DTO
+from seedwork.domain.services import next_id
 
 
 class CatDto(DTO):
-    id: int
+    id: UUID = Field(default_factory=next_id)
     name: str
 
 
 @pytest.mark.unit
 def test_dto_can_be_initialized() -> None:
-    CatDto(id=100, name="Bars")
+    CatDto(name="Bars")
 
 
 @pytest.mark.unit
@@ -22,7 +25,7 @@ def test_dto_has_dynamic_validation() -> None:
 
 @pytest.mark.unit
 def test_dto_is_immutable() -> None:
-    cat = CatDto(id=1, name="hello")
+    cat = CatDto(name="hello")
     with pytest.raises(ValidationError):
         cat.name = "hello world"
 

@@ -35,10 +35,10 @@ app = FastAPI(
     redoc_url=config.redoc_url,
     title=config.title,
     version=config.version,
-    lifespan=lifespan,
     secret_key=config.secret_key,
-    container=container,
     config=config,
+    lifespan=lifespan,
+    container=container,
 )
 app.include_router(health_router)
 app.include_router(iam_router)

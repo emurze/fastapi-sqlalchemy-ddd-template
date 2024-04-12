@@ -8,9 +8,9 @@ from seedwork.application.messagebus import MessageBus
 from collections.abc import AsyncIterator
 from typing import TypeAlias
 
-from seedwork.domain.uows import IUnitOfWork
+from shared.domain.uow import IUnitOfWork
+from shared.infra.database import Model
 from seedwork.infra.database import suppress_echo
-from seedwork.infra.database import Model
 from tests.config import get_top_config
 from tests.container import override_app_container, get_memory_container
 

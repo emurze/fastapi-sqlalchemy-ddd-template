@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from sqlalchemy import insert, select
 
@@ -5,15 +7,15 @@ from iam.domain.entities import Account
 from orders.domain.entities import Order, OrderItem
 from orders.infra.models import CustomerModel, OrderModel
 from orders.infra.repositories import OrderMapper
-from seedwork.domain.collection import alist
-from seedwork.domain.uows import IUnitOfWork
+from seedwork.domain.async_structs import alist
+from shared.domain.uow import IUnitOfWork
 
 
 class TestOrder:
     mapper = OrderMapper()
 
     @staticmethod
-    async def _add_customer(uow: IUnitOfWork) -> int:
+    async def _add_customer(uow: IUnitOfWork) -> UUID:
         async with uow:
             account_id = await uow.accounts.add(Account(name='account'))
             await uow.commit()
@@ -52,15 +54,15 @@ class TestOrder:
         customer_id = await self._add_customer(sqlalchemy_uow)
 
         async with sqlalchemy_uow as uow:
-            entity = Order(
+            order = Order(
                 customer_id=customer_id,
                 items=alist([OrderItem(quantity=1, price=10)]),
             )
-            await uow.orders.add(entity)
+            await uow.orders.add(order)
             await uow.commit()
 
         async with sqlalchemy_uow as uow:
-            model = await uow.orders.get_by_id(1)
+            model = await uow.orders.get_by_id(order.id)
             item = (await model.awaitable_attrs.items)[0]
             assert item.id == 1
             assert item.quantity == 1

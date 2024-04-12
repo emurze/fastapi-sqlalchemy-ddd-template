@@ -3,8 +3,8 @@ from fastapi import APIRouter
 from iam.application.command.register_account import RegisterAccountCommand
 from iam.presentation import schemas as shm
 from seedwork.domain.errors import ErrorType
-from seedwork.presentation.dependencies import BusDep
-from seedwork.presentation.utils import handle_errors
+from seedwork.presentation.error_handlers import handle_errors
+from shared.presentation.dependencies import BusDep
 
 iam_router = APIRouter(prefix="/iam", tags=["iam"])
 

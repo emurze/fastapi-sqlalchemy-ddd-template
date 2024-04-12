@@ -1,9 +1,7 @@
 import abc
 from collections.abc import Iterator
-from typing import Self, Any
+from typing import Self
 
-from iam.domain.repositories import IAccountRepository
-from orders.domain.repositories import IOrderRepository
 from seedwork.domain.events import Event
 
 
@@ -22,9 +20,3 @@ class IGenericUnitOfWork(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def collect_events(self) -> Iterator[Event]: ...
-
-
-class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
-    session: Any
-    accounts: IAccountRepository
-    orders: IOrderRepository

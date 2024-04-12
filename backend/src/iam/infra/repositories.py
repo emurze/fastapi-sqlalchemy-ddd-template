@@ -1,19 +1,19 @@
 from iam.domain.repositories import IAccountRepository
 from iam.domain.entities import Account
 from iam.infra.models import AccountModel
+from seedwork.domain.mappers import IDataMapper
 
 from seedwork.infra.repository import SqlAlchemyRepository, InMemoryRepository
-from seedwork.domain.mapper import IDataMapper
 
 
 class AccountMapper(IDataMapper):
-    def entity_to_model(self, entity: Account) -> AccountModel:
-        dummy_kw = entity.model_dump()
-        return AccountModel(**dummy_kw)
+    async def model_to_entity(self, model: AccountModel) -> Account:
+        kw = model.as_dict()
+        return Account(**kw)
 
-    def model_to_entity(self, model: AccountModel) -> Account:
-        dummy_kw = model.as_dict()
-        return Account(**dummy_kw)
+    async def entity_to_model(self, entity: Account) -> AccountModel:
+        kw = entity.model_dump()
+        return AccountModel(**kw)
 
 
 class AccountSqlAlchemyRepository(SqlAlchemyRepository, IAccountRepository):

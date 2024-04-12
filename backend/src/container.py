@@ -15,9 +15,9 @@ from iam.infra.repositories import AccountSqlAlchemyRepository
 from config import TopLevelConfig
 from orders.infra.repositories import OrderSqlAlchemyRepository
 from seedwork.application.messagebus import MessageBus, Message, Result
-from seedwork.domain.uows import IUnitOfWork
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
 from seedwork.utils.functional import get_first_param_type
+from shared.domain.uow import IUnitOfWork
 
 WrappedHandler: TypeAlias = Callable
 

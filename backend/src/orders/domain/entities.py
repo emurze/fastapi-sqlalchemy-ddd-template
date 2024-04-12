@@ -2,13 +2,14 @@ from pydantic import PositiveInt
 
 from iam.domain.value_objects import AccountId
 from orders.domain.value_objects import OrderId, CustomerId
-from seedwork.domain.collection import alist
+from seedwork.domain.async_structs import alist
 from seedwork.domain.entities import AggregateRoot
+from seedwork.domain.services import UUIDField
 from seedwork.domain.value_objects import ValueObject
 
 
 class Customer(AggregateRoot):
-    id: CustomerId
+    id: CustomerId = UUIDField
     account_id: AccountId
 
     def make_order(self, **kw) -> 'Order':
@@ -16,16 +17,12 @@ class Customer(AggregateRoot):
 
 
 class Order(AggregateRoot):
-    id: OrderId
+    id: OrderId = UUIDField
     items: alist['OrderItem'] = alist()
     customer_id: CustomerId
 
     def add_item(self, **kw) -> None:
         self.items.append(OrderItem(**kw))
-
-    async def run_by_items(self) -> None:
-        for item in await self.items.load():
-            print(item)
 
 
 class OrderItem(ValueObject):

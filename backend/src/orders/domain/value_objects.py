@@ -1,6 +1,5 @@
 from typing import NewType
+from uuid import UUID
 
-from pydantic import PositiveInt
-
-OrderId = NewType('OrderId', PositiveInt)
-CustomerId = NewType('CustomerId', PositiveInt)
+OrderId = NewType("OrderId", UUID)
+CustomerId = NewType("CustomerId", UUID)

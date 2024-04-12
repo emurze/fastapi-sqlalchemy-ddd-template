@@ -1,22 +1,23 @@
 import abc
+from uuid import UUID
 
 from seedwork.domain.entities import Entity
 
 
 class IGenericRepository(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    async def add(self, entity: Entity) -> int: ...
+    async def add(self, entity: Entity) -> UUID: ...
 
     @abc.abstractmethod
     async def delete(self, entity: Entity) -> None: ...
 
     @abc.abstractmethod
-    async def delete_by_id(self, entity_id: int) -> None: ...
+    async def delete_by_id(self, entity_id: UUID) -> None: ...
 
     @abc.abstractmethod
     async def get_by_id(
         self,
-        entity_id: int,
+        entity_id: UUID,
         for_update: bool = False,
     ) -> Entity | None: ...
 

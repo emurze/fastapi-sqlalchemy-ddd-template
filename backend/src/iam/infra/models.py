@@ -1,10 +1,10 @@
-import sqlalchemy as sa
+from sqlalchemy import UUID, Column, String
 
 from iam.domain.entities import Account
-from seedwork.infra.database import Model
+from shared.infra.database import Model
 
 
 class AccountModel(Model):
     __tablename__ = 'account'
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.String(Account.c.name.max_length), nullable=False)
+    id = Column(UUID, primary_key=True)
+    name = Column(String(Account.c.name.max_length), nullable=False)

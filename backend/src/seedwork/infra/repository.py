@@ -1,5 +1,6 @@
 import itertools
-from typing import NoReturn
+from typing import NoReturn, Any
+from uuid import UUID
 
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
@@ -8,24 +9,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from seedwork.domain.entities import Entity
 from seedwork.domain.errors import EntityAlreadyExistsError
 from seedwork.domain.events import Event
-from seedwork.domain.mapper import IDataMapper
+from seedwork.domain.mappers import IDataMapper
 from seedwork.domain.repositories import IGenericRepository
 
 from collections.abc import Iterator
 
-from seedwork.infra.database import Model
-
 
 class SqlAlchemyRepository(IGenericRepository):
     mapper_class: type[IDataMapper]
-    model_class: type[Model]
+    model_class: type[Any]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.mapper = self.mapper_class()
         self._identity_map: dict = {}
 
-    async def add(self, entity: Entity) -> NoReturn | int:
+    async def add(self, entity: Entity) -> NoReturn | UUID:
         try:
             self._identity_map[entity.id] = entity
             model = await self.mapper.entity_to_model(entity)
@@ -88,21 +87,21 @@ class InMemoryRepository(IGenericRepository):
 
     def __init__(self) -> None:
         self.mapper = self.mapper_class()
-        self._objects: dict[int, Entity] = {}
+        self._objects: dict[UUID, Entity] = {}
 
-    async def add(self, entity: Entity) -> int:
+    async def add(self, entity: Entity) -> UUID:
         self._objects[entity.id] = entity
         return entity.id
 
     async def delete(self, entity: Entity) -> None:
         del self._objects[entity.id]
 
-    async def delete_by_id(self, entity_id: int) -> None:
+    async def delete_by_id(self, entity_id: UUID) -> None:
         del self._objects[entity_id]
 
     async def get_by_id(
         self,
-        entity_id: int,
+        entity_id: UUID,
         for_update: bool = False,
     ) -> Entity | None:
         try:

@@ -3,6 +3,8 @@ from dataclasses import field
 from inspect import signature
 from typing import TypeVar
 
+T = TypeVar("T")
+
 
 def get_first_param_type(func: Callable):
     handler_signature = signature(func)
@@ -20,9 +22,6 @@ def invisible_field(default_factory: Callable):
 class classproperty(property):  # noqa
     def __get__(self, cls, owner):  # noqa
         return classmethod(self.fget).__get__(None, owner)()  # noqa
-
-
-T = TypeVar("T")
 
 
 def mixin_for(_: T) -> T:

@@ -1,60 +1,60 @@
 # Run | Clean
 
-run-backend:
+run:
 	poe --root backend run
 
-clean-backend:
+clean:
 	poe --root backend clean
 
 
 # Total checking and testing
 
-check-backend:
+check:
 	poe --root backend check_all
 
 
 # Testing
 
-test-backend:
+test:
 	poe --root backend test
 
-test_unit-backend:
+test_unit:
 	poe --root backend test_unit
 
-test_integration-backend:
+test_integration:
 	poe --root backend test_integration
 
-test_e2e-backend:
+test_e2e:
 	poe --root backend test_e2e
 
-test_domain-backend:
+test_domain:
 	poe --root backend test_domain
 
-test_application-backend:
+test_application:
 	poe --root backend test_application
 
-test_infra-backend:
+test_infra:
 	poe --root backend test_infra
 
-test_coverage-backend:
+test_coverage:
 	poe --root backend test_coverage
 
 # Linting, Formatting, and Type Checking
 
-format-backend:
+format:
 	poe --root backend format
 
-lint-backend:
+lint:
 	poe --root backend lint
 
-check_types-backend:
-	poe --root backend lint
+check_types:
+	poe --root backend check_types
 
 
 # # Migrations
 
-migrations-backend:
+migrations:
 	poe --root backend makemigrations
 
-migrate-backend:
+migrate:
 	poe --root backend migrate

@@ -1,22 +1,22 @@
 import pytest
 from pydantic import ValidationError
 
-from tests.seedwork.confdata.domain.entities import Example
-from tests.seedwork.confdata.domain.events import NameChanged
+from seedwork.domain.services import next_id
+from tests.seedwork.confdata.domain import Example, NameChanged
 
 
 class TestUpdate:
-    @pytest.mark.unit
-    def test_cannot_update_id(self) -> None:
-        example = Example(name="example")
-        with pytest.raises(AssertionError):
-            example.update(**{"id": "2", "name": "new example"})
-
     @pytest.mark.unit
     def test_can_update(self) -> None:
         example = Example(name="example")
         example.update(**{"name": "new"})
         assert example.name == "new"
+
+    @pytest.mark.unit
+    def test_cannot_update_id(self) -> None:
+        example = Example(name="example")
+        with pytest.raises(AssertionError):
+            example.update(**{"id": next_id(), "name": "new example"})
 
 
 class TestValidation:
@@ -30,38 +30,6 @@ class TestValidation:
     def test_validation_error(self) -> None:
         with pytest.raises(ValidationError):
             Example(name="example12345")
-
-
-class TestConstraints:
-    @pytest.mark.unit
-    def test_c_can_retrieve_field_constraint(self) -> None:
-        assert Example.c.name.max_length == 10
-
-
-class TestDeferred:
-    @pytest.mark.unit
-    def test_can_insert_deferred_values_after_initialization(self) -> None:
-        example = Example(name="example")
-        generated_model = Example(id=1, name="example")
-        example.insert_deferred_values(generated_model)
-        assert example.model_dump() == {"id": 1, "name": "example"}
-
-    @pytest.mark.unit
-    def test_can_retrieve_deferred_fields(self) -> None:
-        example = Example(name="example")
-        assert {*example._get_deferred_fields()} == {"id"}
-
-    @pytest.mark.unit
-    def test_cannot_retrieve_deferred_fields(self) -> None:
-        example = Example(id=1, name="example")
-        assert {*example._get_deferred_fields()} == set()
-
-
-class TestStr:
-    @pytest.mark.unit
-    def test_str_can_show_beautiful_representation(self) -> None:
-        example = Example(id=1, name="example")
-        assert str(example) == "Example(id=1, name='example')"
 
 
 class TestBusinessMethod:
@@ -101,3 +69,14 @@ class TestAggregateRoot:
         example.register_event(NameChanged(new_name="helloo"))
         example.collect_events()
         assert len(example._events) == 0
+
+
+class TestCommon:
+    @pytest.mark.unit
+    def test_c_can_retrieve_field_constraint(self) -> None:
+        assert Example.c.name.max_length == 10
+
+    @pytest.mark.unit
+    def test_str_can_show_beautiful_representation(self) -> None:
+        example = Example(id=(example_id := next_id()), name="example")
+        assert str(example) == f"Example(id={example_id}, name='example')"

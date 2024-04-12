@@ -1,8 +1,9 @@
+import enum
 from dataclasses import dataclass
 from typing import Self
 
 
-class ErrorType:
+class ErrorType(str, enum.Enum):
     CONFLICT: str = "Resource conflict error"
     VALIDATION: str = "Validation error"
     PARAMETERS: str = "Parameters error"
