@@ -1,11 +1,13 @@
 import abc
 from collections.abc import Iterator
-from typing import Self
+from typing import Self, Any
 
 from seedwork.domain.events import Event
 
 
-class IGenericUnitOfWork(metaclass=abc.ABCMeta):
+class IBaseUnitOfWork(metaclass=abc.ABCMeta):
+    session: Any
+
     @abc.abstractmethod
     async def __aenter__(self) -> Self: ...
 

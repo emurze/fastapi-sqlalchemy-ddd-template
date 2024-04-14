@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, MappedColumn, Mapped
 from seedwork.domain.mappers import IDataMapper
 from seedwork.domain.repositories import IGenericRepository
 from seedwork.infra.database import ModelBase
-from seedwork.infra.repository import InMemoryRepository, SqlAlchemyRepository
+from seedwork.infra.repository import SqlAlchemyRepository
 from tests.seedwork.confdata.domain import Example
 
 
@@ -33,7 +33,3 @@ class ExampleMapper(IDataMapper):
 class ExampleSqlAlchemyRepository(SqlAlchemyRepository, IGenericRepository):
     mapper_class = ExampleMapper
     model_class = ExampleModel
-
-
-class ExampleInMemoryRepository(InMemoryRepository, IGenericRepository):
-    mapper_class = ExampleMapper

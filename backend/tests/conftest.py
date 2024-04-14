@@ -29,9 +29,7 @@ sqlalchemy_container: TypeAlias = app_container
 
 @pytest.fixture(scope="function")
 async def _restart_tables() -> None:
-    """
-    Cleans tables before each test.
-    """
+    """Cleans tables before each test."""
     async with engine.begin() as conn:
         async with suppress_echo(engine):
             await conn.run_sync(Model.metadata.drop_all)
@@ -46,24 +44,26 @@ async def _restart_cache() -> None:
 
 
 @pytest.fixture(scope="function")
-def bus() -> MessageBus:
+def mem_bus() -> MessageBus:
+    """Provides behavior only for simple use cases."""
     memory_container = get_memory_container()
     return memory_container.message_bus()
 
 
 @pytest.fixture(scope="function")
-def memory_uow() -> IUnitOfWork:
+def mem_uow() -> IUnitOfWork:
+    """Provides behavior only for simple cases."""
     memory_container = get_memory_container()
-    return memory_container.uow()
+    return memory_container.uow()()
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_bus(_restart_tables) -> MessageBus:
+def sql_bus(_restart_tables) -> MessageBus:
     return sqlalchemy_container.message_bus()
 
 
 @pytest.fixture(scope="function")
-def sqlalchemy_uow(_restart_tables) -> IUnitOfWork:
+def sql_uow(_restart_tables) -> IUnitOfWork:
     return sqlalchemy_container.uow()()
 
 
@@ -72,9 +72,7 @@ async def ac(
     _restart_cache,
     _restart_tables,
 ) -> AsyncIterator[AsyncClient]:
-    """
-    Provides a configured async test client for end-to-end tests.
-    """
+    """Provides a configured async test client for end-to-end tests."""
     from main import app
 
     async with LifespanManager(app) as manager:

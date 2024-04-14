@@ -1,15 +1,22 @@
 import abc
+from collections.abc import Iterator
+from typing import TypeVar, Generic
 from uuid import UUID
 
 from seedwork.domain.entities import Entity
+from seedwork.domain.events import Event
+
+T = TypeVar('T', bound=Entity)
 
 
-class IGenericRepository(metaclass=abc.ABCMeta):
+class IGenericRepository(Generic[T], metaclass=abc.ABCMeta):
+    identity_map: dict[UUID, T]
+
     @abc.abstractmethod
-    async def add(self, entity: Entity) -> UUID: ...
+    async def add(self, entity: T) -> UUID: ...
 
     @abc.abstractmethod
-    async def delete(self, entity: Entity) -> None: ...
+    async def delete(self, entity: T) -> None: ...
 
     @abc.abstractmethod
     async def delete_by_id(self, entity_id: UUID) -> None: ...
@@ -18,16 +25,21 @@ class IGenericRepository(metaclass=abc.ABCMeta):
     async def get_by_id(
         self,
         entity_id: UUID,
-        for_update: bool = False,
-    ) -> Entity | None: ...
+        for_update: bool = False
+    ) -> T | None:
+        ...
+
+    @abc.abstractmethod
+    def persist(self, entity: T) -> None: ...
+
+    @abc.abstractmethod
+    def persist_all(self) -> None: ...
+
+    @abc.abstractmethod
+    def collect_events(self) -> Iterator[Event]: ...
 
     @abc.abstractmethod
     async def count(self) -> int: ...
 
     @abc.abstractmethod
-    async def list(self) -> list[Entity]: ...
-
-    # PERSIST
-
-    @abc.abstractmethod
-    def collect_events(self): ...
+    async def list(self) -> list[T]: ...

@@ -35,7 +35,7 @@ pytest-cov = "^4.1.0"
 
 [tool.poe.tasks]
 # Testing
-test             = "docker exec -it api poetry run bash -c 'pytest -m unit && pytest -m integration && pytest -m e2e'"
+test             = "docker exec -it api poetry run bash -c 'pytest -s -m unit && pytest -s -m integration && pytest -s -m e2e'"
 test_all         = "docker exec -it api poetry run pytest -s"
 test_domain      = "docker exec -it api poetry run pytest -s -k domain"
 test_infra       = "docker exec -it api poetry run pytest -s -k infra"
@@ -104,7 +104,7 @@ omit = ["__init__.py", "*/migrations/*"]
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
-disallow_subclassing_any = false
+warn_no_return = false
 cache_dir = "backend/.cache/mypy"
 plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 exclude = ["migrations"]

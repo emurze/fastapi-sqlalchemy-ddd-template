@@ -1,14 +1,16 @@
 import copy
-from typing import Iterator, Any
+from typing import Iterator, Any, NoReturn
 
 from collections.abc import Callable
 from typing import Self
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from seedwork.domain.errors import EntityAlreadyExistsError
 from seedwork.domain.events import Event
 from seedwork.domain.repositories import IGenericRepository
-from seedwork.domain.uows import IGenericUnitOfWork
+from seedwork.domain.uows import IBaseUnitOfWork
 
 
 class CollectEventsMixin:
@@ -20,7 +22,7 @@ class CollectEventsMixin:
                 yield event
 
 
-class SqlAlchemyUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
+class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
     def __init__(self, session_factory: Callable, **repo_classes) -> None:
         self._repo_classes = repo_classes
         self._session_factory = session_factory
@@ -35,11 +37,11 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
         await self.rollback()
         await self.session.close()
 
-    async def commit(self) -> None:
-        await self.session.commit()
-
-    async def execute(self, command: Any) -> Any:
-        return await self.session.execute(command)
+    async def commit(self) -> NoReturn | None:
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            raise EntityAlreadyExistsError()
 
     async def rollback(self) -> None:
         await self.session.rollback()
@@ -52,7 +54,7 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
         return _repos
 
 
-class InMemoryUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
+class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
     """
     Persists memory in each repository.
     """
@@ -60,8 +62,8 @@ class InMemoryUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
     def __init__(self, **repo_classes: type[IGenericRepository]) -> None:
         self._is_committed = False
         self._repos: list = self._set_repos_as_attrs(repo_classes)
-        self._memory_state: list[tuple[IGenericRepository, list]] = [
-            (repo, []) for repo in self._repos
+        self._memory_state: list[tuple[IGenericRepository, dict]] = [
+            (repo, {}) for repo in self._repos
         ]
 
     async def __aenter__(self) -> Self:
@@ -79,7 +81,7 @@ class InMemoryUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
         """
 
         self._memory_state = [
-            (repo, copy.deepcopy(await repo.list()))
+            (repo, copy.deepcopy(repo.identity_map))
             for repo in self._repos
         ]
         self._is_committed = True
@@ -89,8 +91,8 @@ class InMemoryUnitOfWork(CollectEventsMixin, IGenericUnitOfWork):
         Rollbacks repositories memory to the last state.
         """
 
-        for repository, models in self._memory_state:
-            repository._models = copy.deepcopy(models)
+        for repository, old_identity_map in self._memory_state:
+            repository.identity_map = copy.deepcopy(old_identity_map)
 
     def _set_repos_as_attrs(self, cls_repos: dict) -> list[IGenericRepository]:
         _repos = []

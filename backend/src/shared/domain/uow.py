@@ -1,12 +1,10 @@
 import abc
-from typing import Any
 
 from iam.domain.repositories import IAccountRepository
 from orders.domain.repositories import IOrderRepository
-from seedwork.domain.uows import IGenericUnitOfWork
+from seedwork.domain.uows import IBaseUnitOfWork
 
 
-class IUnitOfWork(IGenericUnitOfWork, abc.ABC):
-    session: Any
+class IUnitOfWork(IBaseUnitOfWork, abc.ABC):
     accounts: IAccountRepository
     orders: IOrderRepository

@@ -78,5 +78,7 @@ class TestCommon:
 
     @pytest.mark.unit
     def test_str_can_show_beautiful_representation(self) -> None:
-        example = Example(id=(example_id := next_id()), name="example")
-        assert str(example) == f"Example(id={example_id}, name='example')"
+        example = Example(name="example")
+        assert (
+            str(example) == f"Example(id=UUID('{example.id}'), name='example')"
+        )

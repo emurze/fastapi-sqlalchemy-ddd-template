@@ -20,7 +20,6 @@ async def test_can_return_coro_result() -> None:
 async def test_can_append_value() -> None:
     user = User(id=1, items=alist([10, 20, 30]))
     await user.items.load()
-
     user.items.append(100)
     assert user.items == [10, 20, 30, 100]
 

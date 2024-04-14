@@ -4,9 +4,10 @@ from dependency_injector import containers
 from dependency_injector.providers import Factory, Singleton
 
 from seedwork.infra.injector import Link
+from seedwork.infra.repository import InMemoryRepository
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
 from tests.conftest import session_factory
-from tests.seedwork.confdata import repositories as repos
+from tests.seedwork.confdata.repositories import ExampleSqlAlchemyRepository
 
 
 class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
@@ -15,7 +16,7 @@ class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
         Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        examples=repos.ExampleSqlAlchemyRepository,
+        examples=ExampleSqlAlchemyRepository,
     )
 
 
@@ -23,5 +24,5 @@ class MemorySeedWorkContainer(containers.DeclarativeContainer):
     uow_factory: Any = Singleton(
         Factory,
         InMemoryUnitOfWork,
-        examples=repos.ExampleInMemoryRepository,
+        examples=InMemoryRepository,
     )
