@@ -8,7 +8,7 @@ class OrderMapper(IDataMapper):
     # todo: A new triple relationship
 
     def model_to_entity(self, model: OrderModel) -> Order:
-        async def map_order_item_models_to_entities():
+        async def map_order_item() -> list[OrderItem]:
             return [
                 OrderItem(**x.as_dict())
                 for x in await model.awaitable_attrs.items
@@ -16,7 +16,7 @@ class OrderMapper(IDataMapper):
 
         return Order(
             **model.as_dict(),
-            items=alist(coro_factory=map_order_item_models_to_entities)
+            items=alist(coro_factory=map_order_item)
         )
 
     def entity_to_model(self, entity: Order) -> OrderModel:

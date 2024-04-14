@@ -11,7 +11,6 @@ CoroutineFactory = Callable[[], Coroutine]
 class _AsyncList(Generic[T]):
     """
     Usage:
-
         for batch in await product.items.load():
             for item in await batch.items.load():
                 print(item)
