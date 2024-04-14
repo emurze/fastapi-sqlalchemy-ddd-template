@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, UUID
+from sqlalchemy import Column, String, UUID, ForeignKey
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, MappedColumn, Mapped
 
@@ -20,6 +20,20 @@ class ExampleModel(Model):
     __tablename__ = "example"
     id = MappedColumn(UUID, primary_key=True)
     name = Column(String(Example.c.name.max_length), nullable=False)
+
+
+# class ExampleItemModel(Model):
+#     id = MappedColumn(UUID, primary_key=True)
+#     name = Column(String, nullable=False)
+#     example_id = Column(String, ForeignKey("example.id"), nullable=False)
+#
+#
+# class AddressModel(Model):
+#     id = MappedColumn(UUID, primary_key=True)
+#     city = Column(String, nullable=False)
+#     example_item_id = Column(
+#         String, ForeignKey("example_item.id"), nullable=False
+#     )
 
 
 class ExampleMapper(IDataMapper):

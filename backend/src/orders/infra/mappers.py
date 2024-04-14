@@ -5,8 +5,10 @@ from seedwork.domain.mappers import IDataMapper
 
 
 class OrderMapper(IDataMapper):
+    # todo: A new triple relationship
+
     def model_to_entity(self, model: OrderModel) -> Order:
-        async def order_item_factory():
+        async def map_order_item_models_to_entities():
             return [
                 OrderItem(**x.as_dict())
                 for x in await model.awaitable_attrs.items
@@ -14,17 +16,13 @@ class OrderMapper(IDataMapper):
 
         return Order(
             **model.as_dict(),
-            items=alist(order_item_factory)
+            items=alist(coro_factory=map_order_item_models_to_entities)
         )
 
     def entity_to_model(self, entity: Order) -> OrderModel:
         model = OrderModel(**entity.model_dump(exclude={"items"}))
-
-        def order_item_mapper(instance):
-            model.items += [
-                OrderItemModel(**x.model_dump(), order_id=model.id)
-                for x in instance._list
-            ]
-
-        entity.items.map_relation(order_item_mapper)
+        model.items += [
+            OrderItemModel(**x.model_dump(), order_id=model.id)
+            for x in entity.items.loaded_or_load_sync()
+        ]
         return model
