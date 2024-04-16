@@ -1,8 +1,10 @@
+import inspect
+from collections.abc import Callable
 from typing import Any, cast
 from uuid import UUID
 
 from pydantic import ConfigDict, BaseModel
-from pydantic.fields import FieldInfo
+from pydantic.fields import FieldInfo, PrivateAttr
 
 from seedwork.domain.events import Event
 from seedwork.domain.services import UUIDField
@@ -35,6 +37,11 @@ class Entity(BaseModel):
         arbitrary_types_allowed=True,
     )
     id: UUID = UUIDField
+    _extra: dict = PrivateAttr(default_factory=dict)
+
+    @property
+    def extra_kw(self) -> dict:
+        return self._extra
 
     @classproperty
     def c(self) -> EntityWrapper:
@@ -46,8 +53,19 @@ class Entity(BaseModel):
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def __str__(self) -> str:
-        return f"{type(self).__name__}({', '.join(super().__str__().split())})"
+    @staticmethod
+    def _get_mapper_param(mapper: Callable) -> str:
+        res = inspect.signature(mapper)
+        params = tuple(res.parameters)
+        assert len(params) == 1, "Map callback should have only one parameter."
+        return params[0]
+
+    def only_loaded(self, mapper: Callable) -> dict:
+        rel_name = self._get_mapper_param(mapper)
+        relation = getattr(self, rel_name)
+        return {} if not relation.load_entity_list().is_loaded() else {
+            rel_name: mapper(relation)
+        }
 
 
 class LocalEntity(Entity):

@@ -75,10 +75,3 @@ class TestCommon:
     @pytest.mark.unit
     def test_c_can_retrieve_field_constraint(self) -> None:
         assert Example.c.name.max_length == 10
-
-    @pytest.mark.unit
-    def test_str_can_show_beautiful_representation(self) -> None:
-        example = Example(name="example")
-        assert (
-            str(example) == f"Example(id=UUID('{example.id}'), name='example')"
-        )

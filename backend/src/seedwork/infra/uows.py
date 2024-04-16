@@ -39,12 +39,18 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
 
     async def commit(self) -> NoReturn | None:
         try:
+            await self._persist_all_repos()
             await self.session.commit()
-        except IntegrityError:
+        except IntegrityError as e:
+            print(e)
             raise EntityAlreadyExistsError()
 
     async def rollback(self) -> None:
         await self.session.rollback()
+
+    async def _persist_all_repos(self) -> None:
+        for repo in self._repos:
+            await repo.persist_all()
 
     def _set_repos_as_attrs(self, session: AsyncSession) -> list:
         _repos = []

@@ -21,6 +21,10 @@ class _AsyncList(Generic[T]):
         sync_list: list[T] | None = None,
         coro_factory: CoroutineFactory | None = None,
     ) -> None:
+        assert not (sync_list and coro_factory), (
+            "You should pass a sync_list or a coro_factory or None"
+        )
+
         self._coro_factory = coro_factory
         self._sync_list = sync_list.copy() if sync_list else []
         self._data: list[T] = []
@@ -44,12 +48,13 @@ class _AsyncList(Generic[T]):
         self._load_result(await self._get_result())
         return self
 
-    def loaded_or_load_sync(self) -> Self:
-        """
-        Ignores data not loaded from coroutine factory,
-        """
-        self._load_result(self._sync_list)
+    def load_entity_list(self) -> Self:
+        if self._sync_list:
+            self._load_result(self._sync_list)
         return self
+
+    def is_loaded(self) -> bool:
+        return self._is_loaded
 
     @staticmethod
     def check_loaded(func: Callable) -> Callable:

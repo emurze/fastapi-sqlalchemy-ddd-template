@@ -40,8 +40,9 @@ class SqlAlchemyRepository(IGenericRepository):
         return None
 
     async def add(self, entity: Entity) -> UUID:
+        model = self.mapper.update_model(entity, self.model_class())
+        entity.extra_kw["model"] = model
         self.identity_map[entity.id] = entity
-        model = self.mapper.entity_to_model(entity)
         self.session.add(model)
         return entity.id
 
@@ -70,6 +71,8 @@ class SqlAlchemyRepository(IGenericRepository):
             return None
 
         entity = self.mapper.model_to_entity(model)
+        if not entity.extra_kw.get("model"):
+            entity.extra_kw["model"] = model
 
         # Saves events stored in entity
         if store_entity := self.identity_map.get(entity.id):
@@ -89,11 +92,9 @@ class SqlAlchemyRepository(IGenericRepository):
             "Cannon persist entity which is unknown to the repo. "
             "Did you forget to call repo.add() for this entity?"
         )
-        instance = self.mapper.entity_to_model(entity)
-        merged = self.session.merge(instance)
-        self.session.add(merged)
+        self.mapper.update_model(entity, entity.extra_kw["model"])
 
-    def persist_all(self) -> None:
+    async def persist_all(self) -> None:
         """
         Persists all changes made to entities present in the identity map.
         """
@@ -152,10 +153,10 @@ class InMemoryRepository(IGenericRepository):
     async def list(self) -> list[Entity]:
         return list(self.identity_map.values())
 
-    def persist(self, entity: Entity) -> None:
+    async def persist(self, entity: Entity) -> None:
         ...
 
-    def persist_all(self) -> None:
+    async def persist_all(self) -> None:
         ...
 
     def collect_events(self) -> Iterator[Event]:

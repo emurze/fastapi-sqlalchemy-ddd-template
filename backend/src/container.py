@@ -9,11 +9,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from iam.application.command.register_account import register_account_handler
-from iam.application.event.notify_developers import notify_developers
-from iam.infra.repositories import AccountSqlAlchemyRepository
 from config import TopLevelConfig
-from orders.infra.repositories import OrderSqlAlchemyRepository
 from seedwork.application.messagebus import MessageBus, Message, Result
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
 from seedwork.utils.functional import get_first_param_type
@@ -86,20 +82,14 @@ class AppContainer(containers.DeclarativeContainer):
         Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        accounts=AccountSqlAlchemyRepository,
-        orders=OrderSqlAlchemyRepository,
+        # accounts=AccountSqlAlchemyRepository,
+        # orders=OrderSqlAlchemyRepository,
     )
 
     # Application
     query_handlers = Singleton(get_dict)
-    command_handlers = Singleton(
-        get_dict,
-        Singleton(get_handler, register_account_handler, uow=uow)
-    )
-    event_handlers = Singleton(
-        get_dict,
-        Singleton(get_handler, notify_developers)
-    )
+    command_handlers = Singleton(get_dict)
+    event_handlers = Singleton(get_dict)
     message_bus = Singleton(
         get_bus,
         query_handlers=query_handlers,

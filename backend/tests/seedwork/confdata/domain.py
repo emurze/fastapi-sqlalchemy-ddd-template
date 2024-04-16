@@ -9,9 +9,9 @@ from seedwork.domain.events import Event
 from seedwork.domain.services import UUIDField
 from seedwork.domain.value_objects import ValueObject
 
+AddressId = NewType('AddressId', uuid.UUID)
 ExampleId = NewType('ExampleId', uuid.UUID)
 ExampleItemId = NewType('ExampleItemId', uuid.UUID)
-AddressId = NewType('AddressId', uuid.UUID)
 
 
 class NameChanged(Event):

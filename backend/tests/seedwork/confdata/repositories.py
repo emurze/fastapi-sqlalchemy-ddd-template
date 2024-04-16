@@ -4,7 +4,6 @@ from sqlalchemy import Column, String, UUID, ForeignKey
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, MappedColumn, Mapped, relationship
 
-from seedwork.domain.async_structs import alist
 from seedwork.domain.mappers import IDataMapper
 from seedwork.domain.repositories import IGenericRepository
 from seedwork.domain.services import next_id
@@ -29,7 +28,7 @@ class ExampleItemModel(Model):
     __tablename__ = "example_item"
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     name = Column(String, nullable=False)
-    example_id = Column(String, ForeignKey("example.id"), nullable=False)
+    example_id = Column(UUID, ForeignKey("example.id"), nullable=False)
     addresses: Mapped[list['AddressModel']] = relationship()
 
 
@@ -38,50 +37,47 @@ class AddressModel(Model):
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     city = Column(String, nullable=False)
     example_item_id = Column(
-        String, ForeignKey("example_item.id"), nullable=False
+        UUID, ForeignKey("example_item.id"), nullable=False
     )
 
 
-class ExampleMapper(IDataMapper):
+class ExampleMapper(IDataMapper[Example, ExampleModel]):
     def model_to_entity(self, model: ExampleModel) -> Example:
-        async def map_address(example_item) -> list[Address]:
-            return [
-                Address(**x.as_dict())
-                for x in await example_item.awaitable_attrs.addresses
-            ]
-
-        async def map_example_item() -> list[ExampleItem]:
-            return [
-                ExampleItem(
-                    **x.as_dict(),
-                    addresses=alist(coro_factory=lambda: map_address(x)),
-                )
-                for x in await model.awaitable_attrs.items
-            ]
-
         return Example(
             **model.as_dict(),
-            items=alist(coro_factory=map_example_item)
+            **model.as_alist(lambda items: [
+                ExampleItem(
+                    **item.as_dict(),
+                    **item.as_alist(lambda addresses: [
+                        Address(**addr.as_dict())
+                        for addr in addresses
+                    ])
+                )
+                for item in items
+            ])
         )
 
-    def entity_to_model(self, entity: Example) -> ExampleModel:
-        return ExampleModel(
+    def update_model(
+        self, entity: Example, model: ExampleModel
+    ) -> ExampleModel:
+        model.update(
             **entity.model_dump(exclude={"items"}),
-            items=[
+            **entity.only_loaded(lambda items: [
                 ExampleItemModel(
                     **item.model_dump(exclude={"addresses"}),
-                    example_id=str(entity.id),
-                    addresses=[
+                    **item.only_loaded(lambda addresses: [
                         AddressModel(
                             **addr.model_dump(),
-                            example_item_id=str(item.id)
+                            example_item_id=item.id
                         )
-                        for addr in item.addresses.loaded_or_load_sync()
-                    ]
+                        for addr in addresses
+                    ]),
+                    example_id=entity.id,
                 )
-                for item in entity.items.loaded_or_load_sync()
-            ]
+                for item in items
+            ])
         )
+        return model
 
 
 class ExampleSqlAlchemyRepository(SqlAlchemyRepository, IGenericRepository):
