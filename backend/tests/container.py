@@ -23,7 +23,7 @@ def get_memory_container() -> AppContainer:
         providers.Singleton(
             Factory,
             InMemoryUnitOfWork,
-            # accounts=InMemoryRepository,
+            # examples=InMemoryRepository,
         )
     )
     return container

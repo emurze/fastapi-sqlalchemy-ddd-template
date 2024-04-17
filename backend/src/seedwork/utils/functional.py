@@ -4,6 +4,7 @@ from inspect import signature
 from typing import TypeVar
 
 T = TypeVar("T")
+OnlyOneParamMessage = "Callback should have only one parameter."
 
 
 def get_first_param_type(func: Callable):
@@ -11,6 +12,13 @@ def get_first_param_type(func: Callable):
     kwargs_iterator = iter(handler_signature.parameters.items())
     _, first_param = next(kwargs_iterator)
     return first_param.annotation
+
+
+def get_one_param(mapper: Callable, message: str = OnlyOneParamMessage) -> str:
+    res = signature(mapper)
+    params = tuple(res.parameters)
+    assert len(params) == 1, message
+    return params[0]
 
 
 def invisible_field(default_factory: Callable):
@@ -22,7 +30,3 @@ def invisible_field(default_factory: Callable):
 class classproperty(property):  # noqa
     def __get__(self, cls, owner):  # noqa
         return classmethod(self.fget).__get__(None, owner)()  # noqa
-
-
-def mixin_for(_: T) -> T:
-    return object  # type: ignore

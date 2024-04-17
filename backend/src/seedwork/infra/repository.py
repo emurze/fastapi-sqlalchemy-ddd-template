@@ -21,7 +21,7 @@ class Deleted:
         return "<Deleted entity>"
 
 
-DELETED = Deleted()  # Why can't we just delete them
+DELETED = Deleted()
 
 
 class SqlAlchemyRepository(IGenericRepository):
@@ -40,7 +40,8 @@ class SqlAlchemyRepository(IGenericRepository):
         return None
 
     async def add(self, entity: Entity) -> UUID:
-        model = self.mapper.update_model(entity, self.model_class())
+        model = self.model_class()
+        self.mapper.update_model(entity, model)
         entity.extra_kw["model"] = model
         self.identity_map[entity.id] = entity
         self.session.add(model)
@@ -82,22 +83,16 @@ class SqlAlchemyRepository(IGenericRepository):
         return entity
 
     def persist(self, entity: Entity) -> None:
-        """
-        Persists all the changes made to the entity.
-        Basically, entity is mapped to a model instance using a data mapper,
-        and then added to sqlalchemy session.
-        """
+        """Persists all the changes made to the entity."""
         self._check_not_deleted(entity.id)
         assert entity.id in self.identity_map, (
-            "Cannon persist entity which is unknown to the repo. "
+            "Cannot persist entity which is unknown to the repo. "
             "Did you forget to call repo.add() for this entity?"
         )
         self.mapper.update_model(entity, entity.extra_kw["model"])
 
     async def persist_all(self) -> None:
-        """
-        Persists all changes made to entities present in the identity map.
-        """
+        """Persists changes made to entities present in the identity map."""
         for entity in self.identity_map.values():
             if entity is not DELETED:
                 self.persist(entity)

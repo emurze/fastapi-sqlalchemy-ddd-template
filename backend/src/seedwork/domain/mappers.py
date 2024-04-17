@@ -1,15 +1,15 @@
 import abc
 
-from typing import Any as Model, TypeVar, Generic
-from seedwork.domain.entities import Entity
+from typing import TypeVar, Generic, Any
+from seedwork.domain import entities as e
 
-TModel = TypeVar('TModel', bound=Model)
-TEntity = TypeVar('TEntity', bound=Entity)
+Model = TypeVar('Model', bound=Any)
+Entity = TypeVar('Entity', bound=e.Entity)
 
 
-class IDataMapper(abc.ABC, Generic[TEntity, TModel]):
+class IDataMapper(abc.ABC, Generic[Entity, Model]):
     @abc.abstractmethod
-    def model_to_entity(self, model: TModel) -> TEntity: ...
+    def model_to_entity(self, model: Model) -> Entity: ...
 
     @abc.abstractmethod
-    def update_model(self, entity: TEntity, model: TModel) -> TModel: ...
+    def update_model(self, entity: Entity, model: Model) -> Model: ...

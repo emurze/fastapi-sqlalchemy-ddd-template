@@ -1,4 +1,3 @@
-import inspect
 from collections.abc import Callable
 from typing import Any, cast
 from uuid import UUID
@@ -8,7 +7,7 @@ from pydantic.fields import FieldInfo, PrivateAttr
 
 from seedwork.domain.events import Event
 from seedwork.domain.services import UUIDField
-from seedwork.utils.functional import classproperty
+from seedwork.utils.functional import classproperty, get_one_param
 
 
 class FieldWrapper:
@@ -53,18 +52,10 @@ class Entity(BaseModel):
         for key, value in kw.items():
             setattr(self, key, value)
 
-    @staticmethod
-    def _get_mapper_param(mapper: Callable) -> str:
-        res = inspect.signature(mapper)
-        params = tuple(res.parameters)
-        assert len(params) == 1, "Map callback should have only one parameter."
-        return params[0]
-
     def only_loaded(self, mapper: Callable) -> dict:
-        rel_name = self._get_mapper_param(mapper)
-        relation = getattr(self, rel_name)
+        relation = getattr(self, name := get_one_param(mapper))
         return {} if not relation.load_entity_list().is_loaded() else {
-            rel_name: mapper(relation)
+            name: mapper(relation)
         }
 
 

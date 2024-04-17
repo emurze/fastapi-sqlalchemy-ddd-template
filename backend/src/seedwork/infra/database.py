@@ -1,32 +1,19 @@
-import inspect
 from collections.abc import AsyncGenerator, Iterator, Callable
 from contextlib import asynccontextmanager
+from typing import Protocol, Any
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from seedwork.domain.async_structs import alist
+from seedwork.domain.structs import alist
+from seedwork.utils.functional import get_one_param
 
 
-class LazyAsyncAttrsMixin:
-    @staticmethod
-    def _get_mapper_param(mapper: Callable) -> str:
-        res = inspect.signature(mapper)
-        params = tuple(res.parameters)
-        assert len(params) == 1, "Map callback should have only one parameter."
-        return params[0]
-
-    def as_alist(self, map_items: Callable) -> dict:
-        rel_name = self._get_mapper_param(map_items)
-
-        async def mapper():
-            awaitable = getattr(self.awaitable_attrs, rel_name)  # type: ignore
-            return map_items(await awaitable)
-
-        return {rel_name: alist(coro_factory=mapper)}
+class ModelProtocol(Protocol):
+    awaitable_attrs: Any
 
 
-class ModelBase(LazyAsyncAttrsMixin):
+class ModelBase:
     @classmethod
     def get_fields(cls) -> Iterator[str]:
         return (field.name for field in sa.inspect(cls).c)  # type: ignore
@@ -37,6 +24,15 @@ class ModelBase(LazyAsyncAttrsMixin):
     def update(self, **kw) -> None:
         for key, value in kw.items():
             setattr(self, key, value)
+
+    def as_alist(self: ModelProtocol, map_items: Callable) -> dict:
+        relation_name = get_one_param(map_items)
+
+        async def mapper():
+            awaitable = getattr(self.awaitable_attrs, relation_name)
+            return map_items(await awaitable)
+
+        return {relation_name: alist(coro_factory=mapper)}
 
     def __repr__(self) -> str:
         cls = type(self)

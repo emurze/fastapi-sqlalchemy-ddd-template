@@ -3,7 +3,7 @@ from typing import NewType
 
 from pydantic import Field
 
-from seedwork.domain.async_structs import alist
+from seedwork.domain.structs import alist
 from seedwork.domain.entities import AggregateRoot, LocalEntity
 from seedwork.domain.events import Event
 from seedwork.domain.services import UUIDField

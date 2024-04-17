@@ -57,9 +57,7 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):
             ])
         )
 
-    def update_model(
-        self, entity: Example, model: ExampleModel
-    ) -> ExampleModel:
+    def update_model(self, entity: Example, model: ExampleModel) -> None:
         model.update(
             **entity.model_dump(exclude={"items"}),
             **entity.only_loaded(lambda items: [
@@ -77,7 +75,6 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):
                 for item in items
             ])
         )
-        return model
 
 
 class ExampleSqlAlchemyRepository(SqlAlchemyRepository, IGenericRepository):

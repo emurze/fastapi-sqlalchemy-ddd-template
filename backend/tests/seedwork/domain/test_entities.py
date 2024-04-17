@@ -5,7 +5,7 @@ from seedwork.domain.services import next_id
 from tests.seedwork.confdata.domain import Example, NameChanged
 
 
-class TestUpdate:
+class TestEntity:
     @pytest.mark.unit
     def test_can_update(self) -> None:
         example = Example(name="example")
@@ -13,13 +13,22 @@ class TestUpdate:
         assert example.name == "new"
 
     @pytest.mark.unit
+    def test_can_set_and_get_extra_kw(self) -> None:
+        example = Example(name="example")
+        example.extra_kw['vlados'] = 'In love'
+        assert example.extra_kw['vlados'] == 'In love'
+
+    @pytest.mark.unit
+    @pytest.mark.skip
+    def test_can_return_only_loaded_relations_dict(self) -> None:
+        ...
+
+    @pytest.mark.unit
     def test_cannot_update_id(self) -> None:
         example = Example(name="example")
         with pytest.raises(AssertionError):
             example.update(**{"id": next_id(), "name": "new example"})
 
-
-class TestValidation:
     @pytest.mark.unit
     def test_can_revalidate_on_update(self) -> None:
         example = Example(name="example")
@@ -31,8 +40,6 @@ class TestValidation:
         with pytest.raises(ValidationError):
             Example(name="example12345")
 
-
-class TestBusinessMethod:
     @pytest.mark.unit
     def test_change_name_can_give_a_new_name(self) -> None:
         example = Example(name="hello")
@@ -45,6 +52,10 @@ class TestBusinessMethod:
         example.change_name("helloo")
         assert len(example._events) == 1
         assert example._events[0] == NameChanged(new_name="helloo")
+
+    @pytest.mark.unit
+    def test_c_can_retrieve_field_constraint(self) -> None:
+        assert Example.c.name.max_length == 10
 
 
 class TestAggregateRoot:
@@ -69,9 +80,3 @@ class TestAggregateRoot:
         example.register_event(NameChanged(new_name="helloo"))
         example.collect_events()
         assert len(example._events) == 0
-
-
-class TestCommon:
-    @pytest.mark.unit
-    def test_c_can_retrieve_field_constraint(self) -> None:
-        assert Example.c.name.max_length == 10

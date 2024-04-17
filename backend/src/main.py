@@ -9,7 +9,6 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
 
-from iam.presentation.api import iam_router
 from health.presentation.api import router as health_router
 
 from container import container
@@ -41,10 +40,9 @@ app = FastAPI(
     container=container,
 )
 app.include_router(health_router)
-app.include_router(iam_router)
 
 app.add_middleware(
-    CORSMiddleware,  # noqa
+    CORSMiddleware,  # type: ignore
     allow_origins=config.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],

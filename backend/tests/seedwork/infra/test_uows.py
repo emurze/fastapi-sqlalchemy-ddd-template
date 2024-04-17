@@ -4,9 +4,9 @@ from tests.seedwork.confdata.domain import Example
 from tests.seedwork.confdata.ports import ITestUnitOfWork
 
 
-class TestMemoryUoW:
+class TestMemoryUnitOfWork:
     @pytest.mark.unit
-    async def test_uow_can_commit(self, mem_uow: ITestUnitOfWork) -> None:
+    async def test_commit(self, mem_uow: ITestUnitOfWork) -> None:
         async with mem_uow as uow:
             example = Example(name="Hello")
             await uow.examples.add(example)
@@ -17,7 +17,7 @@ class TestMemoryUoW:
             assert example.name == "Hello"
 
     @pytest.mark.unit
-    async def test_uow_can_rollback(self, mem_uow: ITestUnitOfWork) -> None:
+    async def test_rollback(self, mem_uow: ITestUnitOfWork) -> None:
         async with mem_uow as uow:
             example = Example(name="Hello")
             await uow.examples.add(example)
@@ -28,7 +28,7 @@ class TestMemoryUoW:
             assert example is None
 
     @pytest.mark.unit
-    async def test_uow_can_do_commit_rollback_pipeline(
+    async def test_commit_rollback_pipeline(
         self, mem_uow: ITestUnitOfWork
     ) -> None:
         async with mem_uow as uow:
@@ -55,19 +55,19 @@ class TestMemoryUoW:
             assert await uow.examples.count() == 4
 
 
-class TestSqlAlchemyUoW:
-    mem_tests = TestMemoryUoW()
+class TestSqlAlchemyUnitOfWork:
+    mem_tests = TestMemoryUnitOfWork()
 
     @pytest.mark.integration
-    async def test_uow_can_commit(self, sql_uow: ITestUnitOfWork) -> None:
-        await self.mem_tests.test_uow_can_commit(sql_uow)
+    async def test_commit(self, sql_uow: ITestUnitOfWork) -> None:
+        await self.mem_tests.test_commit(sql_uow)
 
     @pytest.mark.integration
-    async def test_uow_can_rollback(self, sql_uow: ITestUnitOfWork) -> None:
-        await self.mem_tests.test_uow_can_rollback(sql_uow)
+    async def test_rollback(self, sql_uow: ITestUnitOfWork) -> None:
+        await self.mem_tests.test_rollback(sql_uow)
 
     @pytest.mark.integration
-    async def test_uow_can_do_commit_rollback_pipeline(
+    async def test_commit_rollback_pipeline(
         self, sql_uow: ITestUnitOfWork
     ) -> None:
-        await self.mem_tests.test_uow_can_do_commit_rollback_pipeline(sql_uow)
+        await self.mem_tests.test_commit_rollback_pipeline(sql_uow)

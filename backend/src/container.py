@@ -82,8 +82,7 @@ class AppContainer(containers.DeclarativeContainer):
         Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        # accounts=AccountSqlAlchemyRepository,
-        # orders=OrderSqlAlchemyRepository,
+        # examples=ExampleSqlAlchemyRepository,
     )
 
     # Application
