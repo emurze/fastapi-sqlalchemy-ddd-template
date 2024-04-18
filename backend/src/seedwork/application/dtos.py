@@ -1,4 +1,10 @@
-from pydantic import BaseModel, ConfigDict
+from typing import TypeVar
+
+from pydantic import BaseModel, ConfigDict, AfterValidator
+
+from seedwork.domain.structs import alist
+
+T = TypeVar('T')
 
 
 class DTO(BaseModel):
@@ -7,3 +13,12 @@ class DTO(BaseModel):
         from_attributes=True,
         arbitrary_types_allowed=True,
     )
+
+
+def _to_alist(v: list[T]) -> alist[T]:
+    if not isinstance(v, list):
+        raise ValueError("Expected a list")
+    return alist(v)
+
+
+to_alist = AfterValidator(_to_alist)

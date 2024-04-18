@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TypeAlias, Any
+from typing import Any
 
 from dependency_injector import containers
 from dependency_injector.providers import Singleton, Factory
@@ -10,12 +10,8 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from config import TopLevelConfig
-from seedwork.application.messagebus import MessageBus, Message, Result
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
-from seedwork.utils.functional import get_first_param_type
-from shared.domain.uow import IUnitOfWork
-
-WrappedHandler: TypeAlias = Callable
+from seedwork.presentation.factories import get_dict, get_bus
 
 
 def get_config() -> TopLevelConfig:
@@ -35,43 +31,6 @@ def get_session_factory(engine: AsyncEngine) -> Callable:
     return async_sessionmaker(engine)
 
 
-def get_bus(
-    query_handlers: dict[type[Message], WrappedHandler],
-    command_handlers: dict[type[Message], WrappedHandler],
-    event_handlers: dict[type[Message], WrappedHandler],
-) -> MessageBus:
-    return MessageBus(
-        query_handlers=query_handlers,
-        command_handlers=command_handlers,
-        event_handlers=event_handlers,
-    )
-
-
-def get_dict(*handlers: dict) -> dict[type[Message], WrappedHandler]:
-    return {k: v for handler in handlers for k, v in handler.items()}
-
-
-def get_handler(handler, *args, **kw) -> dict[type[Message], WrappedHandler]:
-    async def wrapper(message: Message) -> tuple[Result, IUnitOfWork]:
-        """
-        Wraps the provided handler function to accept a message
-        and ensures the creation of a new unit of work
-        if a factory with "uow" name is provided.
-        """
-
-        new_kw = None
-        uow = None
-
-        if uow_factory := kw.get('uow'):
-            uow = uow_factory()
-            new_kw = kw.copy()
-            new_kw['uow'] = uow
-
-        return await handler(message, *args, **(new_kw or kw)), uow
-
-    return {get_first_param_type(handler): wrapper}
-
-
 class AppContainer(containers.DeclarativeContainer):
     config = Singleton(get_config)
     db_engine = Singleton(get_engine, config)
@@ -86,10 +45,10 @@ class AppContainer(containers.DeclarativeContainer):
     )
 
     # Application
-    query_handlers = Singleton(get_dict)
-    command_handlers = Singleton(get_dict)
-    event_handlers = Singleton(get_dict)
-    message_bus = Singleton(
+    query_handlers: Callable = Singleton(get_dict)
+    command_handlers: Callable = Singleton(get_dict)
+    event_handlers: Callable = Singleton(get_dict)
+    message_bus: Callable = Singleton(
         get_bus,
         query_handlers=query_handlers,
         command_handlers=command_handlers,

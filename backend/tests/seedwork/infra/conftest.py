@@ -17,7 +17,7 @@ def sql_uow(_restart_example_table) -> ITestUnitOfWork:
 
 @pytest.fixture(scope="function")
 def mem_uow() -> ITestUnitOfWork:
-    container = containers.MemorySeedWorkContainer()
+    container = containers.get_memory_container()
     return container.uow_factory()()
 
 

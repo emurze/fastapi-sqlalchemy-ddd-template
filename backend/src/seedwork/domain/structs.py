@@ -1,10 +1,7 @@
 from collections.abc import Callable, Coroutine
 from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator
 
-from seedwork.domain.entities import Entity
-from seedwork.domain.value_objects import ValueObject
-
-T = TypeVar('T', bound=Entity | ValueObject)
+T = TypeVar('T')
 CoroutineFactory = Callable[[], Coroutine]
 
 

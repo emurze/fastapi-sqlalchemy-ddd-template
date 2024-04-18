@@ -20,7 +20,7 @@ class TestEntity:
 
     @pytest.mark.unit
     @pytest.mark.skip
-    def test_can_return_only_loaded_relations_dict(self) -> None:
+    def test_can_return_only_loaded_relations_as_dict(self) -> None:
         ...
 
     @pytest.mark.unit
