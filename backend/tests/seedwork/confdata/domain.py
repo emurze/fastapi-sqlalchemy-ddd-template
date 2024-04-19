@@ -5,7 +5,7 @@ from pydantic import Field
 
 from seedwork.domain.structs import alist
 from seedwork.domain.entities import AggregateRoot, LocalEntity
-from seedwork.domain.events import Event
+from seedwork.domain.events import DomainEvent
 from seedwork.domain.services import UUIDField
 from seedwork.domain.value_objects import ValueObject
 
@@ -14,7 +14,7 @@ ExampleId = NewType('ExampleId', uuid.UUID)
 ExampleItemId = NewType('ExampleItemId', uuid.UUID)
 
 
-class NameChanged(Event):
+class NameChanged(DomainEvent):
     new_name: str
 
 
@@ -25,7 +25,7 @@ class Example(AggregateRoot):
 
     def change_name(self, new_name: str) -> None:
         self.name = new_name
-        self.register_event(NameChanged(new_name=new_name))
+        self.add_domain_event(NameChanged(new_name=new_name))
 
 
 class ExampleItem(LocalEntity):

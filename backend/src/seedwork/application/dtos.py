@@ -1,10 +1,11 @@
-from typing import TypeVar
+from typing import TypeVar, Annotated
 
 from pydantic import BaseModel, ConfigDict, AfterValidator
 
 from seedwork.domain.structs import alist
 
 T = TypeVar('T')
+V = TypeVar('V')
 
 
 class DTO(BaseModel):
@@ -21,4 +22,4 @@ def _to_alist(v: list[T]) -> alist[T]:
     return alist(v)
 
 
-to_alist = AfterValidator(_to_alist)
+to_alist = Annotated[V, AfterValidator(_to_alist)]

@@ -4,12 +4,12 @@ from dependency_injector import containers
 from dependency_injector.providers import Factory, Singleton
 
 from seedwork.infra.injector import Link
-from seedwork.infra.repository import InMemoryRepository
+from seedwork.infra import repositories as generic_repos
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
 from seedwork.presentation.factories import get_dict, get_bus, get_handler
 from tests.conftest import session_factory
-from tests.seedwork.confdata.handlers.command import create_example
-from tests.seedwork.confdata.repositories import ExampleSqlAlchemyRepository
+from tests.seedwork.confdata.handlers import command, query
+from tests.seedwork.confdata import repositories as repos
 
 
 class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
@@ -18,13 +18,23 @@ class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
         Factory,
         SqlAlchemyUnitOfWork,
         session_factory=db_session_factory,
-        examples=ExampleSqlAlchemyRepository,
+        examples={
+            "command": repos.ExampleSqlAlchemyCommandRepository,
+            "query": repos.ExampleSqlAlchemyQueryRepository,
+        }
     )
-
-    query_handlers: Callable = Singleton(get_dict)
+    query_handlers: Callable = Singleton(
+        get_dict,
+        Singleton(
+            get_handler,
+            query.get_example,
+            session_factory=db_session_factory
+        ),
+    )
     command_handlers: Callable = Singleton(
         get_dict,
-        Singleton(get_handler, create_example, uow=uow_factory),
+        Singleton(get_handler, command.create_example, uow=uow_factory),
+        Singleton(get_handler, command.update_example, uow=uow_factory),
     )
     event_handlers: Callable = Singleton(get_dict)
     message_bus: Callable = Singleton(
@@ -39,9 +49,12 @@ def get_memory_container():
     container = SqlAlchemySeedWorkContainer()
     container.uow_factory.override(
         Singleton(
-            Factory,
+            Singleton,
             InMemoryUnitOfWork,
-            examples=InMemoryRepository,
+            examples={
+                "command": generic_repos.InMemoryCommandRepository,
+                "query": generic_repos.InMemoryQueryRepository,
+            },
         )
     )
     return container

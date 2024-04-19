@@ -2,7 +2,7 @@ import abc
 from collections.abc import Iterator
 from typing import Self, Any
 
-from seedwork.domain.events import Event
+from seedwork.domain.events import DomainEvent
 
 
 class IBaseUnitOfWork(metaclass=abc.ABCMeta):
@@ -21,4 +21,4 @@ class IBaseUnitOfWork(metaclass=abc.ABCMeta):
     async def rollback(self) -> None: ...
 
     @abc.abstractmethod
-    def collect_events(self) -> Iterator[Event]: ...
+    def collect_events(self) -> Iterator[DomainEvent]: ...

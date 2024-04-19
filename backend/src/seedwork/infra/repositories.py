@@ -1,16 +1,22 @@
 import itertools
-from typing import NoReturn, Any
+from typing import NoReturn, Any, Optional
 from uuid import UUID
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from seedwork.domain.entities import Entity
-from seedwork.domain.events import Event
+from seedwork.domain.events import DomainEvent
 from seedwork.domain.mappers import IDataMapper
-from seedwork.domain.repositories import IGenericRepository
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Callable
+
+from seedwork.domain.repositories import ICommandRepository, IQueryRepository
+from tests.seedwork.confdata.repositories import Model
+
+
+def default_middleware(query):
+    return query
 
 
 class Deleted:
@@ -24,7 +30,7 @@ class Deleted:
 DELETED = Deleted()
 
 
-class SqlAlchemyRepository(IGenericRepository):
+class SqlAlchemyCommandRepository(ICommandRepository):
     mapper_class: type[IDataMapper]
     model_class: type[Any]
 
@@ -91,13 +97,13 @@ class SqlAlchemyRepository(IGenericRepository):
         )
         self.mapper.update_model(entity, entity.extra_kw["model"])
 
-    async def persist_all(self) -> None:
+    def persist_all(self) -> None:
         """Persists changes made to entities present in the identity map."""
         for entity in self.identity_map.values():
             if entity is not DELETED:
                 self.persist(entity)
 
-    def collect_events(self) -> Iterator[Event]:
+    def collect_events(self) -> Iterator[DomainEvent]:
         return itertools.chain.from_iterable(
             entity.collect_events() for entity in self.identity_map.values()
             if entity is not DELETED
@@ -114,7 +120,35 @@ class SqlAlchemyRepository(IGenericRepository):
         return [self.mapper.model_to_entity(model) for model in res.scalars()]
 
 
-class InMemoryRepository(IGenericRepository):
+class SqlAlchemyQueryRepository(IQueryRepository):
+    model_class: type[Any]
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def count(self) -> int:
+        query = select(func.count()).select_from(self.model_class)
+        res = await self.session.execute(query)
+        return res.scalar_one()
+
+    async def get_by_id(
+        self,
+        model_id: UUID,
+        middleware: Optional[Callable] = None,
+    ) -> Model:
+        middleware = middleware or default_middleware
+        query = middleware(select(self.model_class).filter_by(id=model_id))
+        res = await self.session.execute(query)
+        return res.scalar_one()
+
+    async def list(self, middleware: Optional[Callable] = None) -> list[Model]:
+        middleware = middleware or default_middleware
+        query = middleware(select(self.model_class))
+        res = await self.session.execute(query)
+        return list(res.scalars())
+
+
+class InMemoryCommandRepository(ICommandRepository):
     def __init__(self) -> None:
         self.identity_map: dict[UUID, Entity] = {}
 
@@ -142,19 +176,36 @@ class InMemoryRepository(IGenericRepository):
         except StopIteration:
             return None
 
-    async def count(self) -> int:
-        return len(self.identity_map)
-
-    async def list(self) -> list[Entity]:
-        return list(self.identity_map.values())
-
-    async def persist(self, entity: Entity) -> None:
+    def persist(self, entity: Entity) -> None:
         ...
 
-    async def persist_all(self) -> None:
+    def persist_all(self) -> None:
         ...
 
-    def collect_events(self) -> Iterator[Event]:
+    def collect_events(self) -> Iterator[DomainEvent]:
         return itertools.chain.from_iterable(
             entity.collect_events() for entity in self.identity_map.values()
         )
+
+
+class InMemoryQueryRepository(IQueryRepository):
+    def __init__(self, identity_map: dict) -> None:
+        self.identity_map = identity_map
+
+    async def get_by_id(self, entity_id: UUID) -> Entity | None:
+        try:
+            return next(
+                model
+                for model in self.identity_map.values()
+                if model.id == entity_id
+            )
+        except StopIteration:
+            return None
+
+    async def count(self) -> int:
+        return len(self.identity_map)
+
+    async def list(
+        self, middleware: Optional[Callable] = None
+    ) -> list[Entity]:
+        return list(self.identity_map.values())

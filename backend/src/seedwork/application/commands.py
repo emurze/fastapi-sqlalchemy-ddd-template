@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 from seedwork.application.dtos import DTO
 from seedwork.domain.errors import Error
-from seedwork.domain.events import Event
+from seedwork.domain.events import DomainEvent
 
 
 class Command(DTO):
@@ -11,5 +11,5 @@ class Command(DTO):
 
 class CommandResult(DTO):
     payload: Any = None
-    events: list[Event] = []
+    events: list[DomainEvent] = []
     error: Optional[Error] = None

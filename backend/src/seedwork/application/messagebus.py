@@ -4,9 +4,9 @@ from typing import NoReturn, TypeAlias, Callable
 from seedwork.application.commands import Command, CommandResult
 from seedwork.application.events import EventResult
 from seedwork.application.queries import Query, QueryResult
-from seedwork.domain.events import Event
+from seedwork.domain.events import DomainEvent
 
-Message: TypeAlias = Command | Query | Event
+Message: TypeAlias = Command | Query | DomainEvent
 Result: TypeAlias = CommandResult | QueryResult | EventResult
 
 
@@ -14,7 +14,7 @@ Result: TypeAlias = CommandResult | QueryResult | EventResult
 class MessageBus:
     command_handlers: dict[type[Command], Callable]
     query_handlers: dict[type[Query], Callable]
-    event_handlers: dict[type[Event], Callable]
+    event_handlers: dict[type[DomainEvent], Callable]
     queue: list = field(default_factory=list)
 
     async def handle(self, new_message: Message) -> NoReturn | Result:
@@ -26,7 +26,7 @@ class MessageBus:
                 result = await self._handle_command(message)
             elif isinstance(message, Query):
                 result = await self._handle_query(message)
-            elif isinstance(message, Event):
+            elif isinstance(message, DomainEvent):
                 await self._handle_event(message)
             else:
                 raise TypeError("Param type isn't in [Command, Query, Event]")
@@ -42,11 +42,10 @@ class MessageBus:
 
     async def _handle_query(self, query: Query) -> QueryResult:
         handler = self.query_handlers[type(query)]
-        result = await handler(query)
-        self.queue += result.events
+        result, _ = await handler(query)
         return result
 
-    async def _handle_event(self, event: Event) -> EventResult:
+    async def _handle_event(self, event: DomainEvent) -> EventResult:
         # ???
         handler = self.event_handlers[type(event)]
         return await handler(event)

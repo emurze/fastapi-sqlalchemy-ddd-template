@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import ConfigDict, BaseModel
 from pydantic.fields import FieldInfo, PrivateAttr
 
-from seedwork.domain.events import Event
+from seedwork.domain.events import DomainEvent
 from seedwork.domain.services import UUIDField
 from seedwork.utils.functional import classproperty, get_one_param
 
@@ -66,12 +66,12 @@ class LocalEntity(Entity):
 class AggregateRoot(Entity):
     """Consists of 1+ entities. Spans transaction boundaries."""
 
-    _events: list[Event] = []
+    _events: list[DomainEvent] = []
 
-    def register_event(self, event: Event) -> None:
+    def add_domain_event(self, event: DomainEvent) -> None:
         self._events.append(event)
 
-    def collect_events(self) -> list[Event]:
+    def collect_events(self) -> list[DomainEvent]:
         events = self._events
         self._events = []
         return events

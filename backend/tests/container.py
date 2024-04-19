@@ -23,7 +23,10 @@ def get_memory_container() -> AppContainer:
         providers.Singleton(
             Factory,
             InMemoryUnitOfWork,
-            # examples=InMemoryRepository,
+            # examples={
+            #     "command": InMemoryCommandRepository,
+            #     "query": InMemoryQueryRepository,
+            # }
         )
     )
     return container

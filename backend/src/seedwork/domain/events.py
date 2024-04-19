@@ -1,5 +1,5 @@
 from seedwork.application.dtos import DTO
 
 
-class Event(DTO):
+class DomainEvent(DTO):
     pass

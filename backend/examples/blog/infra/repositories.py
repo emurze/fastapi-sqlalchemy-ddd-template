@@ -1,7 +1,7 @@
 from blog.domain.entitites import Post
 from blog.domain.repositories import IPostRepository
 from blog.infra.models import PostModel
-from seedwork.infra.repository import SqlAlchemyRepository, InMemoryRepository
+from seedwork.infra.repositories import SqlAlchemyRepository, InMemoryRepository
 from seedwork.utils.functional import id_int_gen
 
 

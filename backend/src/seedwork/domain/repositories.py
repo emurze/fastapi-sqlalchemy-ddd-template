@@ -1,15 +1,16 @@
 import abc
-from collections.abc import Iterator
-from typing import TypeVar, Generic
+from collections.abc import Iterator, Callable
+from typing import TypeVar, Generic, Any, Optional
 from uuid import UUID
 
 from seedwork.domain.entities import Entity
-from seedwork.domain.events import Event
+from seedwork.domain.events import DomainEvent
 
 T = TypeVar('T', bound=Entity)
+M = TypeVar('M', bound=Any)
 
 
-class IGenericRepository(Generic[T], metaclass=abc.ABCMeta):
+class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
     identity_map: dict[UUID, T]
 
     @abc.abstractmethod
@@ -30,16 +31,23 @@ class IGenericRepository(Generic[T], metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    async def persist(self, entity: T) -> None: ...
+    def persist(self, entity: T) -> None: ...
 
     @abc.abstractmethod
-    async def persist_all(self) -> None: ...
+    def persist_all(self) -> None: ...
 
     @abc.abstractmethod
-    def collect_events(self) -> Iterator[Event]: ...
+    def collect_events(self) -> Iterator[DomainEvent]: ...
+
+
+class IQueryRepository(Generic[M], metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    async def get_by_id(
+        self, model_id: int, middleware: Optional[Callable] = None
+    ) -> M: ...
 
     @abc.abstractmethod
     async def count(self) -> int: ...
 
     @abc.abstractmethod
-    async def list(self) -> list[T]: ...
+    async def list(self, middleware: Optional[Callable] = None) -> list[M]: ...

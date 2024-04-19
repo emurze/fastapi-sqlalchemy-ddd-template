@@ -5,11 +5,17 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, MappedColumn, Mapped, relationship
 
 from seedwork.domain.mappers import IDataMapper
-from seedwork.domain.repositories import IGenericRepository
 from seedwork.domain.services import next_id
 from seedwork.infra.database import ModelBase
-from seedwork.infra.repository import SqlAlchemyRepository
+from seedwork.infra.repositories import (
+    SqlAlchemyCommandRepository,
+    SqlAlchemyQueryRepository,
+)
 from tests.seedwork.confdata.domain import Example, ExampleItem, Address
+from tests.seedwork.confdata.ports import (
+    IExampleCommandRepository,
+    IExampleQueryRepository,
+)
 
 
 class Model(ModelBase, AsyncAttrs, DeclarativeBase):
@@ -77,6 +83,16 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):
         )
 
 
-class ExampleSqlAlchemyRepository(SqlAlchemyRepository, IGenericRepository):
+class ExampleSqlAlchemyCommandRepository(
+    SqlAlchemyCommandRepository,
+    IExampleCommandRepository,
+):
     mapper_class = ExampleMapper
+    model_class = ExampleModel
+
+
+class ExampleSqlAlchemyQueryRepository(
+    SqlAlchemyQueryRepository,
+    IExampleQueryRepository,
+):
     model_class = ExampleModel
