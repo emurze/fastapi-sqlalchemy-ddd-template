@@ -25,7 +25,7 @@ class CollectEventsMixin:
 
 
 class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
-    query_prefix = 'query_'
+    query_prefix = 'query'
 
     def __init__(
         self,
@@ -50,7 +50,6 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
             self._persist_all_repos()
             await self.session.commit()
         except IntegrityError as e:
-            print(e)
             raise EntityAlreadyExistsError()
 
     async def rollback(self) -> None:
@@ -66,7 +65,11 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
         command_repos = []
         for name, repos in self._repo_classes.items():
             setattr(self, name, command_repo := repos['command'](session))
-            setattr(self, name, repos['query'](session))
+            setattr(
+                self,
+                f"%s_%s" % (self.query_prefix, name),
+                repos['query'](session),
+            )
             command_repos.append(command_repo)
         return command_repos
 
@@ -75,7 +78,7 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
     """
     Persists memory in each repository.
     """
-    query_repo_prefix: str = 'query'
+    query_prefix: str = 'query'
 
     def __init__(self, **cls_repos: dict[str, type[IRepository]]) -> None:
         self._is_committed = False
@@ -118,8 +121,8 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
             setattr(self, name, command_repo := repos_cls['command']())
             setattr(
                 self,
-                f"%s_%s" % (self.query_repo_prefix, name),
-                repos_cls['query'](command_repo.indentity_map)
+                f"%s_%s" % (self.query_prefix, name),
+                repos_cls['query'](command_repo.identity_map)
             )
             command_repos.append(command_repo)
 

@@ -43,6 +43,7 @@ test_application = "docker exec -it api poetry run pytest -s -k application"
 test_unit        = "docker exec -it api poetry run pytest -s -m unit"
 test_integration = "docker exec -it api poetry run pytest -s -m integration"
 test_e2e         = "docker exec -it api poetry run pytest -s -m e2e"
+test_marked      = "docker exec -it api poetry run pytest -s -m marked"
 test_coverage    = "docker exec -it api poetry run pytest -s --cov=src --cov-report=html tests'"
 
 # Linting, Formatting, and Type Checking
@@ -90,7 +91,8 @@ asyncio_mode = "auto"
 markers = [
     "unit: marks test as unit test i.e. not using any external services (deselect with '-m \"not unit\"')",
     "integration: marks tests as integration i.e. using a database (deselect with '-m \"not integration\"')",
-    "e2e: marks tests as e2e tests i.e. using a client api and a database (deselect with '-m \"not e2e\"')"
+    "e2e: marks tests as e2e tests i.e. using a client api and a database (deselect with '-m \"not e2e\"')",
+    "marked: just marked"
 ]
 pythonpath = [
     ".",

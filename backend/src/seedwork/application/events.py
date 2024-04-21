@@ -2,4 +2,5 @@ from seedwork.application.dtos import DTO
 
 
 class EventResult(DTO):
-    pass
+    def is_success(self):
+        return not self.error

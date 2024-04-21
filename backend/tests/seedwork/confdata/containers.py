@@ -10,6 +10,7 @@ from seedwork.presentation.factories import get_dict, get_bus, get_handler
 from tests.conftest import session_factory
 from tests.seedwork.confdata.handlers import command, query
 from tests.seedwork.confdata import repositories as repos
+from tests.seedwork.confdata.repositories import ExampleInMemoryQueryRepository
 
 
 class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
@@ -25,16 +26,13 @@ class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
     )
     query_handlers: Callable = Singleton(
         get_dict,
-        Singleton(
-            get_handler,
-            query.get_example,
-            session_factory=db_session_factory
-        ),
+        Singleton(get_handler, query.get_example, uow=uow_factory),
     )
     command_handlers: Callable = Singleton(
         get_dict,
         Singleton(get_handler, command.create_example, uow=uow_factory),
         Singleton(get_handler, command.update_example, uow=uow_factory),
+        Singleton(get_handler, command.delete_example, uow=uow_factory),
     )
     event_handlers: Callable = Singleton(get_dict)
     message_bus: Callable = Singleton(
@@ -53,7 +51,7 @@ def get_memory_container():
             InMemoryUnitOfWork,
             examples={
                 "command": generic_repos.InMemoryCommandRepository,
-                "query": generic_repos.InMemoryQueryRepository,
+                "query": ExampleInMemoryQueryRepository,
             },
         )
     )

@@ -6,6 +6,9 @@ run:
 clean:
 	poe --root backend clean
 
+in:
+	docker exec -it api /bin/bash
+
 
 # Total checking and testing
 
@@ -35,6 +38,9 @@ test_application:
 
 test_infra:
 	poe --root backend test_infra
+
+test_marked:
+	poe --root backend test_marked
 
 test_coverage:
 	poe --root backend test_coverage

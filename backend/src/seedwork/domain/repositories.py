@@ -1,6 +1,6 @@
 import abc
-from collections.abc import Iterator, Callable
-from typing import TypeVar, Generic, Any, Optional
+from collections.abc import Iterator
+from typing import TypeVar, Generic, Any
 from uuid import UUID
 
 from seedwork.domain.entities import Entity
@@ -14,7 +14,7 @@ class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
     identity_map: dict[UUID, T]
 
     @abc.abstractmethod
-    async def add(self, entity: T) -> UUID: ...
+    def add(self, entity: T) -> UUID: ...
 
     @abc.abstractmethod
     async def delete(self, entity: T) -> None: ...
@@ -31,6 +31,9 @@ class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    async def count(self) -> int: ...
+
+    @abc.abstractmethod
     def persist(self, entity: T) -> None: ...
 
     @abc.abstractmethod
@@ -42,12 +45,7 @@ class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
 
 class IQueryRepository(Generic[M], metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    async def get_by_id(
-        self, model_id: int, middleware: Optional[Callable] = None
-    ) -> M: ...
+    async def get(self, **kw) -> M: ...
 
     @abc.abstractmethod
-    async def count(self) -> int: ...
-
-    @abc.abstractmethod
-    async def list(self, middleware: Optional[Callable] = None) -> list[M]: ...
+    async def list(self) -> list[M]: ...

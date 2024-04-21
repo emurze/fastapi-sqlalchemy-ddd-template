@@ -13,3 +13,6 @@ class CommandResult(DTO):
     payload: Any = None
     events: list[DomainEvent] = []
     error: Optional[Error] = None
+
+    def is_success(self):
+        return not self.error

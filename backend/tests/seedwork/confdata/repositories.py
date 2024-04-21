@@ -2,7 +2,13 @@ import uuid
 
 from sqlalchemy import Column, String, UUID, ForeignKey
 from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, MappedColumn, Mapped, relationship
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    MappedColumn,
+    Mapped,
+    relationship,
+    selectinload,
+)
 
 from seedwork.domain.mappers import IDataMapper
 from seedwork.domain.services import next_id
@@ -10,9 +16,10 @@ from seedwork.infra.database import ModelBase
 from seedwork.infra.repositories import (
     SqlAlchemyCommandRepository,
     SqlAlchemyQueryRepository,
+    InMemoryQueryRepository,
 )
-from tests.seedwork.confdata.domain import Example, ExampleItem, Address
-from tests.seedwork.confdata.ports import (
+from .domain import Example, ExampleItem, Address
+from .ports import (
     IExampleCommandRepository,
     IExampleQueryRepository,
 )
@@ -27,7 +34,9 @@ class ExampleModel(Model):
     __tablename__ = "example"
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     name = Column(String(Example.c.name.max_length), nullable=False)
-    items: Mapped[list['ExampleItemModel']] = relationship()
+    items: Mapped[list['ExampleItemModel']] = relationship(
+        cascade="all, delete-orphan"
+    )
 
 
 class ExampleItemModel(Model):
@@ -35,7 +44,9 @@ class ExampleItemModel(Model):
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     name = Column(String, nullable=False)
     example_id = Column(UUID, ForeignKey("example.id"), nullable=False)
-    addresses: Mapped[list['AddressModel']] = relationship()
+    addresses: Mapped[list['AddressModel']] = relationship(
+        cascade="all, delete-orphan"
+    )
 
 
 class AddressModel(Model):
@@ -95,4 +106,18 @@ class ExampleSqlAlchemyQueryRepository(
     SqlAlchemyQueryRepository,
     IExampleQueryRepository,
 ):
+    model_class = ExampleModel
+
+    def extend_get_query(self, query):
+        return query.options(
+            selectinload(self.model_class.items)
+            .subqueryload(ExampleItemModel.addresses)
+        )
+
+
+class ExampleInMemoryQueryRepository(
+    InMemoryQueryRepository,
+    IExampleQueryRepository,
+):
+    mapper_class = ExampleMapper
     model_class = ExampleModel

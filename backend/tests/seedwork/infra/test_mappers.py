@@ -42,7 +42,7 @@ def make_example_entity() -> Example:
 
 
 class TestModelToEntity:
-    mapper = ExampleMapper()
+    mapper = ExampleMapper(ExampleModel)
 
     @pytest.mark.unit
     async def test_model_to_entity(self) -> None:
@@ -55,12 +55,11 @@ class TestModelToEntity:
 
 
 class TestUpdateModel:
-    mapper = ExampleMapper()
+    mapper = ExampleMapper(ExampleModel)
 
     @pytest.mark.unit
     def test_can_add_using_entity_with_list_loading(self) -> None:
-        model = ExampleModel()
-        self.mapper.update_model(make_example_entity(), model)
+        model = self.mapper.entity_to_model(make_example_entity())
         assert model.name == 'Example1'
         assert model.items[0].name == 'ExampleItem1'
         assert model.items[0].addresses[0].city == 'Kiev'

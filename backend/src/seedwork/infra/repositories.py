@@ -1,5 +1,5 @@
 import itertools
-from typing import NoReturn, Any, Optional
+from typing import NoReturn, Any, Any as Model
 from uuid import UUID
 
 from sqlalchemy import select, func
@@ -9,14 +9,9 @@ from seedwork.domain.entities import Entity
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.mappers import IDataMapper
 
-from collections.abc import Iterator, Callable
+from collections.abc import Iterator
 
 from seedwork.domain.repositories import ICommandRepository, IQueryRepository
-from tests.seedwork.confdata.repositories import Model
-
-
-def default_middleware(query):
-    return query
 
 
 class Deleted:
@@ -36,18 +31,16 @@ class SqlAlchemyCommandRepository(ICommandRepository):
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.mapper = self.mapper_class()
+        self.mapper = self.mapper_class(self.model_class)
         self.identity_map: dict[UUID, Any] = {}
 
     def _check_not_deleted(self, entity_id: UUID) -> NoReturn | None:
         assert (
             self.identity_map.get(entity_id) is not DELETED
         ), f"Entity {entity_id} already deleted"
-        return None
 
-    async def add(self, entity: Entity) -> UUID:
-        model = self.model_class()
-        self.mapper.update_model(entity, model)
+    def add(self, entity: Entity) -> UUID:
+        model = self.mapper.entity_to_model(entity)
         entity.extra_kw["model"] = model
         self.identity_map[entity.id] = entity
         self.session.add(model)
@@ -78,8 +71,7 @@ class SqlAlchemyCommandRepository(ICommandRepository):
             return None
 
         entity = self.mapper.model_to_entity(model)
-        if not entity.extra_kw.get("model"):
-            entity.extra_kw["model"] = model
+        entity.extra_kw["model"] = model
 
         # Saves events stored in entity
         if store_entity := self.identity_map.get(entity.id):
@@ -114,45 +106,12 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         res = await self.session.execute(query)
         return res.scalar_one()
 
-    async def list(self) -> list[Entity]:
-        query = select(self.model_class)
-        res = await self.session.execute(query)
-        return [self.mapper.model_to_entity(model) for model in res.scalars()]
-
-
-class SqlAlchemyQueryRepository(IQueryRepository):
-    model_class: type[Any]
-
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
-
-    async def count(self) -> int:
-        query = select(func.count()).select_from(self.model_class)
-        res = await self.session.execute(query)
-        return res.scalar_one()
-
-    async def get_by_id(
-        self,
-        model_id: UUID,
-        middleware: Optional[Callable] = None,
-    ) -> Model:
-        middleware = middleware or default_middleware
-        query = middleware(select(self.model_class).filter_by(id=model_id))
-        res = await self.session.execute(query)
-        return res.scalar_one()
-
-    async def list(self, middleware: Optional[Callable] = None) -> list[Model]:
-        middleware = middleware or default_middleware
-        query = middleware(select(self.model_class))
-        res = await self.session.execute(query)
-        return list(res.scalars())
-
 
 class InMemoryCommandRepository(ICommandRepository):
     def __init__(self) -> None:
         self.identity_map: dict[UUID, Entity] = {}
 
-    async def add(self, entity: Entity) -> UUID:
+    def add(self, entity: Entity) -> UUID:
         self.identity_map[entity.id] = entity
         return entity.id
 
@@ -176,6 +135,9 @@ class InMemoryCommandRepository(ICommandRepository):
         except StopIteration:
             return None
 
+    async def count(self) -> int:
+        return len(self.identity_map.values())
+
     def persist(self, entity: Entity) -> None:
         ...
 
@@ -188,24 +150,49 @@ class InMemoryCommandRepository(ICommandRepository):
         )
 
 
+class SqlAlchemyQueryRepository(IQueryRepository):
+    model_class: type[Any]
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    def _apply_query_modifier(self, modifier_name: str, query):
+        if hasattr(self, modifier_name):
+            method = getattr(self, modifier_name)
+            return method(query)
+        return query
+
+    async def get(self, **kw) -> Model | None:
+        query = select(self.model_class).filter_by(**kw)
+        query = self._apply_query_modifier("extend_get_query", query)
+        res = await self.session.execute(query)
+        return res.scalar_one()
+
+    async def list(self) -> list[Model]:
+        query = select(self.model_class)
+        query = self._apply_query_modifier("extend_list_query", query)
+        res = await self.session.execute(query)
+        return list(res.scalars())
+
+
 class InMemoryQueryRepository(IQueryRepository):
+    mapper_class: type[IDataMapper]
+    model_class: type[Any]
+
     def __init__(self, identity_map: dict) -> None:
         self.identity_map = identity_map
+        self.mapper = self.mapper_class(self.model_class)
 
-    async def get_by_id(self, entity_id: UUID) -> Entity | None:
+    async def get(self, **kw) -> Model | None:
         try:
-            return next(
+            entity = next(
                 model
                 for model in self.identity_map.values()
-                if model.id == entity_id
+                if model.id == kw["id"]
             )
+            return self.mapper.entity_to_model(entity)
         except StopIteration:
             return None
 
-    async def count(self) -> int:
-        return len(self.identity_map)
-
-    async def list(
-        self, middleware: Optional[Callable] = None
-    ) -> list[Entity]:
+    async def list(self) -> list[Model]:
         return list(self.identity_map.values())

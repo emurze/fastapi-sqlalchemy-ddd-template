@@ -47,7 +47,7 @@ class TestEntity:
         assert example.name == "helloo"
 
     @pytest.mark.unit
-    def test_change_name_can_register_only_one_event(self) -> None:
+    def test_change_name_can_add_only_one_domain_event(self) -> None:
         example = Example(name="hello")
         example.change_name("helloo")
         assert len(example._events) == 1
@@ -60,16 +60,16 @@ class TestEntity:
 
 class TestAggregateRoot:
     @pytest.mark.unit
-    def test_register_event_can_register_only_one_event_at_time(self) -> None:
+    def test_can_add_only_one_domain_event_at_time(self) -> None:
         example = Example(name="hello")
-        example.register_event(NameChanged(new_name="helloo"))
+        example.add_domain_event(NameChanged(new_name="helloo"))
         assert len(example._events) == 1
         assert example._events[0] == NameChanged(new_name="helloo")
 
     @pytest.mark.unit
     def test_collect_events_dont_duplicate_events(self) -> None:
         example = Example(name="hello")
-        example.register_event(NameChanged(new_name="helloo"))
+        example.add_domain_event(NameChanged(new_name="helloo"))
         events = example.collect_events()
         assert len(events) == 1
         assert events[0] == NameChanged(new_name="helloo")
@@ -77,6 +77,6 @@ class TestAggregateRoot:
     @pytest.mark.unit
     def test_collect_events_can_clean_events_after_collecting(self) -> None:
         example = Example(name="hello")
-        example.register_event(NameChanged(new_name="helloo"))
+        example.add_domain_event(NameChanged(new_name="helloo"))
         example.collect_events()
         assert len(example._events) == 0

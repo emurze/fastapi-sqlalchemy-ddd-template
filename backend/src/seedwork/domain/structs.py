@@ -45,6 +45,10 @@ class _AsyncList(Generic[T]):
         self._load_result(await self._get_result())
         return self
 
+    async def just_load(self):
+        res = await self._get_result()
+        return res
+
     def load_entity_list(self) -> Self:
         if self._sync_list:
             self._load_result(self._sync_list)
@@ -66,6 +70,10 @@ class _AsyncList(Generic[T]):
     @check_loaded
     def append(self, value: T) -> None:
         self._data.append(value)
+
+    @check_loaded
+    def pop(self, index: int = -1, /) -> T:
+        return self._data.pop(index)
 
     @check_loaded
     def __getitem__(self, key: int) -> T:

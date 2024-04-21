@@ -58,6 +58,8 @@ services:
     command: redis-server /etc/redis.conf
     networks:
       - backend
+    ports:
+      - '6379:6379'
     volumes:
       - cache_data:/data
       - ./backend/conf/cache:/etc/redis.conf

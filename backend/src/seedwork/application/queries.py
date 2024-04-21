@@ -11,3 +11,6 @@ class Query(DTO):
 class QueryResult(DTO):
     payload: Any = None
     error: Optional[Error] = None
+
+    def is_success(self):
+        return not self.error

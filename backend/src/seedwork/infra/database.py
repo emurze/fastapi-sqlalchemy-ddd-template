@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator, Iterator, Callable
 from contextlib import asynccontextmanager
-from typing import Protocol, Any
+from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine
@@ -9,11 +9,9 @@ from seedwork.domain.structs import alist
 from seedwork.utils.functional import get_one_param
 
 
-class ModelProtocol(Protocol):
+class ModelBase:
     awaitable_attrs: Any
 
-
-class ModelBase:
     @classmethod
     def get_fields(cls) -> Iterator[str]:
         return (field.name for field in sa.inspect(cls).c)  # type: ignore
@@ -25,7 +23,7 @@ class ModelBase:
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def as_alist(self: ModelProtocol, map_items: Callable) -> dict:
+    def as_alist(self, map_items: Callable) -> dict:
         relation_name = get_one_param(map_items)
 
         async def mapper():
@@ -35,12 +33,15 @@ class ModelBase:
         return {relation_name: alist(coro_factory=mapper)}
 
     def __repr__(self) -> str:
-        cls = type(self)
-        kwargs = ', '.join(
-            f'{col.name}={getattr(self, col.name)!r}'
-            for col in sa.inspect(cls).c  # type: ignore
+        column_data = ', '.join(
+            f"{col.name}={getattr(self, col.name)}"
+            for col in self.__table__.columns  # type: ignore
         )
-        return f"{cls.__name__}({kwargs})"
+        relationships_data = ', '.join(
+            f"{key}={getattr(self, key)}"
+            for key in self.__mapper__.relationships.keys()  # type: ignore
+        )
+        return f"{type(self).__name__}({column_data}, {relationships_data})"
 
 
 @asynccontextmanager
