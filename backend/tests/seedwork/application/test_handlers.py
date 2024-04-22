@@ -8,7 +8,8 @@ from tests.seedwork.confdata.domain import ExampleId, Example
 from tests.seedwork.confdata.handlers.command import (
     CreateExampleCommand,
     ExampleItemDTO,
-    UpdateExampleCommand, DeleteExampleCommand,
+    UpdateExampleCommand,
+    DeleteExampleCommand,
 )
 from tests.seedwork.confdata.handlers.query import GetExampleQuery
 from tests.seedwork.confdata.ports import ITestUnitOfWork
@@ -35,7 +36,7 @@ async def test_create_example(sql_bus: MessageBus) -> None:
     assert res.payload["name"] == "Example"
     assert res.payload["items"][0]["name"] == 'Hello'
 
-#
+
 # @pytest.mark.unit
 # async def test_update_example(sql_bus: MessageBus) -> None:
 #     example_id = await create_example(sql_bus)

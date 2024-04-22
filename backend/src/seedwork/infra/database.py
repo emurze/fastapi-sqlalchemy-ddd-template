@@ -6,7 +6,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from seedwork.domain.structs import alist
-from seedwork.utils.functional import get_one_param
+from seedwork.utils.functional import get_single_param
 
 
 class ModelBase:
@@ -24,13 +24,21 @@ class ModelBase:
             setattr(self, key, value)
 
     def as_alist(self, map_items: Callable) -> dict:
-        relation_name = get_one_param(map_items)
+        relation_name = get_single_param(map_items)
 
         async def mapper():
             awaitable = getattr(self.awaitable_attrs, relation_name)
             return map_items(await awaitable)
 
-        return {relation_name: alist(coro_factory=mapper)}
+        def get_coro_struct():
+            return getattr(self, relation_name)
+
+        return {
+            relation_name: alist(
+                coro_factory=mapper,
+                coro_struct=get_coro_struct,
+            )
+        }
 
     def __repr__(self) -> str:
         column_data = ', '.join(

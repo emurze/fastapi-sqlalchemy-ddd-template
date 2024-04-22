@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from seedwork.domain.services import next_id
 from seedwork.domain.structs import alist
 from tests.seedwork.confdata.domain import Example, ExampleItem
 from tests.seedwork.confdata.ports import ITestUnitOfWork
@@ -82,37 +83,21 @@ class TestSqlAlchemyUnitOfWork:
 @pytest.mark.integration
 async def test_can_update(sql_uow: ITestUnitOfWork) -> None:
     async with sql_uow as uow:
-        entity = Example(
+        model = ExampleModel(
+            id=next_id(),
             name="Hello",
-            items=alist([
-                ExampleItem(name="Item A"),
-                ExampleItem(name="Item B"),
-                ExampleItem(name="Item C"),
-                ExampleItem(name="Item D"),
-                ExampleItem(name="Item E"),
-                ExampleItem(name="Item F"),
-                ExampleItem(name="Item G"),
-                ExampleItem(name="Item H"),
-                ExampleItem(name="Item I"),
-                ExampleItem(name="Item J"),
-                ExampleItem(name="Item K"),
-                ExampleItem(name="Item L"),
-                ExampleItem(name="Item M"),
-            ])
+            items=[
+                ExampleItemModel(id=next_id(), name="Item A")
+                for _ in range(500)
+            ]
         )
-        uow.examples.add(entity)
+        uow.session.add(model)
         await uow.commit()
 
     async with sql_uow as uow:
-        entity = await uow.examples.get_by_id(entity.id, for_update=True)
-        res = await entity.items.just_load()
-        print(res)
+        model = await uow.session.get(ExampleModel, model.id)
+        await model.awaitable_attrs.items
+        # delegate changes
+        model.items.pop()
+        model.items.append(ExampleItemModel(name="Item L"))
         await uow.commit()
-
-    # async with sql_uow as uow:
-    #     query = select(ExampleModel).options(
-    #         selectinload(ExampleModel.items)
-    #         .subqueryload(ExampleItemModel.addresses)
-    #     )
-    #     models = list((await uow.session.execute(query)).scalars())
-    #     assert len(models[0].items) == 13

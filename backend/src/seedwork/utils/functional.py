@@ -4,7 +4,7 @@ from inspect import signature
 from typing import TypeVar
 
 T = TypeVar("T")
-OnlyOneParamMessage = "Callback should have only one parameter."
+OnlySingleParamMessage = "Callback should have only one parameter."
 
 
 def get_first_param_type(func: Callable):
@@ -14,7 +14,10 @@ def get_first_param_type(func: Callable):
     return first_param.annotation
 
 
-def get_one_param(mapper: Callable, message: str = OnlyOneParamMessage) -> str:
+def get_single_param(
+    mapper: Callable,
+    message: str = OnlySingleParamMessage,
+) -> str:
     res = signature(mapper)
     params = tuple(res.parameters)
     assert len(params) == 1, message

@@ -42,6 +42,7 @@ class SqlAlchemyCommandRepository(ICommandRepository):
     def add(self, entity: Entity) -> UUID:
         model = self.mapper.entity_to_model(entity)
         entity.extra_kw["model"] = model
+        entity.extra_kw["is_created"] = True
         self.identity_map[entity.id] = entity
         self.session.add(model)
         return entity.id

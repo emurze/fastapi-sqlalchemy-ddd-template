@@ -1,8 +1,14 @@
 from collections.abc import Callable, Coroutine
-from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator
+from enum import Enum
+from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator, Optional
 
 T = TypeVar('T')
 CoroutineFactory = Callable[[], Coroutine]
+
+
+class ListAction(str, Enum):
+    APPEND = 'append'
+    POP = 'pop'
 
 
 class _AsyncList(Generic[T]):
@@ -21,11 +27,11 @@ class _AsyncList(Generic[T]):
         assert not (sync_list and coro_factory), (
             "You should pass a sync_list or a coro_factory or None"
         )
-
         self._coro_factory = coro_factory
         self._sync_list = sync_list.copy() if sync_list else []
         self._data: list[T] = []
         self._is_loaded: bool = False
+        self._actions: dict[ListAction, Any] = {}
 
     async def _get_result(self) -> list[T]:
         if self._coro_factory:
@@ -44,10 +50,6 @@ class _AsyncList(Generic[T]):
         """
         self._load_result(await self._get_result())
         return self
-
-    async def just_load(self):
-        res = await self._get_result()
-        return res
 
     def load_entity_list(self) -> Self:
         if self._sync_list:
@@ -69,10 +71,12 @@ class _AsyncList(Generic[T]):
 
     @check_loaded
     def append(self, value: T) -> None:
+        self._actions[ListAction.APPEND] = value
         self._data.append(value)
 
     @check_loaded
     def pop(self, index: int = -1, /) -> T:
+        self._actions[ListAction.POP] = index
         return self._data.pop(index)
 
     @check_loaded
