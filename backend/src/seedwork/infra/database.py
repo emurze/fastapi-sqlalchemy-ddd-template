@@ -30,13 +30,10 @@ class ModelBase:
             awaitable = getattr(self.awaitable_attrs, relation_name)
             return map_items(await awaitable)
 
-        def get_coro_struct():
-            return getattr(self, relation_name)
-
         return {
             relation_name: alist(
                 coro_factory=mapper,
-                coro_struct=get_coro_struct,
+                coro_struct=lambda: getattr(self, relation_name),
             )
         }
 
@@ -45,11 +42,11 @@ class ModelBase:
             f"{col.name}={getattr(self, col.name)}"
             for col in self.__table__.columns  # type: ignore
         )
-        relationships_data = ', '.join(
-            f"{key}={getattr(self, key)}"
-            for key in self.__mapper__.relationships.keys()  # type: ignore
-        )
-        return f"{type(self).__name__}({column_data}, {relationships_data})"
+        # relationships_data = ', '.join(
+        #     f"{key}={getattr(self, key)}"
+        #     for key in self.__mapper__.relationships.keys()  # type: ignore
+        # )
+        return f"{type(self).__name__}({column_data})"
 
 
 @asynccontextmanager

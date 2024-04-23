@@ -1,12 +1,7 @@
 import pytest
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
-from seedwork.domain.services import next_id
-from seedwork.domain.structs import alist
-from tests.seedwork.confdata.domain import Example, ExampleItem
+from tests.seedwork.confdata.domain import Example
 from tests.seedwork.confdata.ports import ITestUnitOfWork
-from tests.seedwork.confdata.repositories import ExampleModel, ExampleItemModel
 
 
 class TestMemoryUnitOfWork:
@@ -76,28 +71,3 @@ class TestSqlAlchemyUnitOfWork:
         self, sql_uow: ITestUnitOfWork
     ) -> None:
         await self.mem_tests.test_commit_rollback_pipeline(sql_uow)
-
-
-# @pytest.mark.skip(reason="Making mappers")
-@pytest.mark.marked
-@pytest.mark.integration
-async def test_can_update(sql_uow: ITestUnitOfWork) -> None:
-    async with sql_uow as uow:
-        model = ExampleModel(
-            id=next_id(),
-            name="Hello",
-            items=[
-                ExampleItemModel(id=next_id(), name="Item A")
-                for _ in range(500)
-            ]
-        )
-        uow.session.add(model)
-        await uow.commit()
-
-    async with sql_uow as uow:
-        model = await uow.session.get(ExampleModel, model.id)
-        await model.awaitable_attrs.items
-        # delegate changes
-        model.items.pop()
-        model.items.append(ExampleItemModel(name="Item L"))
-        await uow.commit()

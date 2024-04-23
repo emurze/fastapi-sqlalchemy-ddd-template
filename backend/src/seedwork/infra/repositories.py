@@ -42,7 +42,6 @@ class SqlAlchemyCommandRepository(ICommandRepository):
     def add(self, entity: Entity) -> UUID:
         model = self.mapper.entity_to_model(entity)
         entity.extra_kw["model"] = model
-        entity.extra_kw["is_created"] = True
         self.identity_map[entity.id] = entity
         self.session.add(model)
         return entity.id
@@ -64,19 +63,20 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         entity_id: UUID,
         for_update: bool = False,
     ) -> Entity | None:
-        model = await self.session.get(
+        model: Any = await self.session.get(
             self.model_class, entity_id, with_for_update=for_update
         )
 
         if model is None:
             return None
 
+        # Saves events stored in entity
+        if stored_entity := self.identity_map.get(model.id):
+            print("STORED")
+            return stored_entity
+
         entity = self.mapper.model_to_entity(model)
         entity.extra_kw["model"] = model
-
-        # Saves events stored in entity
-        if store_entity := self.identity_map.get(entity.id):
-            return store_entity
 
         self.identity_map[entity.id] = entity
         return entity
@@ -88,6 +88,7 @@ class SqlAlchemyCommandRepository(ICommandRepository):
             "Cannot persist entity which is unknown to the repo. "
             "Did you forget to call repo.add() for this entity?"
         )
+        print(f"{entity=}")
         self.mapper.update_model(entity, entity.extra_kw["model"])
 
     def persist_all(self) -> None:

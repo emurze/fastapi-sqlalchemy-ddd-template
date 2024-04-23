@@ -46,7 +46,7 @@ async def create_example(
                     ) for item in command.items
                 ])
             )
-            await uow.examples.add(example)
+            uow.examples.add(example)
         except ValidationError as e:
             return CommandResult(errors=Error.validation(e.errors()))
         await uow.commit()
@@ -78,11 +78,6 @@ async def update_example(
                     ) for item in command.items
                 ])
             )
-            print(f"UPDATED {example.items=}")
-            print(f"UPDATED {example.items=}")
-            print(f"UPDATED {example.items=}")
-            print(f"UPDATED {example.items=}")
-            print(f"UPDATED {example.items=}")
         except ValidationError as e:
             print(f"{e=}")
             return CommandResult(errors=Error.validation(e.errors()))

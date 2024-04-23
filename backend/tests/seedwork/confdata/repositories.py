@@ -31,30 +31,28 @@ class Model(ModelBase, AsyncAttrs, DeclarativeBase):
 
 
 class ExampleModel(Model):
-    __tablename__ = "example"
+    __tablename__ = 'example'
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     name = Column(String(Example.c.name.max_length), nullable=False)
     items: Mapped[list['ExampleItemModel']] = relationship(
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-        passive_updates=True,
+        cascade="all, delete-orphan",  # redundant
+        # passive_updates=True,
     )
 
 
 class ExampleItemModel(Model):
-    __tablename__ = "example_item"
+    __tablename__ = 'example_item'
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     name = Column(String, nullable=False)
     example_id = Column(UUID, ForeignKey("example.id"), nullable=False)
     addresses: Mapped[list['AddressModel']] = relationship(
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-        passive_updates=True,
+        cascade="all, delete-orphan",  # redundant
+        # passive_updates=True,
     )
 
 
 class AddressModel(Model):
-    __tablename__ = "address"
+    __tablename__ = 'address'
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     city = Column(String, nullable=False)
     example_item_id = Column(
@@ -81,39 +79,20 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):
     def update_model(self, entity: Example, model: ExampleModel) -> None:
         model.update(
             **entity.model_dump(exclude={"items"}),
-            **entity.add_or_persist_changes(  # divide firtsly
-                "items",
-                model.items,
-                entity.items,
-                lambda item: ExampleItemModel(
+            **entity.save(lambda items: [
+                ExampleItemModel(
                     **item.model_dump(exclude={"addresses"}),
-                    **item.add_or_persist_changes(
-                        "addresses",
-                        item.addresses,
-                        model.items,
-                        lambda addr: AddressModel(
+                    **item.save(lambda addresses: [
+                        AddressModel(
                             **addr.model_dump(),
                             example_item_id=item.id
                         )
-                    ),
+                        for addr in addresses
+                    ]),
                     example_id=entity.id,
                 )
-            ),
-
-            # **entity.only_loaded(lambda items: [
-            #     ExampleItemModel(
-            #         **item.model_dump(exclude={"addresses"}),
-            #         **item.only_loaded(lambda addresses: [
-            #             AddressModel(
-            #                 **addr.model_dump(),
-            #                 example_item_id=item.id
-            #             )
-            #             for addr in addresses
-            #         ]),
-            #         example_id=entity.id,
-            #     )
-            #     for item in items
-            # ])
+                for item in items
+            ])
         )
 
 

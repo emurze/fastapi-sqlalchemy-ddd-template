@@ -53,38 +53,20 @@ class Entity(BaseModel):
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def only_loaded(self, mapper: Callable) -> dict:
-        relation = getattr(self, name := get_single_param(mapper))
-        return {} if not relation.load_entity_list().is_loaded() else {
-            name: mapper(relation)
-        }
+    def save(self, mapper: Callable) -> dict:
+        """Adds or persists entity."""
+        relation_name = get_single_param(mapper)
+        entity_relation = getattr(self, relation_name)
 
-    def _add_new_model(self):
-        pass
-
-    def _persist_relation(self, entity_relation, model_relation, mapper):
-        """Executes actions"""
-        for action_name, value in entity_relation._actions.items():
-            match action_name:
-                case ListAction.APPEND:
-                    model_relation.append(mapper(value))
-                case ListAction.POP:
-                    model_relation.pop(mapper(value))
-
-    def add_or_persist_changes(
-        self,
-        rel_name: str,
-        model_relation: list,
-        entity_relation: alist,
-        mapper: Callable
-    ) -> dict:
         if not entity_relation.load_entity_list().is_loaded():
             return {}
 
-        if entity_relation._sync_list:
-            self._add_new_model()
+        if entity_relation.is_entity_list():
+            return {relation_name: mapper(entity_relation)}
         else:
-            self._persist_relation(entity_relation, model_relation, mapper)
+            entity_relation.execute_actions(mapper)
+            mapper(entity_relation)
+            return {}
 
 
 class LocalEntity(Entity):

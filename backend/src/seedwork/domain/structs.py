@@ -1,6 +1,7 @@
 from collections.abc import Callable, Coroutine
 from enum import Enum
-from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator, Optional
+from pprint import pprint
+from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator
 
 T = TypeVar('T')
 CoroutineFactory = Callable[[], Coroutine]
@@ -23,15 +24,17 @@ class _AsyncList(Generic[T]):
         self,
         sync_list: list[T] | None = None,
         coro_factory: CoroutineFactory | None = None,
+        coro_struct: Any | None = None,
     ) -> None:
         assert not (sync_list and coro_factory), (
             "You should pass a sync_list or a coro_factory or None"
         )
         self._coro_factory = coro_factory
+        self._coro_struct = coro_struct
         self._sync_list = sync_list.copy() if sync_list else []
         self._data: list[T] = []
         self._is_loaded: bool = False
-        self._actions: dict[ListAction, Any] = {}
+        self._actions: list[tuple[ListAction, Any]] = []
 
     async def _get_result(self) -> list[T]:
         if self._coro_factory:
@@ -52,12 +55,25 @@ class _AsyncList(Generic[T]):
         return self
 
     def load_entity_list(self) -> Self:
-        if self._sync_list:
+        if self.is_entity_list():
             self._load_result(self._sync_list)
         return self
 
     def is_loaded(self) -> bool:
         return self._is_loaded
+
+    def is_entity_list(self) -> bool:
+        return bool(self._sync_list)
+
+    def execute_actions(self, mapper) -> None:
+        relation = self._coro_struct()
+        pprint(f"{self._actions}")
+        for action_name, value in self._actions:
+            match action_name:
+                case ListAction.APPEND:
+                    relation.append(mapper([value])[0])
+                case ListAction.POP:
+                    relation.pop(value)
 
     @staticmethod
     def check_loaded(func: Callable) -> Callable:
@@ -71,12 +87,12 @@ class _AsyncList(Generic[T]):
 
     @check_loaded
     def append(self, value: T) -> None:
-        self._actions[ListAction.APPEND] = value
+        self._actions.append((ListAction.APPEND, value))
         self._data.append(value)
 
     @check_loaded
     def pop(self, index: int = -1, /) -> T:
-        self._actions[ListAction.POP] = index
+        self._actions.append((ListAction.POP, index))
         return self._data.pop(index)
 
     @check_loaded
@@ -92,6 +108,9 @@ class _AsyncList(Generic[T]):
     @check_loaded
     def __iter__(self) -> Iterator[T]:
         return iter(self._data)
+
+    def __len__(self) -> int:
+        return len(self._data)
 
     def __repr__(self) -> str:
         if self._is_loaded:

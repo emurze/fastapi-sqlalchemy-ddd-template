@@ -10,7 +10,7 @@ class TestMemoryCommandRepository:
     async def test_add_and_get(self, mem_uow: ITestUnitOfWork) -> None:
         async with mem_uow:
             example = Example(name="example")
-            await mem_uow.examples.add(example)
+            mem_uow.examples.add(example)
             retrieved = await mem_uow.examples.get_by_id(example.id)
             assert retrieved.name == "example"
 
@@ -18,7 +18,7 @@ class TestMemoryCommandRepository:
     async def test_delete(self, mem_uow: ITestUnitOfWork) -> None:
         async with mem_uow:
             example = Example(name="example")
-            await mem_uow.examples.add(example)
+            mem_uow.examples.add(example)
             await mem_uow.examples.delete(example)
             res = await mem_uow.examples.get_by_id(example.id)
             assert res is None
@@ -27,7 +27,7 @@ class TestMemoryCommandRepository:
     async def test_delete_by_id(self, mem_uow: ITestUnitOfWork) -> None:
         async with mem_uow:
             example = Example(name="example")
-            await mem_uow.examples.add(example)
+            mem_uow.examples.add(example)
             await mem_uow.examples.delete_by_id(example.id)
             res = await mem_uow.examples.get_by_id(example.id)
             assert res is None
