@@ -11,6 +11,7 @@ CoroutineFactory = Callable[[], Coroutine]
 
 
 class ListAction(enum.Enum):
+    EXTEND = enum.auto()
     APPEND = enum.auto()
     POP = enum.auto()
     SETATTR = enum.auto()
@@ -94,9 +95,9 @@ class _AsyncList(Generic[T]):
         for action, params in self._actions:
             match action:
                 case ListAction.APPEND:
-                    print(f"\n\nentity={params}\n\n")
-                    relation.append(l := mapper(params)[0])  # addresses did't set
-                    print(f"\n\nmodel={l}\n\n")  # without addresses
+                    relation.append(mapper(params)[0])
+                case ListAction.EXTEND:
+                    relation.extend(mapper(params))
                 case ListAction.POP:
                     relation.pop(*params)
                 case ListAction.SETATTR:
@@ -132,6 +133,7 @@ class _AsyncList(Generic[T]):
     @check_loaded
     def find_one(self, **kw) -> T | None:
         """Finds first accepted item"""
+
         try:
             return next(
                 item for key, value in kw.items() for item in self._data

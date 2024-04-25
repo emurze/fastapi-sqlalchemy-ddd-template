@@ -60,7 +60,7 @@ class AddressModel(Model):
     )
 
 
-class ExampleMapper(IDataMapper[Example, ExampleModel]):
+class ExampleMapper(IDataMapper[Example, ExampleModel]):  # should be generated
     def model_to_entity(self, model: ExampleModel) -> Example:
         return Example(
             **model.as_dict(),
@@ -95,33 +95,12 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):
             ])
         )
 
-    def entity_to_model(self, entity: Example) -> ExampleModel:
-        model = self.model_class()
-        model.update(
-            **entity.model_dump(exclude={"items"}),
-            **entity.add(lambda items: [
-                ExampleItemModel(
-                    **item.model_dump(exclude={"addresses"}),
-                    **item.add(lambda addresses: [
-                        AddressModel(
-                            **addr.model_dump(),
-                            example_item_id=item.id
-                        )
-                        for addr in addresses
-                    ]),
-                    example_id=entity.id,
-                )
-                for item in items
-            ])
-        )
-        return model
-
 
 class ExampleSqlAlchemyCommandRepository(
     SqlAlchemyCommandRepository,
     IExampleCommandRepository,
 ):
-    mapper_class = ExampleMapper
+    mapper_class = ExampleMapper  # should be default as DefaultMapper
     model_class = ExampleModel
 
 
@@ -138,7 +117,7 @@ class ExampleSqlAlchemyQueryRepository(
         )
 
 
-class ExampleInMemoryQueryRepository(
+class ExampleInMemoryQueryRepository(  # should be generated
     InMemoryQueryRepository,
     IExampleQueryRepository,
 ):

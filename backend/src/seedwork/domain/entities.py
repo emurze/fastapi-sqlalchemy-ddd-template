@@ -66,21 +66,20 @@ class Entity(BaseModel):
     def _get_relation(self, mapper) -> tuple[str, Any]:
         return (rel_name := get_single_param(mapper)), getattr(self, rel_name)
 
-    def add(self, mapper: Callable) -> dict:
-        relation_name, entity_relation = self._get_relation(mapper)
-        return {} if not entity_relation.load_entity_list().is_loaded() else {
-            relation_name: mapper(entity_relation)
-        }
-
     def persist(self, mapper: Callable) -> dict:
         """Adds or persists entity."""
         relation_name, entity_relation = self._get_relation(mapper)
 
-        if not entity_relation.is_entity_list() and entity_relation.is_loaded():
-            entity_relation.execute_actions(mapper)
-            mapper(entity_relation)  # But if items added in relation
+        entity_relation.load_entity_list()
+        if not entity_relation.is_loaded():
+            return {}
 
-        return {}
+        if entity_relation.is_entity_list():
+            return {relation_name: mapper(entity_relation)}
+        else:
+            entity_relation.execute_actions(mapper)
+            mapper(entity_relation)
+            return {}
 
     def __setattr__(self, key, value) -> None:
         assert self.extra["state"] != State.Deleted, "Entity deleted"

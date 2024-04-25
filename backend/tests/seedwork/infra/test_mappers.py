@@ -90,7 +90,7 @@ async def test_can_update_with_loaded_items() -> None:
 
 @pytest.mark.marked
 @pytest.mark.integration
-async def test_repo_and_mapper_can_update(sql_uow: ITestUnitOfWork) -> None:
+async def test_mapper_can_update_3_tables(sql_uow: ITestUnitOfWork) -> None:
     async with sql_uow as uow:
         model = Example(
             name="Hello",
@@ -99,6 +99,7 @@ async def test_repo_and_mapper_can_update(sql_uow: ITestUnitOfWork) -> None:
                     name="Item A",
                     addresses=alist([
                         Address(city="Lersk")
+                        for _ in range(2)
                     ]),
                 )
                 for _ in range(2)
@@ -118,7 +119,7 @@ async def test_repo_and_mapper_can_update(sql_uow: ITestUnitOfWork) -> None:
             ExampleItem(
                 name="Item B",
                 addresses=alist([
-                    Address(city="lersk")  # maps
+                    Address(city="lersk")
                 ])
             )
         )
@@ -130,22 +131,13 @@ async def test_repo_and_mapper_can_update(sql_uow: ITestUnitOfWork) -> None:
         entity.items[0].addresses.append(Address(city="Vladivostok 2"))
         entity.items[0].addresses[0] = Address(city="Vladivostok -1")
         entity.items[-1].name = "Best Item"
-
-        # Is Item B address saved or not?
-
-        print('\n\n\n', await entity.items.find_one(name="Item B").addresses.load(), '\n\n\n')
-
         await uow.commit()
-
-        print('\n\n\n', entity.items.find_one(name="Item B").addresses, '\n\n\n')
 
     async with sql_uow as uow:
         entity = await uow.examples.get_by_id(model.id)
         await entity.items.load()
         for item in entity.items:
             await item.addresses.load()
-
-        print('\n\n\n', entity.items.find_one(name="Item B").addresses, '\n\n\n')
 
         assert len(entity.items) == 3
         assert entity.name == "Item Vlad"
@@ -154,17 +146,16 @@ async def test_repo_and_mapper_can_update(sql_uow: ITestUnitOfWork) -> None:
         assert (item_b := entity.items.find_one(name="Item B"))
         assert (best_item := entity.items.find_one(name="Best Item"))
 
-        assert len(new_item.addresses) == 2
+        assert len(new_item.addresses) == 3
         assert len(item_b.addresses) == 1
         assert len(best_item.addresses) == 0
 
         assert new_item.addresses.find_one(city="Vladivostok -1")
+        assert new_item.addresses.find_one(city="Vladivostok")
         assert new_item.addresses.find_one(city="Vladivostok 2")
-        assert item_b.addresses.find_one(city="Lersk")
+        assert item_b.addresses.find_one(city="lersk")
 
 
 @pytest.mark.unit
-async def test_mem_repo_and_mapper_can_update(
-    mem_uow: ITestUnitOfWork
-) -> None:
-    await test_repo_and_mapper_can_update(mem_uow)
+async def test_mem_mapper_updates_3_tables(mem_uow: ITestUnitOfWork) -> None:
+    await test_mapper_can_update_3_tables(mem_uow)
