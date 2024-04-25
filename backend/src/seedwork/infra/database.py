@@ -42,11 +42,11 @@ class ModelBase:
             f"{col.name}={getattr(self, col.name)}"
             for col in self.__table__.columns  # type: ignore
         )
-        # relationships_data = ', '.join(
-        #     f"{key}={getattr(self, key)}"
-        #     for key in self.__mapper__.relationships.keys()  # type: ignore
-        # )
-        return f"{type(self).__name__}({column_data})"
+        relationships_data = ', '.join(
+            f"{key}={getattr(self, key)}"
+            for key in self.__mapper__.relationships.keys()  # type: ignore
+        )
+        return f"{type(self).__name__}({column_data}{relationships_data})"
 
 
 @asynccontextmanager

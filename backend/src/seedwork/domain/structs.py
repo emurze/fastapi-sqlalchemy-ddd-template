@@ -1,15 +1,19 @@
+import enum
 from collections.abc import Callable, Coroutine
-from enum import Enum
 from pprint import pprint
 from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator
 
-T = TypeVar('T')
+from seedwork.domain.entities import State
+from seedwork.domain.value_objects import ValueObject
+
+T = TypeVar('T', bound=Any)
 CoroutineFactory = Callable[[], Coroutine]
 
 
-class ListAction(str, Enum):
-    APPEND = 'append'
-    POP = 'pop'
+class ListAction(enum.Enum):
+    APPEND = enum.auto()
+    POP = enum.auto()
+    SETATTR = enum.auto()
 
 
 class _AsyncList(Generic[T]):
@@ -30,11 +34,31 @@ class _AsyncList(Generic[T]):
             "You should pass a sync_list or a coro_factory or None"
         )
         self._coro_factory = coro_factory
-        self._coro_struct = coro_struct
+        self._coro_struct: Any = coro_struct
         self._sync_list = sync_list.copy() if sync_list else []
         self._data: list[T] = []
         self._is_loaded: bool = False
         self._actions: list[tuple[ListAction, Any]] = []
+
+    @property
+    def modified(self) -> list[T]:
+        return [
+            item for item in self._data
+            if (
+                isinstance(item, ValueObject) or
+                item.extra["state"] == State.Modified
+            )
+        ]
+
+    @property
+    def added(self) -> list[T]:
+        return [
+            item for item in self._data
+            if (
+                isinstance(item, ValueObject) or
+                item.extra["state"] == State.Added
+            )
+        ]
 
     async def _get_result(self) -> list[T]:
         if self._coro_factory:
@@ -67,13 +91,23 @@ class _AsyncList(Generic[T]):
 
     def execute_actions(self, mapper) -> None:
         relation = self._coro_struct()
-        pprint(f"{self._actions}")
-        for action_name, value in self._actions:
-            match action_name:
+        for action, params in self._actions:
+            match action:
                 case ListAction.APPEND:
-                    relation.append(mapper([value])[0])
+                    print(f"\n\nentity={params}\n\n")
+                    relation.append(l := mapper(params)[0])  # addresses did't set
+                    print(f"\n\nmodel={l}\n\n")  # without addresses
                 case ListAction.POP:
-                    relation.pop(value)
+                    relation.pop(*params)
+                case ListAction.SETATTR:
+                    relation[params[0]] = mapper([params[1]])[0]
+
+        for model, entity in zip(relation, self._data):
+            if not hasattr(entity, "extra"):
+                continue
+            if actions := entity.extra.get("actions"):
+                for key, value in actions:
+                    model.update(**{key: value})
 
     @staticmethod
     def check_loaded(func: Callable) -> Callable:
@@ -87,17 +121,33 @@ class _AsyncList(Generic[T]):
 
     @check_loaded
     def append(self, value: T) -> None:
-        self._actions.append((ListAction.APPEND, value))
+        self._actions.append((ListAction.APPEND, [value]))
         self._data.append(value)
 
     @check_loaded
     def pop(self, index: int = -1, /) -> T:
-        self._actions.append((ListAction.POP, index))
+        self._actions.append((ListAction.POP, [index]))
         return self._data.pop(index)
+
+    @check_loaded
+    def find_one(self, **kw) -> T | None:
+        """Finds first accepted item"""
+        try:
+            return next(
+                item for key, value in kw.items() for item in self._data
+                if getattr(item, key) == value
+            )
+        except StopIteration:
+            return None
 
     @check_loaded
     def __getitem__(self, key: int) -> T:
         return self._data[key]
+
+    @check_loaded
+    def __setitem__(self, key, value) -> None:
+        self._actions.append((ListAction.SETATTR, [key, value]))
+        self._data[key] = value
 
     @check_loaded
     def __eq__(self, other: Any) -> bool:

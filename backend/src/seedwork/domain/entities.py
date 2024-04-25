@@ -1,3 +1,4 @@
+import enum
 from collections.abc import Callable
 from typing import Any, cast
 from uuid import UUID
@@ -7,8 +8,15 @@ from pydantic.fields import FieldInfo, PrivateAttr
 
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.services import UUIDField
-from seedwork.domain.structs import alist, ListAction
 from seedwork.utils.functional import classproperty, get_single_param
+
+
+class State(enum.Enum):
+    Added = enum.auto()
+    Unchanged = enum.auto()
+    Modified = enum.auto()
+    Deleted = enum.auto()
+    Detached = enum.auto()
 
 
 class FieldWrapper:
@@ -37,10 +45,12 @@ class Entity(BaseModel):
         arbitrary_types_allowed=True,
     )
     id: UUID = UUIDField
-    _extra: dict = PrivateAttr(default_factory=dict)
+    _extra: dict = PrivateAttr(
+        default_factory=lambda: {"actions": [], "state": State.Detached}
+    )
 
     @property
-    def extra_kw(self) -> dict:
+    def extra(self) -> dict:
         return self._extra
 
     @classproperty
@@ -53,20 +63,30 @@ class Entity(BaseModel):
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def save(self, mapper: Callable) -> dict:
+    def _get_relation(self, mapper) -> tuple[str, Any]:
+        return (rel_name := get_single_param(mapper)), getattr(self, rel_name)
+
+    def add(self, mapper: Callable) -> dict:
+        relation_name, entity_relation = self._get_relation(mapper)
+        return {} if not entity_relation.load_entity_list().is_loaded() else {
+            relation_name: mapper(entity_relation)
+        }
+
+    def persist(self, mapper: Callable) -> dict:
         """Adds or persists entity."""
-        relation_name = get_single_param(mapper)
-        entity_relation = getattr(self, relation_name)
+        relation_name, entity_relation = self._get_relation(mapper)
 
-        if not entity_relation.load_entity_list().is_loaded():
-            return {}
-
-        if entity_relation.is_entity_list():
-            return {relation_name: mapper(entity_relation)}
-        else:
+        if not entity_relation.is_entity_list() and entity_relation.is_loaded():
             entity_relation.execute_actions(mapper)
-            mapper(entity_relation)
-            return {}
+            mapper(entity_relation)  # But if items added in relation
+
+        return {}
+
+    def __setattr__(self, key, value) -> None:
+        assert self.extra["state"] != State.Deleted, "Entity deleted"
+        self.extra["actions"].append((key, value))
+        self.extra["state"] = State.Modified
+        super().__setattr__(key, value)
 
 
 class LocalEntity(Entity):

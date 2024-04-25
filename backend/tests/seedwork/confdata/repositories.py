@@ -35,8 +35,8 @@ class ExampleModel(Model):
     id = MappedColumn(UUID, primary_key=True, default=next_id)
     name = Column(String(Example.c.name.max_length), nullable=False)
     items: Mapped[list['ExampleItemModel']] = relationship(
-        cascade="all, delete-orphan",  # redundant
-        # passive_updates=True,
+        cascade="all, delete-orphan",
+        passive_updates=True,
     )
 
 
@@ -46,8 +46,8 @@ class ExampleItemModel(Model):
     name = Column(String, nullable=False)
     example_id = Column(UUID, ForeignKey("example.id"), nullable=False)
     addresses: Mapped[list['AddressModel']] = relationship(
-        cascade="all, delete-orphan",  # redundant
-        # passive_updates=True,
+        cascade="all, delete-orphan",
+        passive_updates=True,
     )
 
 
@@ -79,10 +79,10 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):
     def update_model(self, entity: Example, model: ExampleModel) -> None:
         model.update(
             **entity.model_dump(exclude={"items"}),
-            **entity.save(lambda items: [
+            **entity.persist(lambda items: [
                 ExampleItemModel(
                     **item.model_dump(exclude={"addresses"}),
-                    **item.save(lambda addresses: [
+                    **item.persist(lambda addresses: [
                         AddressModel(
                             **addr.model_dump(),
                             example_item_id=item.id
@@ -94,6 +94,27 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):
                 for item in items
             ])
         )
+
+    def entity_to_model(self, entity: Example) -> ExampleModel:
+        model = self.model_class()
+        model.update(
+            **entity.model_dump(exclude={"items"}),
+            **entity.add(lambda items: [
+                ExampleItemModel(
+                    **item.model_dump(exclude={"addresses"}),
+                    **item.add(lambda addresses: [
+                        AddressModel(
+                            **addr.model_dump(),
+                            example_item_id=item.id
+                        )
+                        for addr in addresses
+                    ]),
+                    example_id=entity.id,
+                )
+                for item in items
+            ])
+        )
+        return model
 
 
 class ExampleSqlAlchemyCommandRepository(

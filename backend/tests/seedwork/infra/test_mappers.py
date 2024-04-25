@@ -110,37 +110,57 @@ async def test_repo_and_mapper_can_update(sql_uow: ITestUnitOfWork) -> None:
     async with sql_uow as uow:
         entity = await uow.examples.get_by_id(model.id)
         await entity.items.load()
+        await entity.items[0].addresses.load()
+
         entity.name = "Item Vlad"
         entity.items.pop()
         entity.items.append(
             ExampleItem(
                 name="Item B",
                 addresses=alist([
-                    Address(city="lersk")
+                    Address(city="lersk")  # maps
                 ])
             )
         )
         entity.items.append(ExampleItem(name="Item C"))
 
-        await entity.items[0].addresses.load()
-
+        entity.items[0].name = "New Item"
         entity.items[0].addresses.pop(0)
         entity.items[0].addresses.append(Address(city="Vladivostok"))
         entity.items[0].addresses.append(Address(city="Vladivostok 2"))
-        entity.items[0].addresses[0].city = "Lerok"  # changes didn't persist
+        entity.items[0].addresses[0] = Address(city="Vladivostok -1")
+        entity.items[-1].name = "Best Item"
+
+        # Is Item B address saved or not?
+
+        print('\n\n\n', await entity.items.find_one(name="Item B").addresses.load(), '\n\n\n')
 
         await uow.commit()
 
+        print('\n\n\n', entity.items.find_one(name="Item B").addresses, '\n\n\n')
+
     async with sql_uow as uow:
         entity = await uow.examples.get_by_id(model.id)
-        assert entity.name == "Item Vlad"
         await entity.items.load()
-        await entity.items[0].addresses.load()
-        await entity.items[1].addresses.load()
+        for item in entity.items:
+            await item.addresses.load()
+
+        print('\n\n\n', entity.items.find_one(name="Item B").addresses, '\n\n\n')
+
         assert len(entity.items) == 3
-        assert entity.items[0].addresses[0].city == "Lerok"
-        assert entity.items[0].addresses[1].city == "Vladivostok 2"
-        assert entity.items[1].addresses[0].city == "lersk"
+        assert entity.name == "Item Vlad"
+
+        assert (new_item := entity.items.find_one(name="New Item"))
+        assert (item_b := entity.items.find_one(name="Item B"))
+        assert (best_item := entity.items.find_one(name="Best Item"))
+
+        assert len(new_item.addresses) == 2
+        assert len(item_b.addresses) == 1
+        assert len(best_item.addresses) == 0
+
+        assert new_item.addresses.find_one(city="Vladivostok -1")
+        assert new_item.addresses.find_one(city="Vladivostok 2")
+        assert item_b.addresses.find_one(city="Lersk")
 
 
 @pytest.mark.unit

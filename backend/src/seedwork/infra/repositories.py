@@ -1,28 +1,18 @@
 import itertools
+
 from typing import NoReturn, Any, Any as Model
 from uuid import UUID
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from seedwork.domain.entities import Entity
+from seedwork.domain.entities import Entity, State
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.mappers import IDataMapper
 
 from collections.abc import Iterator
 
 from seedwork.domain.repositories import ICommandRepository, IQueryRepository
-
-
-class Deleted:
-    def __repr__(self) -> str:
-        return "<Deleted entity>"
-
-    def __str__(self) -> str:
-        return "<Deleted entity>"
-
-
-DELETED = Deleted()
 
 
 class SqlAlchemyCommandRepository(ICommandRepository):
@@ -35,26 +25,30 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         self.identity_map: dict[UUID, Any] = {}
 
     def _check_not_deleted(self, entity_id: UUID) -> NoReturn | None:
+        entity = self.identity_map.get(entity_id)
+        assert entity, "Entity not found."
         assert (
-            self.identity_map.get(entity_id) is not DELETED
-        ), f"Entity {entity_id} already deleted"
+            entity.extra["state"] != State.Deleted
+        ), f"Entity {entity_id} already deleted."
 
     def add(self, entity: Entity) -> UUID:
         model = self.mapper.entity_to_model(entity)
-        entity.extra_kw["model"] = model
+        entity.extra["model"] = model
+        entity.extra["state"] = State.Added
         self.identity_map[entity.id] = entity
         self.session.add(model)
         return entity.id
 
     async def delete(self, entity: Entity) -> None:
         self._check_not_deleted(entity.id)
-        self.identity_map[entity.id] = DELETED
+        entity.extra["state"] = State.Deleted
         if model := await self.session.get(self.model_class, entity.id):
             await self.session.delete(model)
 
     async def delete_by_id(self, entity_id: UUID) -> None:
         self._check_not_deleted(entity_id)
-        self.identity_map[entity_id] = DELETED
+        entity = self.identity_map[entity_id]
+        entity.extra["state"] = State.Deleted
         if model := await self.session.get(self.model_class, entity_id):
             await self.session.delete(model)
 
@@ -72,12 +66,11 @@ class SqlAlchemyCommandRepository(ICommandRepository):
 
         # Saves events stored in entity
         if stored_entity := self.identity_map.get(model.id):
-            print("STORED")
             return stored_entity
 
         entity = self.mapper.model_to_entity(model)
-        entity.extra_kw["model"] = model
-
+        entity.extra["model"] = model
+        entity.extra["state"] = State.Unchanged
         self.identity_map[entity.id] = entity
         return entity
 
@@ -88,19 +81,18 @@ class SqlAlchemyCommandRepository(ICommandRepository):
             "Cannot persist entity which is unknown to the repo. "
             "Did you forget to call repo.add() for this entity?"
         )
-        print(f"{entity=}")
-        self.mapper.update_model(entity, entity.extra_kw["model"])
+        self.mapper.update_model(entity, entity.extra["model"])
 
     def persist_all(self) -> None:
         """Persists changes made to entities present in the identity map."""
         for entity in self.identity_map.values():
-            if entity is not DELETED:
+            if entity.extra["state"] != State.Deleted:
                 self.persist(entity)
 
     def collect_events(self) -> Iterator[DomainEvent]:
         return itertools.chain.from_iterable(
             entity.collect_events() for entity in self.identity_map.values()
-            if entity is not DELETED
+            if entity.extra["state"] != State.Deleted
         )
 
     async def count(self) -> int:
