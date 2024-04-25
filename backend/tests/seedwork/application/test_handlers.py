@@ -4,16 +4,17 @@ from sqlalchemy import select
 from seedwork.application.messagebus import MessageBus
 from seedwork.domain.errors import ErrorType
 from seedwork.domain.services import next_id
-from tests.seedwork.confdata.domain import ExampleId, Example
-from tests.seedwork.confdata.handlers.command import (
+from tests.seedwork.confdata.domain.entities import Example
+from tests.seedwork.confdata.application.command import (
     CreateExampleCommand,
     ExampleItemDTO,
     UpdateExampleCommand,
     DeleteExampleCommand,
 )
-from tests.seedwork.confdata.handlers.query import GetExampleQuery
-from tests.seedwork.confdata.ports import ITestUnitOfWork
-from tests.seedwork.confdata.repositories import ExampleModel
+from tests.seedwork.confdata.application.query import GetExampleQuery
+from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
+from tests.seedwork.confdata.domain.value_objects import ExampleId
+from tests.seedwork.confdata.infra.repositories import ExampleModel
 
 
 async def create_example(bus: MessageBus) -> ExampleId:

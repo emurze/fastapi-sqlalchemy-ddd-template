@@ -1,7 +1,7 @@
 import pytest
 
-from tests.seedwork.confdata.domain import Example
-from tests.seedwork.confdata.ports import ITestUnitOfWork
+from tests.seedwork.confdata.domain.entities import Example
+from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 
 
 class TestMemoryUnitOfWork:

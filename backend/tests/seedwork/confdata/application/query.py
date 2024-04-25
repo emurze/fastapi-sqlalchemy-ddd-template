@@ -2,7 +2,7 @@ from uuid import UUID
 
 from seedwork.application.queries import Query, QueryResult
 from seedwork.domain.errors import Error
-from tests.seedwork.confdata.ports import ITestUnitOfWork
+from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 
 
 class GetExampleQuery(Query):

@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from seedwork.domain.services import next_id
-from tests.seedwork.confdata.domain import Example, NameChanged
+from tests.seedwork.confdata.domain.entities import Example, NameChanged
 
 
 class TestEntity:
@@ -13,15 +13,10 @@ class TestEntity:
         assert example.name == "new"
 
     @pytest.mark.unit
-    def test_can_set_and_get_extra_kw(self) -> None:
+    def test_can_set_and_get_extra_kwargs(self) -> None:
         example = Example(name="example")
-        example.extra_kw['vlados'] = 'In love'
-        assert example.extra_kw['vlados'] == 'In love'
-
-    @pytest.mark.unit
-    @pytest.mark.skip
-    def test_can_return_only_loaded_relations_as_dict(self) -> None:
-        ...
+        example.extra['vlados'] = 'In love'
+        assert example.extra['vlados'] == 'In love'
 
     @pytest.mark.unit
     def test_cannot_update_id(self) -> None:

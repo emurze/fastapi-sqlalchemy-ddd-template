@@ -1,7 +1,7 @@
 import pytest
 
 from seedwork.application.messagebus import MessageBus
-from tests.seedwork.confdata import containers
+from tests.seedwork.confdata.container import containers
 
 
 @pytest.fixture(scope="function")

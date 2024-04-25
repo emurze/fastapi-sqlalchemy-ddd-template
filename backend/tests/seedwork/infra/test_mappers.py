@@ -2,13 +2,14 @@ import pytest
 
 from seedwork.domain.structs import alist
 from seedwork.domain.services import next_id
-from tests.seedwork.confdata.domain import Example, ExampleItem, Address
-from tests.seedwork.confdata.ports import ITestUnitOfWork
-from tests.seedwork.confdata.repositories import (
-    ExampleMapper,
+from tests.seedwork.confdata.domain.entities import Example, ExampleItem
+from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
+from tests.seedwork.confdata.domain.value_objects import Address
+from tests.seedwork.confdata.infra.mappers import ExampleMapper, PostMapper
+from tests.seedwork.confdata.infra.models import (
     ExampleModel,
     ExampleItemModel,
-    AddressModel,
+    AddressModel, PostModel, CommentModel,
 )
 
 mapper = ExampleMapper(ExampleModel)
@@ -88,9 +89,8 @@ async def test_can_update_with_loaded_items() -> None:
     assert model.items[0].addresses[0].city == 'Kiev'
 
 
-@pytest.mark.marked
 @pytest.mark.integration
-async def test_mapper_can_update_3_tables(sql_uow: ITestUnitOfWork) -> None:
+async def test_mapper_updates_a_few_tables(sql_uow: ITestUnitOfWork) -> None:
     async with sql_uow as uow:
         model = Example(
             name="Hello",
@@ -114,7 +114,7 @@ async def test_mapper_can_update_3_tables(sql_uow: ITestUnitOfWork) -> None:
         await entity.items[0].addresses.load()
 
         entity.name = "Item Vlad"
-        entity.items.pop()
+        entity.items.pop()  # pop request
         entity.items.append(
             ExampleItem(
                 name="Item B",
@@ -156,6 +156,41 @@ async def test_mapper_can_update_3_tables(sql_uow: ITestUnitOfWork) -> None:
         assert item_b.addresses.find_one(city="lersk")
 
 
+@pytest.mark.marked
+@pytest.mark.integration
+async def test_mapper_can_update_m2m(sql_uow: ITestUnitOfWork) -> None:
+    post_mapper = PostMapper(PostModel)
+
+    async with sql_uow as uow:
+        session = uow.session
+        model = PostModel(
+            id=next_id(),
+            title="Hello",
+            comments=[
+                CommentModel(
+                    id=next_id(),
+                    body="World",
+                )
+            ]
+        )
+        session.add(model)
+        await uow.commit()
+
+    async with sql_uow as uow:
+        session = uow.session
+        post = await session.get(PostModel, model.id)
+        await post.awaitable_attrs.comments
+        # model = post_mapper.entity_to_model(post)
+        assert model
+
+
 @pytest.mark.unit
-async def test_mem_mapper_updates_3_tables(mem_uow: ITestUnitOfWork) -> None:
-    await test_mapper_can_update_3_tables(mem_uow)
+async def test_mem_mapper_updates_a_few_tables(
+    mem_uow: ITestUnitOfWork,
+) -> None:
+    await test_mapper_updates_a_few_tables(mem_uow)
+
+#
+# @pytest.mark.unit
+# async def test_mem_mapper_updates_m2m(mem_uow: ITestUnitOfWork) -> None:
+#     await test_mapper_can_update_m2m(mem_uow)

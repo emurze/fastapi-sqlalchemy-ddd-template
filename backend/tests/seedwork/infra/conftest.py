@@ -1,7 +1,7 @@
 import pytest
 
-from tests.seedwork.confdata import containers
-from tests.seedwork.confdata.ports import ITestUnitOfWork
+from tests.seedwork.confdata.container import containers
+from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 
 
 @pytest.fixture(scope="function")

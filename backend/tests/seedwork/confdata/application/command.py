@@ -1,14 +1,14 @@
 from uuid import UUID
 
-from pydantic import Field, ValidationError
+from pydantic import ValidationError
 
 from seedwork.application.commands import Command, CommandResult
 from seedwork.application.dtos import DTO
 from seedwork.domain.errors import Error
-from seedwork.domain.services import next_id
 from seedwork.domain.structs import alist
-from tests.seedwork.confdata.domain import Example, ExampleItem, Address
-from tests.seedwork.confdata.ports import ITestUnitOfWork
+from tests.seedwork.confdata.domain.entities import Example, ExampleItem
+from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
+from tests.seedwork.domain.test_value_objects import Address
 
 
 class AddressDTO(DTO):

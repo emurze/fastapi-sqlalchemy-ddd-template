@@ -8,9 +8,8 @@ from seedwork.infra import repositories as generic_repos
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
 from seedwork.presentation.factories import get_dict, get_bus, get_handler
 from tests.conftest import session_factory
-from tests.seedwork.confdata.handlers import command, query
-from tests.seedwork.confdata import repositories as repos
-from tests.seedwork.confdata.repositories import ExampleInMemoryQueryRepository
+from tests.seedwork.confdata.application import command, query
+from tests.seedwork.confdata.infra import repositories as repos
 
 
 class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
@@ -51,7 +50,7 @@ def get_memory_container():
             InMemoryUnitOfWork,
             examples={
                 "command": generic_repos.InMemoryCommandRepository,
-                "query": ExampleInMemoryQueryRepository,
+                "query": repos.ExampleInMemoryQueryRepository,
             },
         )
     )
