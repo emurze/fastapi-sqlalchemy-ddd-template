@@ -1,10 +1,8 @@
 import pytest
-from sqlalchemy import select
 
 from seedwork.application.messagebus import MessageBus
 from seedwork.domain.errors import ErrorType
 from seedwork.domain.services import next_id
-from tests.seedwork.confdata.domain.entities import Example
 from tests.seedwork.confdata.application.command import (
     CreateExampleCommand,
     ExampleItemDTO,
@@ -12,9 +10,7 @@ from tests.seedwork.confdata.application.command import (
     DeleteExampleCommand,
 )
 from tests.seedwork.confdata.application.query import GetExampleQuery
-from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 from tests.seedwork.confdata.domain.value_objects import ExampleId
-from tests.seedwork.confdata.infra.repositories import ExampleModel
 
 
 async def create_example(bus: MessageBus) -> ExampleId:
@@ -55,7 +51,7 @@ async def test_create_example(sql_bus: MessageBus) -> None:
 #     assert res.payload["id"] == example_id
 #     assert res.payload["name"] == "NExample"
 #     assert res.payload["items"][0].name == 'NHello'
-#
+
 #
 # @pytest.mark.unit
 # async def test_delete_example(sql_bus: MessageBus) -> None:
@@ -67,4 +63,4 @@ async def test_create_example(sql_bus: MessageBus) -> None:
 #
 #     res = await sql_bus.handle(GetExampleQuery(id=example_id))
 #     assert res.error.type == ErrorType.NOT_FOUND
-
+#

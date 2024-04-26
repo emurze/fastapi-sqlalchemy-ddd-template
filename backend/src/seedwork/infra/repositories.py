@@ -1,6 +1,7 @@
 import itertools
+from functools import partial
 
-from typing import NoReturn, Any, Any as Model
+from typing import NoReturn, Any, Any as Model, Protocol
 from uuid import UUID
 
 from sqlalchemy import select, func
@@ -10,7 +11,7 @@ from seedwork.domain.entities import Entity, State
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.mappers import IDataMapper
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Callable
 
 from seedwork.domain.repositories import ICommandRepository, IQueryRepository
 
@@ -169,13 +170,19 @@ class SqlAlchemyQueryRepository(IQueryRepository):
         return list(res.scalars())
 
 
-class InMemoryQueryRepository(IQueryRepository):
+class _Container(Protocol):
     mapper_class: type[IDataMapper]
     model_class: type[Any]
 
-    def __init__(self, identity_map: dict) -> None:
+
+def as_mem_query(container: _Container) -> Callable:
+    return partial(InMemoryQueryRepository, container)
+
+
+class InMemoryQueryRepository(IQueryRepository):
+    def __init__(self, attr_container: _Container, identity_map: dict) -> None:
         self.identity_map = identity_map
-        self.mapper = self.mapper_class(self.model_class)
+        self.mapper = attr_container.mapper_class(attr_container.model_class)
 
     async def get(self, **kw) -> Model | None:
         try:

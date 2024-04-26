@@ -4,7 +4,7 @@ from dependency_injector import containers
 from dependency_injector.providers import Factory, Singleton
 
 from seedwork.infra.injector import Link
-from seedwork.infra import repositories as generic_repos
+from seedwork.infra.repositories import InMemoryCommandRepository, as_mem_query
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
 from seedwork.presentation.factories import get_dict, get_bus, get_handler
 from tests.conftest import session_factory
@@ -21,6 +21,10 @@ class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
         examples={
             "command": repos.ExampleSqlAlchemyCommandRepository,
             "query": repos.ExampleSqlAlchemyQueryRepository,
+        },
+        posts={
+            "command": repos.PostSqlAlchemyCommandRepository,
+            "query": repos.PostSqlAlchemyQueryRepository,
         }
     )
     query_handlers: Callable = Singleton(
@@ -49,9 +53,15 @@ def get_memory_container():
             Singleton,
             InMemoryUnitOfWork,
             examples={
-                "command": generic_repos.InMemoryCommandRepository,
-                "query": repos.ExampleInMemoryQueryRepository,
+                "command": InMemoryCommandRepository,
+                "query": as_mem_query(
+                    repos.ExampleSqlAlchemyCommandRepository,
+                ),
             },
+            posts={
+                "command": InMemoryCommandRepository,
+                "query": as_mem_query(repos.PostSqlAlchemyCommandRepository)
+            }
         )
     )
     return container

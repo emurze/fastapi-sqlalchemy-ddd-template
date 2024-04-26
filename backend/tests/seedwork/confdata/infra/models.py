@@ -45,13 +45,16 @@ class PostModel(Model):
     title = Column(String(256))
     comments: Mapped[list['CommentModel']] = relationship(
         secondary="post_comment",
-        cascade="all, delete-orphan",
     )
 
 
 class PostCommentModel(Model):
     __tablename__ = 'post_comment'
-    post_id = Column(UUID, ForeignKey('post.id', ondelete="CASCADE"), primary_key=True)
+    post_id = Column(
+        UUID,
+        ForeignKey('post.id', ondelete="CASCADE"),  # redundant?
+        primary_key=True,
+    )
     comment_id = Column(UUID, ForeignKey('comment.id', ondelete="CASCADE"), primary_key=True)
 
 

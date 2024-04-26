@@ -1,7 +1,13 @@
 import pytest
 import sqlalchemy as sa
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase
 
-from shared.infra.database import Model
+from seedwork.infra.database import ModelBase
+
+
+class Model(ModelBase, AsyncAttrs, DeclarativeBase):
+    __allow_unmapped__ = True
 
 
 class Post(Model):

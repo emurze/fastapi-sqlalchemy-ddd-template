@@ -68,10 +68,7 @@ def sql_uow(_restart_tables) -> IUnitOfWork:
 
 
 @pytest.fixture(scope="function")
-async def ac(
-    _restart_cache,
-    _restart_tables,
-) -> AsyncIterator[AsyncClient]:
+async def ac(_restart_cache, _restart_tables) -> AsyncIterator[AsyncClient]:
     """Provides a configured async test client for end-to-end tests."""
     from main import app
 

@@ -3,12 +3,12 @@ from pydantic import Field
 from seedwork.domain.structs import alist
 from seedwork.domain.entities import AggregateRoot, LocalEntity
 from seedwork.domain.services import UUIDField
-from tests.seedwork.confdata.domain import value_objects as vo
+from tests.seedwork.confdata.domain import value_objects as vos
 from tests.seedwork.confdata.domain.events import NameChanged
 
 
 class Example(AggregateRoot):
-    id: vo.ExampleId = UUIDField
+    id: vos.ExampleId = UUIDField
     name: str = Field(max_length=10)
     items: alist['ExampleItem'] = alist()
 
@@ -18,17 +18,17 @@ class Example(AggregateRoot):
 
 
 class ExampleItem(LocalEntity):
-    id: vo.ExampleItemId = UUIDField
+    id: vos.ExampleItemId = UUIDField
     name: str
-    addresses: alist[vo.Address] = alist()
+    addresses: alist[vos.Address] = alist()
 
 
 class Post(AggregateRoot):
-    id: vo.PostId = UUIDField
+    id: vos.PostId = UUIDField
     title: str
     comments: alist['Comment']
 
 
 class Comment(LocalEntity):
-    id: vo.CommentId = UUIDField
+    id: vos.CommentId = UUIDField
     body: str
