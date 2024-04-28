@@ -1,30 +1,7 @@
 version: "3.9"
 services:
-  api:
-    build: backend
-    image: api:v1
-    container_name: api
-    command: >
-      poetry run bash -c "cd src && poe row-migrate && python main.py"
-    networks:
-      - backend
-    ports:
-      - '8080:8080'
-    env_file:
-      - backend/.env/dev/.app.env
-    volumes:
-      - ./backend/htmlcov:/service/htmlcov
-      - ./backend/src:/service/src
-      - ./backend/tests:/service/tests
-      - ./backend/migrations:/service/migrations
-    restart: unless-stopped
-    depends_on:
-      - db
-      - rabbitmq
-      - cache
-
   db:
-    build: backend/conf/postgres
+    build: backend/config/postgres
     image: emurze/postgres:16
     container_name: db
     networks:
@@ -32,7 +9,7 @@ services:
     ports:
       - '5432:5432'
     env_file:
-      - backend/.env/dev/.db.env
+      - backend/.env/.db.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -45,7 +22,7 @@ services:
     ports:
       - '8888:80'
     env_file:
-      - backend/.env/dev/.pgadmin.env
+      - backend/.env/.pgadmin.env
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     restart: unless-stopped
@@ -62,14 +39,14 @@ services:
       - '6379:6379'
     volumes:
       - cache_data:/data
-      - ./backend/conf/cache:/etc/redis.conf
+      - ./backend/config/cache:/etc/redis.conf
     restart: unless-stopped
 
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:3.13.1-management-alpine
     env_file:
-      - backend/.env/dev/.rabbitmq.env
+      - backend/.env/.rabbitmq.env
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -78,7 +55,6 @@ services:
 
 volumes:
   cache_data:
-  pubsub_data:
   pgadmin_data:
   postgres_data:
 

@@ -87,7 +87,7 @@ class _AsyncList(Generic[T]):
                 case ListAction.SETATTR:
                     relation[params[0]] = mapper([params[1]])[0]
 
-        for model, entity in zip(relation, self._data):
+        for model, entity in zip(relation, self._data):  # todo: Why?
             if hasattr(entity, "extra"):
                 if actions := entity.extra.get("actions"):
                     for key, value in actions:
