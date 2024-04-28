@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import Field
 
 from seedwork.domain.structs import alist
@@ -5,6 +7,7 @@ from seedwork.domain.entities import AggregateRoot, LocalEntity
 from seedwork.domain.services import UUIDField
 from tests.seedwork.confdata.domain import value_objects as vos
 from tests.seedwork.confdata.domain.events import NameChanged
+from tests.seedwork.confdata.domain.value_objects import Photo
 
 
 class Example(AggregateRoot):
@@ -32,9 +35,16 @@ class Post(AggregateRoot):
 class User(LocalEntity):
     id: vos.UserId = UUIDField
     name: str
-    permissions: alist['Permission'] = alist()
+    photo: Optional[Photo] = None  # todo: arel
+    permissions: alist["Permission"] = alist()
 
 
 class Permission(LocalEntity):
+    # PERMISSION_CHOICES = (
+    #     ("C", "Create"),
+    #     ("R", "Update"),
+    #     ("U", "Update"),
+    #     ("D", "Delete"),
+    # )
     id: vos.PermissionId = UUIDField
     name: str

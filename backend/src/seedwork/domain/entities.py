@@ -1,4 +1,3 @@
-import enum
 from collections.abc import Callable
 from typing import Any, cast
 from uuid import UUID
@@ -9,14 +8,6 @@ from pydantic.fields import FieldInfo, PrivateAttr
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.services import UUIDField
 from seedwork.utils.functional import classproperty, get_single_param
-
-
-class State(enum.Enum):
-    Added = enum.auto()
-    Unchanged = enum.auto()
-    Modified = enum.auto()
-    Deleted = enum.auto()
-    Detached = enum.auto()
 
 
 class FieldWrapper:
@@ -46,8 +37,12 @@ class Entity(BaseModel):
     )
     id: UUID = UUIDField
     _extra: dict = PrivateAttr(
-        default_factory=lambda: {"actions": [], "state": State.Detached}
+        default_factory=lambda: {"actions": [], "state": ""}
     )
+
+    def __setattr__(self, key, value) -> None:
+        self.extra["actions"].append((key, value))
+        super().__setattr__(key, value)
 
     @property
     def extra(self) -> dict:
@@ -79,11 +74,8 @@ class Entity(BaseModel):
             mapper(entity_relation)
             return {}
 
-    def __setattr__(self, key, value) -> None:
-        assert self.extra["state"] != State.Deleted, "Entity deleted"
-        self.extra["actions"].append((key, value))
-        self.extra["state"] = State.Modified
-        super().__setattr__(key, value)
+    def persist_one(self, mapper: Callable) -> dict:
+        return {}
 
 
 class LocalEntity(Entity):

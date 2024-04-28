@@ -2,18 +2,16 @@ import enum
 from collections.abc import Callable, Coroutine
 from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator
 
-from seedwork.domain.entities import State
-from seedwork.domain.value_objects import ValueObject
-
 T = TypeVar("T", bound=Any)
+R = TypeVar("R", bound=Any)
 CoroutineFactory = Callable[[], Coroutine]
 
 
 class ListAction(enum.Enum):
     EXTEND = enum.auto()
     APPEND = enum.auto()
-    POP = enum.auto()
     SETATTR = enum.auto()
+    POP = enum.auto()
 
 
 class _AsyncList(Generic[T]):
@@ -26,7 +24,7 @@ class _AsyncList(Generic[T]):
 
     def __init__(
         self,
-        sync_list: list[T] | None = None,
+        sync_list: list[T] | Iterator[T] | None = None,
         coro_factory: CoroutineFactory | None = None,
         coro_struct: Any | None = None,
     ) -> None:
@@ -35,32 +33,17 @@ class _AsyncList(Generic[T]):
         ), "You should pass a sync_list or a coro_factory or None"
         self._coro_factory = coro_factory
         self._coro_struct: Any = coro_struct
-        self._sync_list = sync_list.copy() if sync_list else []
+
+        if not sync_list:
+            self._sync_list = []
+        elif not isinstance(sync_list, list):
+            self._sync_list = list(sync_list)
+        else:
+            self._sync_list = sync_list.copy()
+
         self._data: list[T] = []
         self._is_loaded: bool = False
         self._actions: list[tuple[ListAction, Any]] = []
-
-    @property
-    def modified(self) -> list[T]:
-        return [
-            item
-            for item in self._data
-            if (
-                isinstance(item, ValueObject)
-                or item.extra["state"] == State.Modified
-            )
-        ]
-
-    @property
-    def added(self) -> list[T]:
-        return [
-            item
-            for item in self._data
-            if (
-                isinstance(item, ValueObject)
-                or item.extra["state"] == State.Added
-            )
-        ]
 
     async def _get_result(self) -> list[T]:
         if self._coro_factory:
@@ -105,11 +88,10 @@ class _AsyncList(Generic[T]):
                     relation[params[0]] = mapper([params[1]])[0]
 
         for model, entity in zip(relation, self._data):
-            if not hasattr(entity, "extra"):
-                continue
-            if actions := entity.extra.get("actions"):
-                for key, value in actions:
-                    model.update(**{key: value})
+            if hasattr(entity, "extra"):
+                if actions := entity.extra.get("actions"):
+                    for key, value in actions:
+                        model.update(**{key: value})
 
     @staticmethod
     def check_loaded(func: Callable) -> Callable:
@@ -165,7 +147,6 @@ class _AsyncList(Generic[T]):
         return iter(self._data)
 
     def __len__(self) -> int:
-        # NEED ERROR
         return len(self._data)
 
     def __repr__(self) -> str:
@@ -178,4 +159,39 @@ class _AsyncList(Generic[T]):
         return repr(self)
 
 
+class _AsyncRel(Generic[R]):
+    # OneToOne and ManyToMany
+    def __init__(
+        self,
+        sync_val: R | None = None,
+        coro_factory: CoroutineFactory | None = None,
+        coro_struct: Any | None = None,
+    ) -> None:
+        assert not (
+            sync_val and coro_factory
+        ), "You should pass a sync_list or a coro_factory or None"
+        self._coro_factory = coro_factory
+        self._coro_struct: Any = coro_struct
+        self._sync_val = sync_val
+        self._data: R | None = None
+        self._is_loaded: bool = False
+
+        def __getattr__(self, key: str) -> Any:
+            return getattr(self._data, key)
+
+        def __setattr__(self, key: str, value) -> Any:
+            return setattr(self._data, key, value)
+
+    @staticmethod
+    def check_loaded(func: Callable) -> Callable:
+        def wrapper(self, *args, **kw) -> Any:
+            assert (
+                self._is_loaded
+            ), "You can make operations when you have already loaded the item"
+            return func(self, *args, **kw)
+
+        return wrapper
+
+
 alist: TypeAlias = _AsyncList
+arel: TypeAlias = _AsyncRel

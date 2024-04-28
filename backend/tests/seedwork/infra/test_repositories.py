@@ -11,6 +11,9 @@ class TestMemoryCommandRepository:
         async with mem_uow:
             example = Example(name="example")
             mem_uow.examples.add(example)
+            await mem_uow.commit()
+
+        async with mem_uow:
             retrieved = await mem_uow.examples.get_by_id(example.id)
             assert retrieved.name == "example"
 
@@ -19,7 +22,13 @@ class TestMemoryCommandRepository:
         async with mem_uow:
             example = Example(name="example")
             mem_uow.examples.add(example)
+            await mem_uow.commit()
+
+        async with mem_uow:
             await mem_uow.examples.delete(example)
+            await mem_uow.commit()
+
+        async with mem_uow:
             res = await mem_uow.examples.get_by_id(example.id)
             assert res is None
 
@@ -28,7 +37,13 @@ class TestMemoryCommandRepository:
         async with mem_uow:
             example = Example(name="example")
             mem_uow.examples.add(example)
+            await mem_uow.commit()
+
+        async with mem_uow:
             await mem_uow.examples.delete_by_id(example.id)
+            await mem_uow.commit()
+
+        async with mem_uow:
             res = await mem_uow.examples.get_by_id(example.id)
             assert res is None
 

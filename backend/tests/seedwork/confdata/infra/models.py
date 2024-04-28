@@ -1,7 +1,6 @@
 from sqlalchemy import UUID, Column, String, ForeignKey
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship
-from sqlalchemy_utils import ChoiceType
 
 from seedwork.domain.services import next_id
 from seedwork.infra.database import ModelBase
@@ -65,17 +64,16 @@ class UserModel(Model):
     __tablename__ = "user"
     id = Column(UUID, primary_key=True, default=next_id)
     name = Column(String(256), nullable=False)
-    permissions: Mapped[list['PermissionModel']] = relationship(
+    permissions: Mapped[list["PermissionModel"]] = relationship(
         secondary="user_permission",
     )
+    photo: Mapped["PhotoModel"] = relationship()
 
 
 class UserPermissionModel(Model):
     __tablename__ = "user_permission"
     user_id = Column(
-        UUID,
-        ForeignKey("user.id", ondelete="CASCADE"),
-        primary_key=True
+        UUID, ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
     )
     permission_id = Column(
         UUID,
@@ -86,11 +84,13 @@ class UserPermissionModel(Model):
 
 class PermissionModel(Model):
     __tablename__ = "permission"
-    PERMISSION_CHOICES = (
-        ("C", "Create"),
-        ("R", "Update"),
-        ("U", "Update"),
-        ("D", "Delete"),
-    )
     id = Column(UUID, primary_key=True, default=next_id)
     name = Column(String(256), nullable=False)
+
+
+class PhotoModel(Model):
+    __tablename__ = "photo"
+    id = Column(UUID, primary_key=True, default=next_id)
+    url = Column(String(256), nullable=False)
+    context = Column(String(256), nullable=False)
+    user_id = Column(UUID, ForeignKey("user.id", ondelete="CASCADE"))

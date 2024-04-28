@@ -5,7 +5,9 @@ from seedwork.domain.services import next_id
 from tests.seedwork.confdata.domain.entities import (
     Example,
     ExampleItem,
-    Post, User, Permission,
+    Post,
+    User,
+    Permission,
 )
 from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 from tests.seedwork.confdata.domain.value_objects import Address
@@ -95,23 +97,19 @@ async def test_can_update_with_loaded_items() -> None:
     assert model.items[0].addresses[0].city == "Kiev"
 
 
-# @pytest.mark.marked
+@pytest.mark.marked
 @pytest.mark.integration
 async def test_mapper_updates_o2m_m2o(sql_uow: ITestUnitOfWork) -> None:
-    # todo: ManyToOne
     async with sql_uow as uow:
         model = Example(
             name="Hello",
-            items=alist([
+            items=alist(
                 ExampleItem(
                     name="Item A",
-                    addresses=alist([
-                        Address(city="Lersk")
-                        for _ in range(2)
-                    ]),
+                    addresses=alist([Address(city="Lersk") for _ in range(2)]),
                 )
                 for _ in range(2)
-            ])
+            ),
         )
         uow.examples.add(model)
         await uow.commit()
@@ -122,13 +120,10 @@ async def test_mapper_updates_o2m_m2o(sql_uow: ITestUnitOfWork) -> None:
         await entity.items[0].addresses.load()
 
         entity.name = "Item Vlad"
-        entity.items.pop()  # pop request
+        entity.items.pop()
         entity.items.append(
             ExampleItem(
-                name="Item B",
-                addresses=alist([
-                    Address(city="lersk")
-                ])
+                name="Item B", addresses=alist([Address(city="lersk")])
             )
         )
         entity.items.append(ExampleItem(name="Item C"))
@@ -149,16 +144,16 @@ async def test_mapper_can_update_m2m_o2o(sql_uow: ITestUnitOfWork) -> None:
     async with sql_uow as uow:
         entity = Post(
             title="Post 1",
-            users=alist([
+            users=alist(
                 User(
                     name=f"User {index + 1}",
-                    permissions=alist([
+                    permissions=alist(
                         Permission(name="Perm")
                         for _ in range(3)
-                    ])
+                    ),
                 )
                 for index in range(4)
-            ]),
+            ),
         )
         uow.posts.add(entity)
         await uow.commit()
@@ -170,9 +165,9 @@ async def test_mapper_can_update_m2m_o2o(sql_uow: ITestUnitOfWork) -> None:
         post.users.pop(0)
         post.users.pop(0)
         post.users[0].name = "New User"
-        post.users.append(User(name="Vlados", alist=alist([
-            Permission(name="Perm -1")
-        ])))
+        post.users.append(
+            User(name="Vlados", alist=alist([Permission(name="Perm -1")]))
+        )
         user_3 = post.users.find_one(name="User 4")
         await user_3.permissions.load()
         user_3.permissions.pop()

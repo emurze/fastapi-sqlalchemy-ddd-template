@@ -12,3 +12,8 @@ PermissionId = NewType("PermissionId", uuid.UUID)
 
 class Address(ValueObject):
     city: str
+
+
+class Photo(ValueObject):
+    url: str
+    context: str

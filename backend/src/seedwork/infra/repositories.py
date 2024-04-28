@@ -1,3 +1,4 @@
+import enum
 import itertools
 from functools import partial
 
@@ -7,13 +8,17 @@ from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from seedwork.domain.entities import Entity, State
+from seedwork.domain.entities import Entity
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.mappers import IDataMapper
 
 from collections.abc import Iterator, Callable
 
 from seedwork.domain.repositories import ICommandRepository, IQueryRepository
+
+
+class State(enum.Enum):
+    Deleted = enum.auto()
 
 
 class SqlAlchemyCommandRepository(ICommandRepository):
@@ -26,16 +31,14 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         self.identity_map: dict[UUID, Any] = {}
 
     def _check_not_deleted(self, entity_id: UUID) -> NoReturn | None:
-        entity = self.identity_map.get(entity_id)
-        assert entity, "Entity not found."
-        assert (
-            entity.extra["state"] != State.Deleted
-        ), f"Entity {entity_id} already deleted."
+        if entity := self.identity_map.get(entity_id):
+            assert (
+                entity.extra["state"] != State.Deleted
+            ), f"Entity {entity_id} already deleted."
 
     def add(self, entity: Entity) -> UUID:
         model = self.mapper.entity_to_model(entity)
         entity.extra["model"] = model
-        entity.extra["state"] = State.Added
         entity.extra["for_adding"] = True
         self.identity_map[entity.id] = entity
         return entity.id
@@ -48,8 +51,8 @@ class SqlAlchemyCommandRepository(ICommandRepository):
 
     async def delete_by_id(self, entity_id: UUID) -> None:
         self._check_not_deleted(entity_id)
-        entity = self.identity_map[entity_id]
-        entity.extra["state"] = State.Deleted
+        if entity := self.identity_map.get(entity_id):
+            entity.extra["state"] = State.Deleted
         if model := await self.session.get(self.model_class, entity_id):
             await self.session.delete(model)
 
@@ -71,7 +74,6 @@ class SqlAlchemyCommandRepository(ICommandRepository):
 
         entity = self.mapper.model_to_entity(model)
         entity.extra["model"] = model
-        entity.extra["state"] = State.Unchanged
         self.identity_map[entity.id] = entity
         return entity
 
@@ -87,9 +89,8 @@ class SqlAlchemyCommandRepository(ICommandRepository):
     def persist_all(self) -> None:
         """Persists changes made to entities present in the identity map."""
         for entity in self.identity_map.values():
-            if entity.extra["state"] != State.Deleted:
+            if entity.extra.get("state") != State.Deleted:
                 self.persist(entity)
-
             if entity.extra.get("for_adding"):  # Deferred session.add
                 self.session.add(entity.extra["model"])
 

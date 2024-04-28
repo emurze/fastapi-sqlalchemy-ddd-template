@@ -37,6 +37,9 @@ class ModelBase:
             )
         }
 
+    def as_rel(self, mapper) -> dict:
+        return {}
+
     def __repr__(self) -> str:
         column_data = ", ".join(
             f"{col.name}={getattr(self, col.name)}"

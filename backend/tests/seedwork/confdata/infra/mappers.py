@@ -3,15 +3,18 @@ from tests.seedwork.confdata.domain.entities import (
     Example,
     ExampleItem,
     Post,
-    User, Permission,
+    User,
+    Permission,
 )
-from tests.seedwork.confdata.domain.value_objects import Address
+from tests.seedwork.confdata.domain.value_objects import Address, Photo
 from tests.seedwork.confdata.infra.models import (
     ExampleModel,
     ExampleItemModel,
     AddressModel,
     PostModel,
-    UserModel, PermissionModel,
+    UserModel,
+    PermissionModel,
+    PhotoModel,
 )
 
 
@@ -43,14 +46,10 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):  # should be generated
                         **item.model_dump(exclude={"addresses"}),
                         **item.persist(
                             lambda addresses: [
-                                AddressModel(
-                                    **addr.model_dump(),
-                                    # example_item_id=item.id,
-                                )
+                                AddressModel(**addr.model_dump())
                                 for addr in addresses
                             ],
                         ),
-                        # example_id=entity.id
                     )
                     for item in items
                 ],
@@ -72,6 +71,9 @@ class PostMapper(IDataMapper[Post, PostModel]):
                                 for perm_model in permissions
                             ]
                         ),
+                        **user_model.as_rel(
+                            lambda photo: Photo(**user_model.photo.as_dict())
+                        ),
                     )
                     for user_model in users
                 ]
@@ -84,13 +86,16 @@ class PostMapper(IDataMapper[Post, PostModel]):
             **entity.persist(
                 lambda users: [
                     UserModel(
-                        **user.model_dump(exclude={"permissions"}),
+                        **user.model_dump(exclude={"permissions", "photo"}),
                         **user.persist(
                             lambda permissions: [
                                 PermissionModel(**perm.model_dump())
                                 for perm in permissions
                             ]
-                        )
+                        ),
+                        **user.persist_one(
+                            lambda photo: PhotoModel(**user.photo.model_dump())
+                        ),
                     )
                     for user in users
                 ],

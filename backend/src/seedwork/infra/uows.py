@@ -49,7 +49,7 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
         try:
             self._persist_all_repos()
             await self.session.commit()
-        except IntegrityError as e:
+        except IntegrityError:
             raise EntityAlreadyExistsError()
 
     async def rollback(self) -> None:

@@ -27,7 +27,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 )
 @cache(expire=15)
 async def get_post(post_id: int, bus: BusDep):
-    lg.info('Running get post')
+    lg.info("Running get post")
     query = GetPostQuery(id=post_id)
     query_result = bus.handle(query)
     handle_errors(query_result, [ErrorType.NOT_FOUND])
