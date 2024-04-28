@@ -7,4 +7,4 @@ class ValueObject(BaseModel):
 
 class Money(ValueObject):
     amount: int = 0
-    currency: str = 'USD'
+    currency: str = "USD"

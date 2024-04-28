@@ -22,8 +22,9 @@ class ExampleSqlAlchemyQueryRepository(
 
     def extend_get_query(self, query):
         return query.options(
-            selectinload(self.model_class.items)
-            .subqueryload(models.ExampleItemModel.addresses)
+            selectinload(self.model_class.items).subqueryload(
+                models.ExampleItemModel.addresses
+            )
         )
 
 

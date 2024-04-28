@@ -25,7 +25,7 @@ class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
         posts={
             "command": repos.PostSqlAlchemyCommandRepository,
             "query": repos.PostSqlAlchemyQueryRepository,
-        }
+        },
     )
     query_handlers: Callable = Singleton(
         get_dict,
@@ -60,8 +60,8 @@ def get_memory_container():
             },
             posts={
                 "command": InMemoryCommandRepository,
-                "query": as_mem_query(repos.PostSqlAlchemyCommandRepository)
-            }
+                "query": as_mem_query(repos.PostSqlAlchemyCommandRepository),
+            },
         )
     )
     return container

@@ -35,10 +35,10 @@ def get_handler(handler, *args, **kw) -> dict[type[Message], WrappedHandler]:
         new_kw = None
         uow = None
 
-        if uow_factory := kw.get('uow'):
+        if uow_factory := kw.get("uow"):
             uow = uow_factory()
             new_kw = kw.copy()
-            new_kw['uow'] = uow
+            new_kw["uow"] = uow
 
         return await handler(message, *args, **(new_kw or kw)), uow
 

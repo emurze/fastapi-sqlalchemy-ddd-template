@@ -36,8 +36,8 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         model = self.mapper.entity_to_model(entity)
         entity.extra["model"] = model
         entity.extra["state"] = State.Added
+        entity.extra["for_adding"] = True
         self.identity_map[entity.id] = entity
-        self.session.add(model)
         return entity.id
 
     async def delete(self, entity: Entity) -> None:
@@ -90,9 +90,13 @@ class SqlAlchemyCommandRepository(ICommandRepository):
             if entity.extra["state"] != State.Deleted:
                 self.persist(entity)
 
+            if entity.extra.get("for_adding"):  # Deferred session.add
+                self.session.add(entity.extra["model"])
+
     def collect_events(self) -> Iterator[DomainEvent]:
         return itertools.chain.from_iterable(
-            entity.collect_events() for entity in self.identity_map.values()
+            entity.collect_events()
+            for entity in self.identity_map.values()
             if entity.extra["state"] != State.Deleted
         )
 
@@ -133,11 +137,9 @@ class InMemoryCommandRepository(ICommandRepository):
     async def count(self) -> int:
         return len(self.identity_map.values())
 
-    def persist(self, entity: Entity) -> None:
-        ...
+    def persist(self, entity: Entity) -> None: ...
 
-    def persist_all(self) -> None:
-        ...
+    def persist_all(self) -> None: ...
 
     def collect_events(self) -> Iterator[DomainEvent]:
         return itertools.chain.from_iterable(

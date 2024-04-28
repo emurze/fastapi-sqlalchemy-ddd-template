@@ -1,12 +1,11 @@
 import enum
 from collections.abc import Callable, Coroutine
-from pprint import pprint
 from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator
 
 from seedwork.domain.entities import State
 from seedwork.domain.value_objects import ValueObject
 
-T = TypeVar('T', bound=Any)
+T = TypeVar("T", bound=Any)
 CoroutineFactory = Callable[[], Coroutine]
 
 
@@ -31,9 +30,9 @@ class _AsyncList(Generic[T]):
         coro_factory: CoroutineFactory | None = None,
         coro_struct: Any | None = None,
     ) -> None:
-        assert not (sync_list and coro_factory), (
-            "You should pass a sync_list or a coro_factory or None"
-        )
+        assert not (
+            sync_list and coro_factory
+        ), "You should pass a sync_list or a coro_factory or None"
         self._coro_factory = coro_factory
         self._coro_struct: Any = coro_struct
         self._sync_list = sync_list.copy() if sync_list else []
@@ -44,20 +43,22 @@ class _AsyncList(Generic[T]):
     @property
     def modified(self) -> list[T]:
         return [
-            item for item in self._data
+            item
+            for item in self._data
             if (
-                isinstance(item, ValueObject) or
-                item.extra["state"] == State.Modified
+                isinstance(item, ValueObject)
+                or item.extra["state"] == State.Modified
             )
         ]
 
     @property
     def added(self) -> list[T]:
         return [
-            item for item in self._data
+            item
+            for item in self._data
             if (
-                isinstance(item, ValueObject) or
-                item.extra["state"] == State.Added
+                isinstance(item, ValueObject)
+                or item.extra["state"] == State.Added
             )
         ]
 
@@ -113,9 +114,9 @@ class _AsyncList(Generic[T]):
     @staticmethod
     def check_loaded(func: Callable) -> Callable:
         def wrapper(self, *args, **kw) -> Any:
-            assert self._is_loaded, (
-                "You can make operations when you have already loaded the list"
-            )
+            assert (
+                self._is_loaded
+            ), "You can make operations when you have already loaded the list"
             return func(self, *args, **kw)
 
         return wrapper
@@ -136,7 +137,9 @@ class _AsyncList(Generic[T]):
 
         try:
             return next(
-                item for key, value in kw.items() for item in self._data
+                item
+                for key, value in kw.items()
+                for item in self._data
                 if getattr(item, key) == value
             )
         except StopIteration:
@@ -162,6 +165,7 @@ class _AsyncList(Generic[T]):
         return iter(self._data)
 
     def __len__(self) -> int:
+        # NEED ERROR
         return len(self._data)
 
     def __repr__(self) -> str:

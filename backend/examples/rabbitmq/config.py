@@ -1,6 +1,0 @@
-ENCODING = 'utf-8'
-
-RABBITMQ_HOST = 'localhost'
-RABBITMQ_PORT = 5672
-RABBITMQ_USER = 'adm1'
-RABBITMQ_PASS = 'adm1'

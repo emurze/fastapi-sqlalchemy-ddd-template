@@ -7,7 +7,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-sys.path.append(os.path.join(sys.path[0], 'src'))
+sys.path.append(os.path.join(sys.path[0], "src"))
 
 from main import config as app_config
 from shared.infra.database import Model

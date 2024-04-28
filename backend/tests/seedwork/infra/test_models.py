@@ -11,7 +11,7 @@ class Model(ModelBase, AsyncAttrs, DeclarativeBase):
 
 
 class Post(Model):
-    __tablename__ = 'post'
+    __tablename__ = "post"
     id = sa.Column(sa.BIGINT, primary_key=True)
     title = sa.Column(sa.String(256))
 
@@ -19,7 +19,7 @@ class Post(Model):
 class TestModelBaseMixin:
     @pytest.mark.unit
     def test_get_fields_success(self) -> None:
-        assert [*Post.get_fields()] == ['id', "title"]
+        assert [*Post.get_fields()] == ["id", "title"]
 
     @pytest.mark.unit
     def test_as_dict(self) -> None:

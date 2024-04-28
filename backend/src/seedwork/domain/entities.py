@@ -67,11 +67,9 @@ class Entity(BaseModel):
         return (rel_name := get_single_param(mapper)), getattr(self, rel_name)
 
     def persist(self, mapper: Callable) -> dict:
-        """Adds or persists entity."""
         relation_name, entity_relation = self._get_relation(mapper)
 
-        entity_relation.load_entity_list()
-        if not entity_relation.is_loaded():
+        if not entity_relation.load_entity_list().is_loaded():
             return {}
 
         if entity_relation.is_entity_list():

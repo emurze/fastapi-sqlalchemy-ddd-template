@@ -2,7 +2,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
-V = TypeVar('V')
+V = TypeVar("V")
 
 
 class DTO(BaseModel):

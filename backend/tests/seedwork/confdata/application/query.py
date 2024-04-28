@@ -21,9 +21,8 @@ async def get_example(
 
         payload = example.as_dict() | {
             "items": [
-                item.as_dict() | {
-                    "addresses": [addr.as_dict() for addr in item.addresses]
-                }
+                item.as_dict()
+                | {"addresses": [addr.as_dict() for addr in item.addresses]}
                 for item in example.items
             ]
         }

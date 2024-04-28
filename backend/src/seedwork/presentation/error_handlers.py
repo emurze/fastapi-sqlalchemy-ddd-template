@@ -17,7 +17,7 @@ STATUS_CODES = {
 def handle_errors(
     result: Any,
     errors: list | None = None,
-    status_codes: dict[ErrorType, int] | None = None
+    status_codes: dict[ErrorType, int] | None = None,
 ) -> None:
     assert errors is not None, "Please pass the errors being processed."
 

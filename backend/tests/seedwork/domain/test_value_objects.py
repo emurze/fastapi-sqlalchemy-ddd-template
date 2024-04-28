@@ -24,6 +24,6 @@ class TestEmail:
     def test_email_str_and_address_vo(self) -> None:
         entity = Entity(
             email="loza@gmail.com",
-            address=Address(city="Lolo", country="Lolo")
+            address=Address(city="Lolo", country="Lolo"),
         )
         print(entity)

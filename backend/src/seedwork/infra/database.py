@@ -38,15 +38,15 @@ class ModelBase:
         }
 
     def __repr__(self) -> str:
-        column_data = ', '.join(
+        column_data = ", ".join(
             f"{col.name}={getattr(self, col.name)}"
             for col in self.__table__.columns  # type: ignore
         )
-        rels_data = ', '.join(
+        rels_data = ", ".join(
             f"{key}={getattr(self, key)}"
             for key in self.__mapper__.relationships.keys()  # type: ignore
         )
-        rels_data = ', ' + rels_data if rels_data else ''
+        rels_data = ", " + rels_data if rels_data else ""
         return f"{type(self).__name__}({column_data}{rels_data})"
 
 

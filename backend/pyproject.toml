@@ -7,7 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+asyncpg = "^0.29.0"
 sqlalchemy = "^2.0.27"
+sqlalchemy-utils = "^0.41.2"
 pydantic = "^2.6.3"
 pydantic-settings = "^2.2.1"
 pytest = "^8.0.2"
@@ -19,14 +21,10 @@ flake8 = "^7.0.0"
 flake8-pyproject = "^1.2.3"
 fastapi = "^0.110.0"
 fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
-asyncpg = "^0.29.0"
 uvicorn = "^0.27.1"
 httpx = "^0.27.0"
 redis = "4.5"
-types-redis = "^4.6.0.20240218"
 asgi-lifespan = "^2.1.0"
-pika = "^1.3.2"
-pika-stubs = "^0.1.3"
 dependency-injector = "^4.41.0"
 
 [tool.poetry.dev-dependencies]
@@ -34,53 +32,35 @@ poethepoet = "^0.25.0"
 pytest-cov = "^4.1.0"
 
 [tool.poe.tasks]
-# Testing
-test             = "docker exec -it api poetry run bash -c 'pytest -s -m unit && pytest -s -m integration && pytest -s -m e2e'"
-test_all         = "docker exec -it api poetry run pytest -s"
-test_domain      = "docker exec -it api poetry run pytest -s -k domain"
-test_infra       = "docker exec -it api poetry run pytest -s -k infra"
-test_application = "docker exec -it api poetry run pytest -s -k application"
-test_unit        = "docker exec -it api poetry run pytest -s -m unit"
-test_integration = "docker exec -it api poetry run pytest -s -m integration"
-test_e2e         = "docker exec -it api poetry run pytest -s -m e2e"
-test_marked      = "docker exec -it api poetry run pytest -s -m marked"
-test_coverage    = "docker exec -it api poetry run pytest -s --cov=src --cov-report=html tests'"
+compose_up       = "docker compose up --build"
+compose_clean    = "docker compose down -v"
+start            = "python src/main.py"
+test             = "bash -c 'pytest -s -m unit && pytest -s -m integration && pytest -s -m e2e'"
+test_all         = "pytest -s tests"
+test_domain      = "pytest -s -k domain"
+test_infra       = "pytest -s -k infra"
+test_application = "pytest -s -k application"
+test_unit        = "pytest -s -m unit"
+test_integration = "pytest -s -m integration"
+test_e2e         = "pytest -s -m e2e"
+test_marked      = "pytest -s -m marked tests"
+test_coverage    = "pytest -s --cov=src --cov-report=html tests'"
+format           = "black . -l 79 tests src"
+lint             = "flake8 --toml-config pyproject.toml src tests"
+check_types      = "mypy src tests"
+makemigrations   = "alembic revision --autogenerate"
+migrate          = "alembic upgrade head"
 
-# Linting, Formatting, and Type Checking
-format           = "poetry run black . -l 79 tests src"
-lint             = "poetry run flake8 --toml-config pyproject.toml src tests"
-check_types      = "poetry run mypy src tests"
-
-# Run, Down
-run              = "docker compose up --build"
-restart          = "docker compose down && docker compose up --build"
-down             = "docker compose down"
-clean            = "docker compose down -v"
-run_server       = "poetry run uvicorn --host 0.0.0.0 --port 8080 --reload"
-
-# Migrations
-makemigrations   = "docker exec -it api poetry run alembic revision --autogenerate"
-migrate          = "docker exec -it api poetry run alembic upgrade head"
-row-migrate      = "poetry run alembic upgrade head"
-
-[tool.poe.tasks.check_all]
+[tool.poe.tasks.check]
 sequence = ["lint", "check_types", "test"]
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
 
 [tool.flake8]
 exclude = [".git", "*migrations*", "*settings*"]
 max-line-length = 100
 ignore = ["E402", "E501", "E704", "F401", "W503"]
 
-
 [tool.pytest.ini_options]
 filterwarnings = [
-    # ignore TestRunner class from facade .env
     "ignore::Warning:.*test class 'TestRunner'.*",
     "ignore::DeprecationWarning:httpx.*"
 ]
@@ -94,10 +74,7 @@ markers = [
     "e2e: marks tests as e2e tests i.e. using a client api and a database (deselect with '-m \"not e2e\"')",
     "marked: just marked"
 ]
-pythonpath = [
-    ".",
-    "src",
-]
+pythonpath = [".", "src", ]
 
 [tool.coverage.run]
 source = ["src"]
@@ -111,3 +88,6 @@ cache_dir = "backend/.cache/mypy"
 plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 exclude = ["migrations"]
 
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

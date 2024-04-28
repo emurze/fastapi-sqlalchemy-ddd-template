@@ -10,7 +10,7 @@ from tests.seedwork.confdata.domain.events import NameChanged
 class Example(AggregateRoot):
     id: vos.ExampleId = UUIDField
     name: str = Field(max_length=10)
-    items: alist['ExampleItem'] = alist()
+    items: alist["ExampleItem"] = alist()
 
     def change_name(self, new_name: str) -> None:
         self.name = new_name
@@ -26,9 +26,15 @@ class ExampleItem(LocalEntity):
 class Post(AggregateRoot):
     id: vos.PostId = UUIDField
     title: str
-    comments: alist['Comment']
+    users: alist["User"] = alist()
 
 
-class Comment(LocalEntity):
-    id: vos.CommentId = UUIDField
-    body: str
+class User(LocalEntity):
+    id: vos.UserId = UUIDField
+    name: str
+    permissions: alist['Permission'] = alist()
+
+
+class Permission(LocalEntity):
+    id: vos.PermissionId = UUIDField
+    name: str

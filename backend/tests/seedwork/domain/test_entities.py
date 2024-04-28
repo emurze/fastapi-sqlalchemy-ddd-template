@@ -15,8 +15,8 @@ class TestEntity:
     @pytest.mark.unit
     def test_can_set_and_get_extra_kwargs(self) -> None:
         example = Example(name="example")
-        example.extra['vlados'] = 'In love'
-        assert example.extra['vlados'] == 'In love'
+        example.extra["vlados"] = "In love"
+        assert example.extra["vlados"] == "In love"
 
     @pytest.mark.unit
     def test_cannot_update_id(self) -> None:

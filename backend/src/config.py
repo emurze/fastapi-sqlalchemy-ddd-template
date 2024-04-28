@@ -4,8 +4,11 @@ from enum import StrEnum
 from typing import Optional
 
 from pydantic import SecretStr, Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
+generic_config = SettingsConfigDict(
+    env_file=".env/.app.env", extra="allow"
+)
 LOG_FORMAT_DEBUG = (
     "%(levelname)s:     %(message)s  %(pathname)s:%(funcName)s:%(lineno)d"
 )
@@ -19,6 +22,7 @@ class LogLevel(StrEnum):
 
 
 class CacheConfig(BaseSettings):
+    model_config = generic_config
     cache_driver: str = "redis"
     cache_host: str
     cache_port: int
@@ -36,6 +40,7 @@ class CacheConfig(BaseSettings):
 
 
 class DatabaseConfig(BaseSettings):
+    model_config = generic_config
     db_driver: str = "postgresql+asyncpg"
     db_name: str
     db_user: str
@@ -57,6 +62,7 @@ class DatabaseConfig(BaseSettings):
 
 
 class TopLevelConfig(BaseSettings):
+    model_config = generic_config
     debug: bool = False
     docs_url: str = "/docs"
     redoc_url: str = "/redoc"

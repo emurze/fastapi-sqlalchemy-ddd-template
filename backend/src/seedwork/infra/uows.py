@@ -25,7 +25,7 @@ class CollectEventsMixin:
 
 
 class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
-    query_prefix = 'query'
+    query_prefix = "query"
 
     def __init__(
         self,
@@ -60,15 +60,15 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
             repo.persist_all()
 
     def _set_repos_as_attrs(
-         self, session: AsyncSession
+        self, session: AsyncSession
     ) -> list[ICommandRepository]:
         command_repos = []
         for name, repos in self._repo_classes.items():
-            setattr(self, name, command_repo := repos['command'](session))
+            setattr(self, name, command_repo := repos["command"](session))
             setattr(
                 self,
                 f"%s_%s" % (self.query_prefix, name),
-                repos['query'](session),
+                repos["query"](session),
             )
             command_repos.append(command_repo)
         return command_repos
@@ -78,7 +78,8 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
     """
     Persists memory in each repository.
     """
-    query_prefix: str = 'query'
+
+    query_prefix: str = "query"
 
     def __init__(self, **cls_repos: dict[str, type[IRepository]]) -> None:
         self._is_committed = False
@@ -102,8 +103,7 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
         """
 
         self._memory_state = [
-            (repo, copy.deepcopy(repo.identity_map))
-            for repo in self._repos
+            (repo, copy.deepcopy(repo.identity_map)) for repo in self._repos
         ]
         self._is_committed = True
 
@@ -118,11 +118,11 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
     def _set_repos_as_attrs(self, cls_repos: dict) -> list[ICommandRepository]:
         command_repos = []
         for name, repos_cls in cls_repos.items():
-            setattr(self, name, command_repo := repos_cls['command']())
+            setattr(self, name, command_repo := repos_cls["command"]())
             setattr(
                 self,
                 f"%s_%s" % (self.query_prefix, name),
-                repos_cls['query'](command_repo.identity_map)
+                repos_cls["query"](command_repo.identity_map),
             )
             command_repos.append(command_repo)
 

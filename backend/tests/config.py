@@ -1,10 +1,11 @@
 from pydantic import SecretStr, Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from src.config import TopLevelConfig, LogLevel
+from src.config import TopLevelConfig, LogLevel, generic_config
 
 
 class TestDatabaseConfig(BaseSettings):
+    model_config = generic_config
     test_db_name: str
     test_db_user: str
     test_db_pass: SecretStr
@@ -26,6 +27,7 @@ class TestDatabaseConfig(BaseSettings):
 
 
 class TestCacheConfig(BaseSettings):
+    model_config = generic_config
     test_cache_driver: str = "redis"
     test_cache_port: int
     test_cache_host: str
@@ -43,6 +45,7 @@ class TestCacheConfig(BaseSettings):
 
 
 class TestTopLevelConfig(BaseSettings):
+    model_config = generic_config
     test_title: str = "Test"
     test_log_level: str = LogLevel.info
     test_db_echo: bool = False

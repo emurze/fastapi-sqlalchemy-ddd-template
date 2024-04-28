@@ -3,7 +3,7 @@ from tests.seedwork.confdata.domain.entities import (
     Example,
     ExampleItem,
     Post,
-    Comment,
+    User, Permission,
 )
 from tests.seedwork.confdata.domain.value_objects import Address
 from tests.seedwork.confdata.infra.models import (
@@ -11,7 +11,7 @@ from tests.seedwork.confdata.infra.models import (
     ExampleItemModel,
     AddressModel,
     PostModel,
-    CommentModel,
+    UserModel, PermissionModel,
 )
 
 
@@ -19,35 +19,42 @@ class ExampleMapper(IDataMapper[Example, ExampleModel]):  # should be generated
     def model_to_entity(self, model: ExampleModel) -> Example:
         return Example(
             **model.as_dict(),
-            **model.as_alist(lambda items: [
-                ExampleItem(
-                    **item.as_dict(),
-                    **item.as_alist(lambda addresses: [
-                        Address(**addr.as_dict())
-                        for addr in addresses
-                    ])
-                )
-                for item in items
-            ])
+            **model.as_alist(
+                lambda items: [
+                    ExampleItem(
+                        **item.as_dict(),
+                        **item.as_alist(
+                            lambda addresses: [
+                                Address(**addr.as_dict()) for addr in addresses
+                            ]
+                        ),
+                    )
+                    for item in items
+                ]
+            ),
         )
 
     def update_model(self, entity: Example, model: ExampleModel) -> None:
         model.update(
             **entity.model_dump(exclude={"items"}),
-            **entity.persist(lambda items: [
-                ExampleItemModel(
-                    **item.model_dump(exclude={"addresses"}),
-                    **item.persist(lambda addresses: [
-                        AddressModel(
-                            **addr.model_dump(),
-                            example_item_id=item.id
-                        )
-                        for addr in addresses
-                    ]),
-                    example_id=entity.id,
-                )
-                for item in items
-            ])
+            **entity.persist(
+                lambda items: [
+                    ExampleItemModel(
+                        **item.model_dump(exclude={"addresses"}),
+                        **item.persist(
+                            lambda addresses: [
+                                AddressModel(
+                                    **addr.model_dump(),
+                                    # example_item_id=item.id,
+                                )
+                                for addr in addresses
+                            ],
+                        ),
+                        # example_id=entity.id
+                    )
+                    for item in items
+                ],
+            ),
         )
 
 
@@ -55,17 +62,37 @@ class PostMapper(IDataMapper[Post, PostModel]):
     def model_to_entity(self, model: PostModel) -> Post:
         return Post(
             **model.as_dict(),
-            **model.as_alist(lambda comments: [
-                Comment(**comment_model.as_dict())
-                for comment_model in comments
-            ])
+            **model.as_alist(
+                lambda users: [
+                    User(
+                        **user_model.as_dict(),
+                        **user_model.as_alist(
+                            lambda permissions: [
+                                Permission(**perm_model.as_dict())
+                                for perm_model in permissions
+                            ]
+                        ),
+                    )
+                    for user_model in users
+                ]
+            ),
         )
 
     def update_model(self, entity: Post, model: PostModel) -> None:
         model.update(
-            **entity.model_dump(),
-            **entity.persist(lambda comments: [
-                CommentModel(**comment.model_dump())
-                for comment in comments
-            ])
+            **entity.model_dump(exclude={"users"}),
+            **entity.persist(
+                lambda users: [
+                    UserModel(
+                        **user.model_dump(exclude={"permissions"}),
+                        **user.persist(
+                            lambda permissions: [
+                                PermissionModel(**perm.model_dump())
+                                for perm in permissions
+                            ]
+                        )
+                    )
+                    for user in users
+                ],
+            ),
         )

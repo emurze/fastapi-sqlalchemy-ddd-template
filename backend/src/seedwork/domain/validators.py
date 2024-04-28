@@ -11,7 +11,7 @@ def check_email(value: str) -> str:
 
 
 def check_slug(value: str) -> str:
-    if not re.match(r'^[-\w]+$', value):
+    if not re.match(r"^[-\w]+$", value):
         raise ValueError("Slug is invalid.")
     return value
 

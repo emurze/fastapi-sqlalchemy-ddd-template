@@ -50,7 +50,7 @@ app.add_middleware(
 )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     extra_kw: dict = {}
 
     if config.debug:

@@ -17,7 +17,7 @@ async def create_example(bus: MessageBus) -> ExampleId:
     command = CreateExampleCommand(
         id=next_id(),
         name="Example",
-        items=[ExampleItemDTO(id=next_id(), name='Hello')],
+        items=[ExampleItemDTO(id=next_id(), name="Hello")],
     )
     res = await bus.handle(command)
     assert res.is_success()
@@ -31,7 +31,7 @@ async def test_create_example(sql_bus: MessageBus) -> None:
     assert res.is_success()
     assert res.payload["id"] == example_id
     assert res.payload["name"] == "Example"
-    assert res.payload["items"][0]["name"] == 'Hello'
+    assert res.payload["items"][0]["name"] == "Hello"
 
 
 # @pytest.mark.unit

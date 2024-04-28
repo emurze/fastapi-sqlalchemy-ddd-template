@@ -6,8 +6,8 @@ from uuid import UUID
 from seedwork.domain.entities import Entity
 from seedwork.domain.events import DomainEvent
 
-T = TypeVar('T', bound=Entity)
-M = TypeVar('M', bound=Any)
+T = TypeVar("T", bound=Entity)
+M = TypeVar("M", bound=Any)
 
 
 class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
@@ -24,11 +24,8 @@ class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     async def get_by_id(
-        self,
-        entity_id: UUID,
-        for_update: bool = False
-    ) -> T | None:
-        ...
+        self, entity_id: UUID, for_update: bool = False
+    ) -> T | None: ...
 
     @abc.abstractmethod
     async def count(self) -> int: ...
