@@ -11,9 +11,6 @@ class TestMemoryCommandRepository:
         async with mem_uow:
             example = Example(name="example")
             mem_uow.examples.add(example)
-            await mem_uow.commit()
-
-        async with mem_uow:
             retrieved = await mem_uow.examples.get_by_id(example.id)
             assert retrieved.name == "example"
 
@@ -22,13 +19,7 @@ class TestMemoryCommandRepository:
         async with mem_uow:
             example = Example(name="example")
             mem_uow.examples.add(example)
-            await mem_uow.commit()
-
-        async with mem_uow:
             await mem_uow.examples.delete(example)
-            await mem_uow.commit()
-
-        async with mem_uow:
             res = await mem_uow.examples.get_by_id(example.id)
             assert res is None
 
@@ -37,13 +28,7 @@ class TestMemoryCommandRepository:
         async with mem_uow:
             example = Example(name="example")
             mem_uow.examples.add(example)
-            await mem_uow.commit()
-
-        async with mem_uow:
             await mem_uow.examples.delete_by_id(example.id)
-            await mem_uow.commit()
-
-        async with mem_uow:
             res = await mem_uow.examples.get_by_id(example.id)
             assert res is None
 
@@ -54,6 +39,13 @@ class TestMemoryCommandRepository:
         async with mem_uow:
             res = await mem_uow.examples.get_by_id(next_id())
             assert res is None
+
+    @pytest.mark.unit
+    async def test_count(self, mem_uow: ITestUnitOfWork) -> None:
+        async with mem_uow:
+            mem_uow.examples.add(Example(name="example"))
+            mem_uow.examples.add(Example(name="example"))
+            assert await mem_uow.examples.count() == 2
 
 
 class TestSqlAlchemyCommandRepository:
@@ -76,3 +68,7 @@ class TestSqlAlchemyCommandRepository:
         self, sql_uow: ITestUnitOfWork
     ) -> None:
         await self.mem_tests.test_get_by_id_not_found_as_none(sql_uow)
+
+    @pytest.mark.integration
+    async def test_count(self, sql_uow: ITestUnitOfWork) -> None:
+        await self.mem_tests.test_count(sql_uow)

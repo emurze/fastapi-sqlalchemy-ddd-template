@@ -82,7 +82,7 @@ class PostMapper(IDataMapper[Post, PostModel]):
 
     def update_model(self, entity: Post, model: PostModel) -> None:
         model.update(
-            **entity.model_dump(exclude={"users"}),
+            **entity.model_dump(exclude={"users"}),  # persisted
             **entity.persist(
                 lambda users: [
                     UserModel(

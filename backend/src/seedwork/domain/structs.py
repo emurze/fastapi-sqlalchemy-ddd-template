@@ -1,5 +1,5 @@
 import enum
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine, Iterable
 from typing import TypeVar, Generic, TypeAlias, Any, Self, Iterator
 
 T = TypeVar("T", bound=Any)
@@ -24,7 +24,7 @@ class _AsyncList(Generic[T]):
 
     def __init__(
         self,
-        sync_list: list[T] | Iterator[T] | None = None,
+        sync_list: Iterable[T] | None = None,
         coro_factory: CoroutineFactory | None = None,
         coro_struct: Any | None = None,
     ) -> None:
@@ -33,14 +33,7 @@ class _AsyncList(Generic[T]):
         ), "You should pass a sync_list or a coro_factory or None"
         self._coro_factory = coro_factory
         self._coro_struct: Any = coro_struct
-
-        if not sync_list:
-            self._sync_list = []
-        elif not isinstance(sync_list, list):
-            self._sync_list = list(sync_list)
-        else:
-            self._sync_list = sync_list.copy()
-
+        self._sync_list = list(sync_list) if sync_list else []
         self._data: list[T] = []
         self._is_loaded: bool = False
         self._actions: list[tuple[ListAction, Any]] = []
@@ -87,7 +80,7 @@ class _AsyncList(Generic[T]):
                 case ListAction.SETATTR:
                     relation[params[0]] = mapper([params[1]])[0]
 
-        for model, entity in zip(relation, self._data):  # todo: Why?
+        for model, entity in zip(relation, self._data):
             if hasattr(entity, "extra"):
                 if actions := entity.extra.get("actions"):
                     for key, value in actions:
@@ -160,7 +153,7 @@ class _AsyncList(Generic[T]):
 
 
 class _AsyncRel(Generic[R]):
-    # OneToOne and ManyToMany
+    # OneToOne and ManyToOne
     def __init__(
         self,
         sync_val: R | None = None,

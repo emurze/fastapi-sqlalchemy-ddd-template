@@ -3,7 +3,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from pydantic import ConfigDict, BaseModel
-from pydantic.fields import FieldInfo, PrivateAttr
+from pydantic.fields import PrivateAttr
 
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.services import UUIDField
@@ -11,7 +11,7 @@ from seedwork.utils.functional import classproperty, get_single_param
 
 
 class FieldWrapper:
-    def __init__(self, field: FieldInfo, entity: type[BaseModel]) -> None:
+    def __init__(self, field: Any, entity: type[BaseModel]) -> None:
         self._entity = entity
         self._field = field
 
@@ -36,9 +36,7 @@ class Entity(BaseModel):
         arbitrary_types_allowed=True,
     )
     id: UUID = UUIDField
-    _extra: dict = PrivateAttr(
-        default_factory=lambda: {"actions": [], "state": ""}
-    )
+    _extra: dict = PrivateAttr(default_factory=lambda: {"actions": []})
 
     def __setattr__(self, key, value) -> None:
         self.extra["actions"].append((key, value))

@@ -1,6 +1,5 @@
-import enum
 import itertools
-from functools import partial
+from functools import partial, cached_property
 
 from typing import NoReturn, Any, Any as Model, Protocol
 from uuid import UUID
@@ -17,8 +16,15 @@ from collections.abc import Iterator, Callable
 from seedwork.domain.repositories import ICommandRepository, IQueryRepository
 
 
-class State(enum.Enum):
-    Deleted = enum.auto()
+class Deleted:
+    def __repr__(self) -> str:
+        return "<Deleted>"
+
+    def __str__(self) -> str:
+        return "<Deleted>"
+
+
+DELETED = Deleted()
 
 
 class SqlAlchemyCommandRepository(ICommandRepository):
@@ -31,28 +37,48 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         self.identity_map: dict[UUID, Any] = {}
 
     def _check_not_deleted(self, entity_id: UUID) -> NoReturn | None:
+        """Checks if the entity is deleted."""
         if entity := self.identity_map.get(entity_id):
             assert (
-                entity.extra["state"] != State.Deleted
-            ), f"Entity {entity_id} already deleted."
+                entity != DELETED
+            ), f"Entity {entity_id} has already been deleted."
 
     def add(self, entity: Entity) -> UUID:
+        """
+        Marks the entity as added to be added right before commit
+        and stores the entity in the identity map for pre-commit logic.
+        """
         model = self.mapper.entity_to_model(entity)
         entity.extra["model"] = model
-        entity.extra["for_adding"] = True
+        entity.extra["is_added"] = True
         self.identity_map[entity.id] = entity
         return entity.id
 
+    @cached_property
+    def added(self) -> list[Entity]:
+        """Retrieves all entities added to this repository."""
+        return [
+            entity
+            for entity in self.identity_map.values()
+            if entity.extra.get("is_added")
+        ]
+
+    @staticmethod
+    def is_added(entity: Entity) -> bool:
+        """Checks if the entity is added to this repository."""
+        return entity.extra.get("is_added")
+
     async def delete(self, entity: Entity) -> None:
+        """Deletes an entity from the repository and the database."""
         self._check_not_deleted(entity.id)
-        entity.extra["state"] = State.Deleted
+        self.identity_map[entity.id] = DELETED
         if model := await self.session.get(self.model_class, entity.id):
             await self.session.delete(model)
 
     async def delete_by_id(self, entity_id: UUID) -> None:
+        """Deletes an entity by ID from the repository and the database."""
         self._check_not_deleted(entity_id)
-        if entity := self.identity_map.get(entity_id):
-            entity.extra["state"] = State.Deleted
+        self.identity_map[entity_id] = DELETED
         if model := await self.session.get(self.model_class, entity_id):
             await self.session.delete(model)
 
@@ -61,16 +87,19 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         entity_id: UUID,
         for_update: bool = False,
     ) -> Entity | None:
-        model: Any = await self.session.get(
+        """
+        Retrieves an entity by ID from the repository or the database,
+        storing events.
+        """
+        if stored_entity := self.identity_map.get(entity_id):
+            return None if stored_entity is DELETED else stored_entity
+
+        model = await self.session.get(
             self.model_class, entity_id, with_for_update=for_update
         )
 
         if model is None:
             return None
-
-        # Saves events stored in entity
-        if stored_entity := self.identity_map.get(model.id):
-            return stored_entity
 
         entity = self.mapper.model_to_entity(model)
         entity.extra["model"] = model
@@ -87,24 +116,31 @@ class SqlAlchemyCommandRepository(ICommandRepository):
         self.mapper.update_model(entity, entity.extra["model"])
 
     def persist_all(self) -> None:
-        """Persists changes made to entities present in the identity map."""
+        """
+        Persists changes made to entities in the identity map
+        and adds entities marked as added to the session.
+        """
         for entity in self.identity_map.values():
-            if entity.extra.get("state") != State.Deleted:
-                self.persist(entity)
-            if entity.extra.get("for_adding"):  # Deferred session.add
+            if entity is DELETED:
+                continue
+
+            self.persist(entity)
+            if self.is_added(entity):
                 self.session.add(entity.extra["model"])
 
     def collect_events(self) -> Iterator[DomainEvent]:
+        """Collects events from all entities present in the identity map."""
         return itertools.chain.from_iterable(
             entity.collect_events()
             for entity in self.identity_map.values()
-            if entity.extra["state"] != State.Deleted
+            if entity is not DELETED
         )
 
     async def count(self) -> int:
+        """Counts all entities in this repository and from the database."""
         query = select(func.count()).select_from(self.model_class)
         res = await self.session.execute(query)
-        return res.scalar_one()
+        return len(self.added) + res.scalar_one()
 
 
 class InMemoryCommandRepository(ICommandRepository):
@@ -154,21 +190,23 @@ class SqlAlchemyQueryRepository(IQueryRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    def _apply_query_modifier(self, modifier_name: str, query):
-        if hasattr(self, modifier_name):
-            method = getattr(self, modifier_name)
-            return method(query)
+    @staticmethod
+    def extend_get_query(query):
+        return query
+
+    @staticmethod
+    def extend_list_query(query):
         return query
 
     async def get(self, **kw) -> Model | None:
         query = select(self.model_class).filter_by(**kw)
-        query = self._apply_query_modifier("extend_get_query", query)
+        query = self.extend_get_query(query)
         res = await self.session.execute(query)
         return res.scalar_one()
 
     async def list(self) -> list[Model]:
         query = select(self.model_class)
-        query = self._apply_query_modifier("extend_list_query", query)
+        query = self.extend_list_query(query)
         res = await self.session.execute(query)
         return list(res.scalars())
 
@@ -176,10 +214,6 @@ class SqlAlchemyQueryRepository(IQueryRepository):
 class _Container(Protocol):
     mapper_class: type[IDataMapper]
     model_class: type[Any]
-
-
-def as_mem_query(container: _Container) -> Callable:
-    return partial(InMemoryQueryRepository, container)
 
 
 class InMemoryQueryRepository(IQueryRepository):
@@ -192,7 +226,7 @@ class InMemoryQueryRepository(IQueryRepository):
             entity = next(
                 model
                 for model in self.identity_map.values()
-                if model.id == kw["id"]
+                if model.id == kw.get("id")
             )
             return self.mapper.entity_to_model(entity)
         except StopIteration:
@@ -200,3 +234,7 @@ class InMemoryQueryRepository(IQueryRepository):
 
     async def list(self) -> list[Model]:
         return list(self.identity_map.values())
+
+
+def as_mem_query(container: _Container) -> Callable:
+    return partial(InMemoryQueryRepository, container)

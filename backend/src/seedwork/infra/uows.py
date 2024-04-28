@@ -25,7 +25,9 @@ class CollectEventsMixin:
 
 
 class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
-    query_prefix = "query"
+    """Persists data in database."""
+
+    query_prefix: str = "query"
 
     def __init__(
         self,
@@ -62,6 +64,7 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
     def _set_repos_as_attrs(
         self, session: AsyncSession
     ) -> list[ICommandRepository]:
+        """Sets repositories as attributes of the unit of work."""
         command_repos = []
         for name, repos in self._repo_classes.items():
             setattr(self, name, command_repo := repos["command"](session))
@@ -75,9 +78,7 @@ class SqlAlchemyUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
 
 
 class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
-    """
-    Persists memory in each repository.
-    """
+    """Persists memory in each repository."""
 
     query_prefix: str = "query"
 
@@ -116,6 +117,7 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
             repository.identity_map = copy.deepcopy(old_identity_map)
 
     def _set_repos_as_attrs(self, cls_repos: dict) -> list[ICommandRepository]:
+        """Sets repositories as attributes of the unit of work."""
         command_repos = []
         for name, repos_cls in cls_repos.items():
             setattr(self, name, command_repo := repos_cls["command"]())

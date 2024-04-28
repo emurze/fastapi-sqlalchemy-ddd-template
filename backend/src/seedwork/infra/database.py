@@ -12,16 +12,16 @@ from seedwork.utils.functional import get_single_param
 class ModelBase:
     awaitable_attrs: Any
 
+    def update(self, **kw) -> None:
+        for key, value in kw.items():
+            setattr(self, key, value)
+
     @classmethod
     def get_fields(cls) -> Iterator[str]:
         return (field.name for field in sa.inspect(cls).c)  # type: ignore
 
     def as_dict(self) -> dict:
         return {key: getattr(self, key) for key in self.get_fields()}
-
-    def update(self, **kw) -> None:
-        for key, value in kw.items():
-            setattr(self, key, value)
 
     def as_alist(self, map_items: Callable) -> dict:
         relation_name = get_single_param(map_items)
@@ -37,7 +37,7 @@ class ModelBase:
             )
         }
 
-    def as_rel(self, mapper) -> dict:
+    def as_rel(self, mapper: Callable) -> dict:
         return {}
 
     def __repr__(self) -> str:

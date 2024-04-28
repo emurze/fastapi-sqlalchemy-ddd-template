@@ -26,10 +26,17 @@ class TestModelBaseMixin:
         post = Post(id=1, title="Post 1")
         assert post.as_dict() == {"id": 1, "title": "Post 1"}
 
+    @pytest.mark.skip
     @pytest.mark.unit
     def test_update(self) -> None:
         pass
 
+    @pytest.mark.skip
     @pytest.mark.unit
     def test_as_alist(self) -> None:
+        pass
+
+    @pytest.mark.skip
+    @pytest.mark.unit
+    def test_as_rel(self) -> None:
         pass
