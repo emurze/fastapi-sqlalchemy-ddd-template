@@ -1,5 +1,5 @@
 from pydantic import SecretStr, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 from src.config import TopLevelConfig, LogLevel, generic_config
 

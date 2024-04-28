@@ -79,6 +79,7 @@ pythonpath = [".", "src", ]
 [tool.coverage.run]
 source = ["src"]
 omit = ["__init__.py", "*/migrations/*"]
+data_file = ".cache/coverage/.coverage"
 
 [tool.mypy]
 python_version = "3.11"

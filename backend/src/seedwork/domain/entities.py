@@ -56,24 +56,18 @@ class Entity(BaseModel):
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def _get_relation(self, mapper) -> tuple[str, Any]:
-        return (rel_name := get_single_param(mapper)), getattr(self, rel_name)
-
     def persist(self, mapper: Callable) -> dict:
-        relation_name, entity_relation = self._get_relation(mapper)
+        entity_relation = getattr(self, rel_name := get_single_param(mapper))
 
-        if not entity_relation.load_entity_list().is_loaded():
+        if not entity_relation.__load_entity_list().__is_loaded():
             return {}
 
-        if entity_relation.is_entity_list():
-            return {relation_name: mapper(entity_relation)}
+        if entity_relation.__is_entity_list():
+            return {rel_name: mapper(entity_relation)}
         else:
-            entity_relation.execute_actions(mapper)
+            entity_relation.__execute_actions(mapper)
             mapper(entity_relation)
             return {}
-
-    def persist_one(self, mapper: Callable) -> dict:
-        return {}
 
 
 class LocalEntity(Entity):

@@ -5,7 +5,7 @@ from typing import Any
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from seedwork.domain.structs import alist
+from seedwork.domain.structs import alist, arel
 from seedwork.utils.functional import get_single_param
 
 
@@ -37,8 +37,19 @@ class ModelBase:
             )
         }
 
-    def as_rel(self, mapper: Callable) -> dict:
-        return {}
+    def as_rel(self, map_item: Callable) -> dict:
+        relation_name = get_single_param(map_item)
+
+        async def mapper():
+            awaitable = getattr(self.awaitable_attrs, relation_name)
+            return map_item(await awaitable)
+
+        return {
+            relation_name: arel(
+                coro_factory=mapper,
+                coro_struct=lambda: getattr(self, relation_name),
+            )
+        }
 
     def __repr__(self) -> str:
         column_data = ", ".join(

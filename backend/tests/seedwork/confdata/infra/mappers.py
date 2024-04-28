@@ -93,7 +93,7 @@ class PostMapper(IDataMapper[Post, PostModel]):
                                 for perm in permissions
                             ]
                         ),
-                        **user.persist_one(
+                        **user.persist(
                             lambda photo: PhotoModel(**user.photo.model_dump())
                         ),
                     )

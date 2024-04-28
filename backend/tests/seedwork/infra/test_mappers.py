@@ -1,6 +1,6 @@
 import pytest
 
-from seedwork.domain.structs import alist
+from seedwork.domain.structs import alist, arel
 from seedwork.domain.services import next_id
 from tests.seedwork.confdata.domain.entities import (
     Example,
@@ -10,14 +10,13 @@ from tests.seedwork.confdata.domain.entities import (
     Permission,
 )
 from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
-from tests.seedwork.confdata.domain.value_objects import Address
+from tests.seedwork.confdata.domain.value_objects import Address, Photo
 from tests.seedwork.confdata.infra.mappers import ExampleMapper, PostMapper
 from tests.seedwork.confdata.infra.models import (
     ExampleModel,
     ExampleItemModel,
     AddressModel,
     PostModel,
-    UserModel,
 )
 
 post_mapper = PostMapper(PostModel)
@@ -139,7 +138,7 @@ async def test_mapper_updates_o2m_m2o(sql_uow: ITestUnitOfWork) -> None:
         await uow.commit()
 
 
-# @pytest.mark.marked
+@pytest.mark.marked
 @pytest.mark.integration
 async def test_mapper_can_update_m2m_o2o(sql_uow: ITestUnitOfWork) -> None:
     # todo: OneToOne
@@ -152,6 +151,7 @@ async def test_mapper_can_update_m2m_o2o(sql_uow: ITestUnitOfWork) -> None:
                     permissions=alist(
                         Permission(name="Perm") for _ in range(3)
                     ),
+                    photo=arel(Photo(url="URL", context="cats")),
                 )
                 for index in range(4)
             ),

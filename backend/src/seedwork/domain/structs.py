@@ -56,18 +56,18 @@ class _AsyncList(Generic[T]):
         self._load_result(await self._get_result())
         return self
 
-    def load_entity_list(self) -> Self:
-        if self.is_entity_list():
+    def __load_entity_list(self) -> Self:
+        if self.__is_entity_list():
             self._load_result(self._sync_list)
         return self
 
-    def is_loaded(self) -> bool:
+    def __is_loaded(self) -> bool:
         return self._is_loaded
 
-    def is_entity_list(self) -> bool:
+    def __is_entity_list(self) -> bool:
         return bool(self._sync_list)
 
-    def execute_actions(self, mapper) -> None:
+    def __execute_actions(self, mapper) -> None:
         relation = self._coro_struct()
         for action, params in self._actions:
             match action:
@@ -91,7 +91,7 @@ class _AsyncList(Generic[T]):
         def wrapper(self, *args, **kw) -> Any:
             assert (
                 self._is_loaded
-            ), "You can make operations when you have already loaded the list"
+            ), "You can make operations when you have already loaded the list."
             return func(self, *args, **kw)
 
         return wrapper
@@ -163,27 +163,73 @@ class _AsyncRel(Generic[R]):
         assert not (
             sync_val and coro_factory
         ), "You should pass a sync_list or a coro_factory or None"
-        self._coro_factory = coro_factory
-        self._coro_struct: Any = coro_struct
-        self._sync_val = sync_val
-        self._data: R | None = None
-        self._is_loaded: bool = False
-
-        def __getattr__(self, key: str) -> Any:
-            return getattr(self._data, key)
-
-        def __setattr__(self, key: str, value) -> Any:
-            return setattr(self._data, key, value)
+        self.__coro_factory = coro_factory
+        self.__coro_struct: Any = coro_struct
+        self.__sync_val: R | None = sync_val
+        self.__data: R | None = None
+        self.__is_loaded_flag: bool = False
 
     @staticmethod
-    def check_loaded(func: Callable) -> Callable:
+    def __check_loaded(func: Callable) -> Callable:
         def wrapper(self, *args, **kw) -> Any:
             assert (
-                self._is_loaded
+                self.__is_loaded_flag
             ), "You can make operations when you have already loaded the item"
             return func(self, *args, **kw)
 
         return wrapper
+
+    def __execute_actions(self, _) -> None:
+        relation = self.__coro_struct()
+        entity = self.__sync_val
+        if entity and hasattr(entity, "extra"):
+            if actions := entity.extra.get("actions"):
+                for key, value in actions:
+                    relation.update(**{key: value})
+
+    async def __get_result(self) -> R:
+        if self.__coro_factory:
+            return await self.__coro_factory()
+        else:
+            return self.__sync_val  # type: ignore
+
+    def __load_result(self, res: R) -> None:
+        if not self.__is_loaded_flag:
+            self.__data = res
+            self.__is_loaded_flag = True
+
+    def __load_entity_list(self) -> Self:
+        if self.is_entity_list():
+            self.__load_result(self.__sync_val)  # type: ignore
+        return self
+
+    def __is_loaded(self) -> bool:
+        return self.__is_loaded_flag
+
+    def __is_entity_list(self) -> bool:
+        return bool(self.__sync_val)
+
+    async def load(self) -> Self:
+        """
+        Idempotently load list from coroutine.
+        """
+        self.__load_result(await self.__get_result())
+        return self
+
+    def __repr__(self) -> str:
+        if self.__is_loaded_flag:
+            return repr(self.__data)
+        else:
+            return f"arel(<<lazy>>)"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+    def __getattr__(self, item):
+        pass
+
+    def __setattr__(self, key, value):
+        pass
 
 
 alist: TypeAlias = _AsyncList
