@@ -166,12 +166,16 @@ async def test_mapper_can_update_m2m_o2o(sql_uow: ITestUnitOfWork) -> None:
         post.users.pop(0)
         post.users.pop(0)
         post.users[0].name = "New User"
+        await post.users[0].photo.load()
+        post.users[0].photo = None
         post.users.append(
             User(
                 name="Vlados", permissions=alist([Permission(name="Perm -1")])
             )
         )
         user_3 = post.users.find_one(name="User 4")
+        await user_3.photo.load()
+        user_3.photo = arel(Photo(url="DOG", context="dogs"))  # todo: problem
         await user_3.permissions.load()
         user_3.permissions.pop()
         user_3.permissions.pop()
@@ -182,10 +186,13 @@ async def test_mapper_can_update_m2m_o2o(sql_uow: ITestUnitOfWork) -> None:
         post = await uow.posts.get_by_id(entity.id)
         await post.users.load()
         assert len(post.users) == 3
-        assert post.users.find_one(name="New User")
+        assert (new_user := post.users.find_one(name="New User"))
+        assert await new_user.photo.load() is None
         assert post.users.find_one(name="Vlados")
         assert (user_3 := post.users.find_one(name="User 4"))
         assert len(await user_3.permissions.load()) == 2
+        photo = await user_3.photo.load()
+        assert photo.url == "DOG" and photo.context == "dogs"
         assert user_3.permissions.find_one(name="Perm")
         assert user_3.permissions.find_one(name="New Perm")
 

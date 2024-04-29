@@ -40,6 +40,7 @@ class Entity(BaseModel):
 
     def __setattr__(self, key, value) -> None:
         self.extra["actions"].append((key, value))
+        # todo: a new logic, should be mapped, I can replace old items logic
         super().__setattr__(key, value)
 
     @property
@@ -59,13 +60,16 @@ class Entity(BaseModel):
     def persist(self, mapper: Callable) -> dict:
         entity_relation = getattr(self, rel_name := get_single_param(mapper))
 
-        if not entity_relation.__load_entity_list().__is_loaded():
+        if entity_relation is None:
             return {}
 
-        if entity_relation.__is_entity_list():
+        if not entity_relation._load_entity_list().is_loaded():
+            return {}
+
+        if entity_relation._is_entity_list():
             return {rel_name: mapper(entity_relation)}
         else:
-            entity_relation.__execute_actions(mapper)
+            entity_relation._execute_actions(mapper)
             mapper(entity_relation)
             return {}
 

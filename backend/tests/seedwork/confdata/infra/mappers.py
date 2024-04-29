@@ -72,7 +72,7 @@ class PostMapper(IDataMapper[Post, PostModel]):
                             ]
                         ),
                         **user_model.as_rel(
-                            lambda photo: Photo(**user_model.photo.as_dict())
+                            lambda photo: Photo(**photo.as_dict())
                         ),
                     )
                     for user_model in users
@@ -82,7 +82,7 @@ class PostMapper(IDataMapper[Post, PostModel]):
 
     def update_model(self, entity: Post, model: PostModel) -> None:
         model.update(
-            **entity.model_dump(exclude={"users"}),  # persisted
+            **entity.model_dump(exclude={"users"}),
             **entity.persist(
                 lambda users: [
                     UserModel(

@@ -42,12 +42,13 @@ class ModelBase:
 
         async def mapper():
             awaitable = getattr(self.awaitable_attrs, relation_name)
-            return map_item(await awaitable)
+            res = await awaitable
+            return map_item(res) if res else res
 
         return {
             relation_name: arel(
-                coro_factory=mapper,
-                coro_struct=lambda: getattr(self, relation_name),
+                _coro_factory=mapper,
+                _coro_struct=lambda: getattr(self, relation_name),
             )
         }
 

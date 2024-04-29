@@ -5,5 +5,7 @@ from seedwork.domain.uows import IBaseUnitOfWork
 
 class IUnitOfWork(IBaseUnitOfWork, abc.ABC):
     """
-    examples: IExampleRepository
+    Usage:
+        class IUnitOfWork(IBaseUnitOfWork, abc.ABC):
+            examples: IExampleRepository
     """

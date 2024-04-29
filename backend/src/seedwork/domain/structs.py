@@ -16,6 +16,8 @@ class ListAction(enum.Enum):
 
 class _AsyncList(Generic[T]):
     """
+    OneToMany and ManyToMany relationship.
+
     Usage:
         for batch in await product.items.load():
             for item in await batch.items.load():
@@ -56,18 +58,18 @@ class _AsyncList(Generic[T]):
         self._load_result(await self._get_result())
         return self
 
-    def __load_entity_list(self) -> Self:
-        if self.__is_entity_list():
+    def _load_entity_list(self) -> Self:
+        if self._is_entity_list():
             self._load_result(self._sync_list)
         return self
 
-    def __is_loaded(self) -> bool:
+    def is_loaded(self) -> bool:
         return self._is_loaded
 
-    def __is_entity_list(self) -> bool:
+    def _is_entity_list(self) -> bool:
         return bool(self._sync_list)
 
-    def __execute_actions(self, mapper) -> None:
+    def _execute_actions(self, mapper) -> None:
         relation = self._coro_struct()
         for action, params in self._actions:
             match action:
@@ -153,83 +155,99 @@ class _AsyncList(Generic[T]):
 
 
 class _AsyncRel(Generic[R]):
-    # OneToOne and ManyToOne
+    """OneToOne and ManyToOne relationship."""
     def __init__(
         self,
-        sync_val: R | None = None,
-        coro_factory: CoroutineFactory | None = None,
-        coro_struct: Any | None = None,
+        _sync_val: R | None = None,
+        _coro_factory: CoroutineFactory | None = None,
+        _coro_struct: Any | None = None,
     ) -> None:
+        print(f"INIT {_sync_val or _coro_factory}")
         assert not (
-            sync_val and coro_factory
+            _sync_val and _coro_factory
         ), "You should pass a sync_list or a coro_factory or None"
-        self.__coro_factory = coro_factory
-        self.__coro_struct: Any = coro_struct
-        self.__sync_val: R | None = sync_val
-        self.__data: R | None = None
-        self.__is_loaded_flag: bool = False
+        self._coro_factory = _coro_factory
+        self._coro_struct: Any = _coro_struct
+        self._sync_val: R | None = _sync_val
+        self._data: R | None = None
+        self._is_loaded: bool = False
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        if key.startswith("_") or key == "load":
+            object.__setattr__(self, key, value)
+        else:
+            setattr(self._data, key, value)
+
+    def __getattr__(self, key: str) -> Any:
+        if key.startswith("_") or key in ["load", "is_loaded"]:
+            return object.__getattribute__(self, key)
+        else:
+            @self._check_loaded
+            def func(self):
+                return getattr(self._data, key)
+
+            return func(self)
 
     @staticmethod
-    def __check_loaded(func: Callable) -> Callable:
+    def _check_loaded(func: Callable) -> Callable:
         def wrapper(self, *args, **kw) -> Any:
             assert (
-                self.__is_loaded_flag
+                self._is_loaded
             ), "You can make operations when you have already loaded the item"
             return func(self, *args, **kw)
 
         return wrapper
 
-    def __execute_actions(self, _) -> None:
-        relation = self.__coro_struct()
-        entity = self.__sync_val
+    def _execute_actions(self, _) -> None:
+        relation = self._coro_struct()
+        entity = self._sync_val
         if entity and hasattr(entity, "extra"):
             if actions := entity.extra.get("actions"):
                 for key, value in actions:
                     relation.update(**{key: value})
 
-    async def __get_result(self) -> R:
-        if self.__coro_factory:
-            return await self.__coro_factory()
+    async def _get_result(self) -> R:
+        if self._coro_factory:
+            print("CORO")
+            return await self._coro_factory()
         else:
-            return self.__sync_val  # type: ignore
+            print("VAL")
+            return self._sync_val  # type: ignore
 
-    def __load_result(self, res: R) -> None:
-        if not self.__is_loaded_flag:
-            self.__data = res
-            self.__is_loaded_flag = True
+    def _load_result(self, res: R) -> None:
+        if not self._is_loaded:
+            self._data = res
+            self._is_loaded = True
 
-    def __load_entity_list(self) -> Self:
-        if self.is_entity_list():
-            self.__load_result(self.__sync_val)  # type: ignore
+    def _load_entity_list(self) -> Self:
+        if self._is_entity_list():
+            self._load_result(self._sync_val)  # type: ignore
         return self
 
-    def __is_loaded(self) -> bool:
-        return self.__is_loaded_flag
+    def _is_entity_list(self) -> bool:
+        return bool(self._sync_val)
 
-    def __is_entity_list(self) -> bool:
-        return bool(self.__sync_val)
+    def is_loaded(self) -> bool:
+        return self._is_loaded
 
-    async def load(self) -> Self:
+    async def load(self) -> Self | None:
         """
         Idempotently load list from coroutine.
         """
-        self.__load_result(await self.__get_result())
-        return self
+        self._load_result(await self._get_result())
+        return self if self else None
+
+    def __bool__(self) -> bool:
+        return bool(self._data)
 
     def __repr__(self) -> str:
-        if self.__is_loaded_flag:
-            return repr(self.__data)
+        if self._is_loaded:
+            return repr(self._data)
         else:
             return f"arel(<<lazy>>)"
 
     def __str__(self) -> str:
         return repr(self)
-
-    def __getattr__(self, item):
-        pass
-
-    def __setattr__(self, key, value):
-        pass
 
 
 alist: TypeAlias = _AsyncList

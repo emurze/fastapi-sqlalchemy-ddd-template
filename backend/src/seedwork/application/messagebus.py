@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
-from typing import NoReturn, TypeAlias, Callable
+from typing import NoReturn, TypeAlias, Callable, Annotated
+
+from typing_extensions import Doc
 
 from seedwork.application.commands import Command, CommandResult
 from seedwork.application.events import EventResult
@@ -15,29 +17,45 @@ class MessageBus:
     command_handlers: dict[type[Command], Callable]
     query_handlers: dict[type[Query], Callable]
     event_handlers: dict[type[DomainEvent], Callable]
-    queue: list = field(default_factory=list)
+    queue: Annotated[
+        list,
+        Doc(
+            """
+            Queue contains domain events.
+            """
+        )
+    ] = field(default_factory=list)
+    background_queue: Annotated[
+        list,
+        Doc(
+            """
+            Background queue contains integration (async) events to cross 
+            bounded contexts.
+            """
+        )
+    ] = field(default_factory=list)
 
-    async def handle(self, new_message: Message) -> NoReturn | Result:
-        result = None
-        self.queue.append(new_message)
-        while self.queue:
-            message = self.queue.pop(0)
-            if isinstance(message, Command):
-                result = await self._handle_command(message)
-            elif isinstance(message, Query):
-                result = await self._handle_query(message)
-            elif isinstance(message, DomainEvent):
-                await self._handle_event(message)
-            else:
-                raise TypeError("Param type isn't in [Command, Query, Event]")
-        return result
+    async def handle(self, message: Message) -> NoReturn | Result:
+        if isinstance(message, Command):
+            return await self._handle_command(message)
+        elif isinstance(message, Query):
+            return await self._handle_query(message)
+        else:
+            raise TypeError("Param type isn't in (Command, Query, Event)")
 
     async def _handle_command(self, command: Command) -> CommandResult:
         handler = self.command_handlers[type(command)]
         result, uow = await handler(command)
         self.queue += uow.collect_events()
-        self.queue += result.events
-        print(f"Events {self.queue}")
+        self.background_queue += result.events
+
+        print(f"{self.queue=}")
+        print(f"{self.background_queue=}")
+
+        while len(self.queue) > 0:
+            event_result = await self._handle_domain_event(self.queue.pop(0))
+            self.queue += event_result.events
+
         return result
 
     async def _handle_query(self, query: Query) -> QueryResult:
@@ -45,7 +63,6 @@ class MessageBus:
         result, _ = await handler(query)
         return result
 
-    async def _handle_event(self, event: DomainEvent) -> EventResult:
-        # ???
+    async def _handle_domain_event(self, event: DomainEvent) -> EventResult:
         handler = self.event_handlers[type(event)]
         return await handler(event)
