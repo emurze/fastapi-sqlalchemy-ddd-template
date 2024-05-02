@@ -1,39 +1,26 @@
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import NoReturn, TypeAlias, Callable, Annotated
-
-from typing_extensions import Doc
+from functools import partial
+from typing import NoReturn, TypeAlias
 
 from seedwork.application.commands import Command, CommandResult
 from seedwork.application.events import EventResult
 from seedwork.application.queries import Query, QueryResult
+from seedwork.domain.errors import Error
 from seedwork.domain.events import DomainEvent
 
+HandlerWithParams: TypeAlias = tuple[Callable, tuple, dict]
 Message: TypeAlias = Command | Query | DomainEvent
 Result: TypeAlias = CommandResult | QueryResult | EventResult
 
 
 @dataclass(slots=True)
 class MessageBus:
-    command_handlers: dict[type[Command], Callable]
-    query_handlers: dict[type[Query], Callable]
-    event_handlers: dict[type[DomainEvent], Callable]
-    queue: Annotated[
-        list,
-        Doc(
-            """
-            Queue contains domain events.
-            """
-        )
-    ] = field(default_factory=list)
-    background_queue: Annotated[
-        list,
-        Doc(
-            """
-            Background queue contains integration (async) events to cross 
-            bounded contexts.
-            """
-        )
-    ] = field(default_factory=list)
+    command_handlers: dict[type[Command], HandlerWithParams]
+    event_handlers: dict[type[DomainEvent], HandlerWithParams]
+    query_handlers: dict[type[Query], HandlerWithParams]
+    queue: list = field(default_factory=list)
+    background_queue: list = field(default_factory=list)
 
     async def handle(self, message: Message) -> NoReturn | Result:
         if isinstance(message, Command):
@@ -41,28 +28,44 @@ class MessageBus:
         elif isinstance(message, Query):
             return await self._handle_query(message)
         else:
-            raise TypeError("Param type isn't in (Command, Query, Event)")
+            raise TypeError("Param type isn't a Command or a Query.")
 
     async def _handle_command(self, command: Command) -> CommandResult:
-        handler = self.command_handlers[type(command)]
-        result, uow = await handler(command)
-        self.queue += uow.collect_events()
-        self.background_queue += result.events
+        handler, args, kw = self.command_handlers[type(command)]
 
-        print(f"{self.queue=}")
-        print(f"{self.background_queue=}")
+        uow_factory = kw["uow"]
+        async with uow_factory() as uow:
+            wrapper_handler = partial(handler, *args, **(kw | {"uow": uow}))
+            result = await wrapper_handler(command)
 
-        while len(self.queue) > 0:
-            event_result = await self._handle_domain_event(self.queue.pop(0))
-            self.queue += event_result.events
+            if isinstance(result, Error):
+                return CommandResult(error=result)
 
-        return result
+            self.queue += uow.collect_events()
+            self.background_queue += result.events
+
+            while len(self.queue) > 0:
+                event = self.queue.pop(0)
+                event_result = await self._handle_domain_event(event)
+                self.queue += event_result.events
+
+            await uow.commit()
+
+        return CommandResult(payload=result)
 
     async def _handle_query(self, query: Query) -> QueryResult:
-        handler = self.query_handlers[type(query)]
-        result, _ = await handler(query)
+        handler, args, kw = self.query_handlers[type(query)]
+
+        new_kw = {}
+        if session_factory := kw.get("session"):
+            new_kw = kw.copy()
+            new_kw["session"] = session_factory()
+
+        wrapper_handler = partial(handler, *args, **(new_kw or kw))
+        result = await wrapper_handler(query)
         return result
 
     async def _handle_domain_event(self, event: DomainEvent) -> EventResult:
-        handler = self.event_handlers[type(event)]
-        return await handler(event)
+        handler, args, kw = self.event_handlers[type(event)]
+        wrapper_handler = partial(handler, *args, **kw)
+        return await wrapper_handler(event)

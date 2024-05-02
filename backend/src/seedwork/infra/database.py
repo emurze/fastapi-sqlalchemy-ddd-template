@@ -1,20 +1,31 @@
-from collections.abc import AsyncGenerator, Iterator, Callable
-from contextlib import asynccontextmanager
-from typing import Any
+from collections.abc import Iterator, Generator
+from contextlib import contextmanager
+from typing import Any, TypeVar
 
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.orm import Mapper, DeclarativeBase
 
-from seedwork.domain.structs import alist, arel
-from seedwork.utils.functional import get_single_param
+T = TypeVar("T")
 
 
 class ModelBase:
+    __table__: Any
     awaitable_attrs: Any
+    registry: Any
 
     def update(self, **kw) -> None:
         for key, value in kw.items():
             setattr(self, key, value)
+
+    @classmethod
+    def map_imperatively(
+        cls,
+        class_: type[T],
+        model: type[DeclarativeBase],
+        **kw: Any,
+    ) -> Mapper[T]:
+        return cls.registry.map_imperatively(class_, model.__table__, **kw)
 
     @classmethod
     def get_fields(cls) -> Iterator[str]:
@@ -22,35 +33,6 @@ class ModelBase:
 
     def as_dict(self) -> dict:
         return {key: getattr(self, key) for key in self.get_fields()}
-
-    def as_alist(self, map_items: Callable) -> dict:
-        relation_name = get_single_param(map_items)
-
-        async def mapper():
-            awaitable = getattr(self.awaitable_attrs, relation_name)
-            return map_items(await awaitable)
-
-        return {
-            relation_name: alist(
-                coro_factory=mapper,
-                coro_struct=lambda: getattr(self, relation_name),
-            )
-        }
-
-    def as_rel(self, map_item: Callable) -> dict:
-        relation_name = get_single_param(map_item)
-
-        async def mapper():
-            awaitable = getattr(self.awaitable_attrs, relation_name)
-            res = await awaitable
-            return map_item(res) if res else res
-
-        return {
-            relation_name: arel(
-                _coro_factory=mapper,
-                _coro_struct=lambda: getattr(self, relation_name),
-            )
-        }
 
     def __repr__(self) -> str:
         column_data = ", ".join(
@@ -65,8 +47,8 @@ class ModelBase:
         return f"{type(self).__name__}({column_data}{rels_data})"
 
 
-@asynccontextmanager
-async def suppress_echo(engine: AsyncEngine) -> AsyncGenerator:
+@contextmanager
+def suppress_echo(engine: AsyncEngine) -> Generator:
     engine.echo = False
     yield
     engine.echo = True

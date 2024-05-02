@@ -4,38 +4,30 @@ from dependency_injector import containers
 from dependency_injector.providers import Factory, Singleton
 
 from seedwork.infra.injector import Link
-from seedwork.infra.repositories import InMemoryCommandRepository, as_mem_query
+from seedwork.infra.repositories import as_memory
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
 from seedwork.presentation.factories import get_dict, get_bus, get_handler
-from tests.conftest import session_factory
+from tests.conftest import session_factory as _session_factory
 from tests.seedwork.confdata.application import command, query
 from tests.seedwork.confdata.infra import repositories as repos
 
 
 class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
-    db_session_factory = Link(session_factory)
+    session_factory = Link(_session_factory)
     uow_factory: Any = Singleton(
         Factory,
         SqlAlchemyUnitOfWork,
-        session_factory=db_session_factory,
-        examples={
-            "command": repos.ExampleSqlAlchemyCommandRepository,
-            "query": repos.ExampleSqlAlchemyQueryRepository,
-        },
-        posts={
-            "command": repos.PostSqlAlchemyCommandRepository,
-            "query": repos.PostSqlAlchemyQueryRepository,
-        },
+        session_factory=session_factory,
+        examples=repos.ExampleSqlAlchemyRepository,
     )
     query_handlers: Callable = Singleton(
         get_dict,
-        Singleton(get_handler, query.get_example, uow=uow_factory),
+        Singleton(get_handler, query.get_example, session=session_factory),
+        Singleton(get_handler, query.get_examples, session=session_factory),
     )
     command_handlers: Callable = Singleton(
         get_dict,
         Singleton(get_handler, command.create_example, uow=uow_factory),
-        Singleton(get_handler, command.update_example, uow=uow_factory),
-        Singleton(get_handler, command.delete_example, uow=uow_factory),
     )
     event_handlers: Callable = Singleton(get_dict)
     message_bus: Callable = Singleton(
@@ -52,16 +44,7 @@ def get_memory_container():
         Singleton(
             Singleton,
             InMemoryUnitOfWork,
-            examples={
-                "command": InMemoryCommandRepository,
-                "query": as_mem_query(
-                    repos.ExampleSqlAlchemyCommandRepository,
-                ),
-            },
-            posts={
-                "command": InMemoryCommandRepository,
-                "query": as_mem_query(repos.PostSqlAlchemyCommandRepository),
-            },
+            examples=as_memory(repos.ExampleSqlAlchemyRepository),
         )
     )
     return container

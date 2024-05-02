@@ -10,7 +10,7 @@ T = TypeVar("T", bound=Entity)
 M = TypeVar("M", bound=Any)
 
 
-class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
+class IGenericRepository(Generic[T], metaclass=abc.ABCMeta):
     identity_map: dict[UUID, T]
 
     @abc.abstractmethod
@@ -24,25 +24,13 @@ class ICommandRepository(Generic[T], metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     async def get_by_id(
-        self, entity_id: UUID, for_update: bool = False
+        self,
+        entity_id: UUID,
+        for_update: bool = False,
     ) -> T | None: ...
 
     @abc.abstractmethod
     async def count(self) -> int: ...
 
     @abc.abstractmethod
-    def persist(self, entity: T) -> None: ...
-
-    @abc.abstractmethod
-    def persist_all(self) -> None: ...
-
-    @abc.abstractmethod
     def collect_events(self) -> Iterator[DomainEvent]: ...
-
-
-class IQueryRepository(Generic[M], metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    async def get(self, **kw) -> M: ...
-
-    @abc.abstractmethod
-    async def list(self) -> list[M]: ...

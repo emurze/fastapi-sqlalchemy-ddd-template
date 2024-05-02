@@ -1,10 +1,7 @@
-from pydantic import BaseModel, ConfigDict
+from dataclasses import dataclass
 
 
-class ValueObject(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-
-class Money(ValueObject):
+@dataclass(kw_only=True, frozen=True)
+class Money:
     amount: int = 0
     currency: str = "USD"

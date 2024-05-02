@@ -1,87 +1,41 @@
-from collections.abc import Callable
-from typing import Any, cast
+from dataclasses import dataclass, field
+from typing import Optional, Any, Self
 from uuid import UUID
 
-from pydantic import ConfigDict, BaseModel
-from pydantic.fields import PrivateAttr
-
 from seedwork.domain.events import DomainEvent
-from seedwork.domain.services import UUIDField
-from seedwork.utils.functional import classproperty, get_single_param
+from seedwork.domain.services import uuid_field, hidden_field
 
 
-class FieldWrapper:
-    def __init__(self, field: Any, entity: type[BaseModel]) -> None:
-        self._entity = entity
-        self._field = field
+@dataclass(kw_only=True)
+class Entity:
+    id: UUID = uuid_field()
+    awaitable_attrs: Optional["AwaitableAttrs"] = hidden_field(default=None)
 
-    def __getattr__(self, constraint_name: str) -> Any:
-        for item in self._field.metadata:
-            return getattr(item, constraint_name)
+    def __post_init__(self) -> None:
+        if not self.awaitable_attrs:
+            self.awaitable_attrs = AwaitableAttrs(entity=self)
 
-
-class EntityWrapper:
-    def __init__(self, entity: type[BaseModel]) -> None:
-        self._entity = entity
-
-    def __getattr__(self, field_name: str) -> Any:
-        field_info = self._entity.model_fields[field_name]
-        return FieldWrapper(field_info, self._entity)
-
-
-class Entity(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-        validate_assignment=True,
-        arbitrary_types_allowed=True,
-    )
-    id: UUID = UUIDField
-    _extra: dict = PrivateAttr(default_factory=lambda: {"actions": []})
-
-    def __setattr__(self, key, value) -> None:
-        self.extra["actions"].append((key, value))
-        # todo: a new logic, should be mapped, I can replace old items logic
-        super().__setattr__(key, value)
-
-    @property
-    def extra(self) -> dict:
-        return self._extra
-
-    @classproperty
-    def c(self) -> EntityWrapper:
-        cls = cast(type[BaseModel], self)
-        return EntityWrapper(cls)
+    @classmethod
+    def create(cls, **kw) -> tuple[Self, list[Any]]:
+        return cls(**kw), []
 
     def update(self, **kw) -> None:
         assert kw.get("id") is None, "Entity can't update its identity."
         for key, value in kw.items():
             setattr(self, key, value)
 
-    def persist(self, mapper: Callable) -> dict:
-        entity_relation = getattr(self, rel_name := get_single_param(mapper))
 
-        if entity_relation is None:
-            return {}
-
-        if not entity_relation._load_entity_list().is_loaded():
-            return {}
-
-        if entity_relation._is_entity_list():
-            return {rel_name: mapper(entity_relation)}
-        else:
-            entity_relation._execute_actions(mapper)
-            mapper(entity_relation)
-            return {}
-
-
+@dataclass(kw_only=True)
 class LocalEntity(Entity):
     """Entity inside an aggregate."""
 
 
+@dataclass(kw_only=True)
 class AggregateRoot(Entity):
+    # https://docs.sqlalchemy.org/en/14/orm/composites.html
+    # https://blog.szymonmiks.pl/p/what-are-architectural-drivers-in-software-engineering/
     """Consists of 1+ entities. Spans transaction boundaries."""
-
-    _events: list[DomainEvent] = []
+    _events: list[DomainEvent] = field(repr=False, default_factory=list)
 
     def add_domain_event(self, event: DomainEvent) -> None:
         self._events.append(event)
@@ -90,3 +44,33 @@ class AggregateRoot(Entity):
         events = self._events
         self._events = []
         return events
+
+
+class AwaitableAttrs:
+    def __init__(
+        self,
+        entity: Optional[Entity] = None,
+        awaitable_attrs: Optional[Any] = None,
+    ) -> None:
+        assert entity or awaitable_attrs, (
+            "Either entity or awaitable_attrs must be provided."
+        )
+        assert not (entity and awaitable_attrs), (
+            "Only one of entity or awaitable_attrs should be provided."
+        )
+        self._entity = entity
+        self._awaitable_attrs = awaitable_attrs
+
+        def attrs_getter(key: str) -> Any:
+            return getattr(self._awaitable_attrs, key)
+
+        async def entity_getter(key: str):
+            return getattr(self._entity, key)
+
+        self._getter = attrs_getter if self._awaitable_attrs else entity_getter
+
+    def __getattr__(self, key: str) -> Any:
+        if key.startswith("_"):
+            return object.__getattribute__(self, key)
+        else:
+            return self._getter(key)

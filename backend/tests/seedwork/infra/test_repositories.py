@@ -5,70 +5,70 @@ from tests.seedwork.confdata.domain.entities import Example
 from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 
 
-class TestMemoryCommandRepository:
-    @pytest.mark.unit
-    async def test_add_and_get(self, mem_uow: ITestUnitOfWork) -> None:
-        async with mem_uow:
+class TestSqlAlchemyRepository:
+    @pytest.mark.integration
+    async def test_can_add_and_get(self, sql_uow: ITestUnitOfWork) -> None:
+        async with sql_uow as uow:
             example = Example(name="example")
-            mem_uow.examples.add(example)
-            retrieved = await mem_uow.examples.get_by_id(example.id)
+            uow.examples.add(example)
+            retrieved = await uow.examples.get_by_id(example.id)
             assert retrieved.name == "example"
 
-    @pytest.mark.unit
-    async def test_delete(self, mem_uow: ITestUnitOfWork) -> None:
-        async with mem_uow:
+    @pytest.mark.integration
+    async def test_can_delete(self, sql_uow: ITestUnitOfWork) -> None:
+        async with sql_uow as uow:
             example = Example(name="example")
-            mem_uow.examples.add(example)
-            await mem_uow.examples.delete(example)
-            res = await mem_uow.examples.get_by_id(example.id)
+            uow.examples.add(example)
+            await uow.examples.delete(example)
+            res = await uow.examples.get_by_id(example.id)
             assert res is None
 
-    @pytest.mark.unit
-    async def test_delete_by_id(self, mem_uow: ITestUnitOfWork) -> None:
-        async with mem_uow:
+    @pytest.mark.integration
+    async def test_can_delete_by_id(self, sql_uow: ITestUnitOfWork) -> None:
+        async with sql_uow as uow:
             example = Example(name="example")
-            mem_uow.examples.add(example)
-            await mem_uow.examples.delete_by_id(example.id)
-            res = await mem_uow.examples.get_by_id(example.id)
+            uow.examples.add(example)
+            await uow.examples.delete_by_id(example.id)
+            res = await uow.examples.get_by_id(example.id)
             assert res is None
 
-    @pytest.mark.unit
-    async def test_get_by_id_not_found_as_none(
-        self, mem_uow: ITestUnitOfWork
-    ) -> None:
-        async with mem_uow:
-            res = await mem_uow.examples.get_by_id(next_id())
-            assert res is None
-
-    @pytest.mark.unit
-    async def test_count(self, mem_uow: ITestUnitOfWork) -> None:
-        async with mem_uow:
-            mem_uow.examples.add(Example(name="example"))
-            mem_uow.examples.add(Example(name="example"))
-            assert await mem_uow.examples.count() == 2
-
-
-class TestSqlAlchemyCommandRepository:
-    mem_tests = TestMemoryCommandRepository()
-
     @pytest.mark.integration
-    async def test_add_and_get(self, sql_uow: ITestUnitOfWork) -> None:
-        await self.mem_tests.test_add_and_get(sql_uow)
-
-    @pytest.mark.integration
-    async def test_delete(self, sql_uow: ITestUnitOfWork) -> None:
-        await self.mem_tests.test_delete(sql_uow)
-
-    @pytest.mark.integration
-    async def test_delete_by_id(self, sql_uow: ITestUnitOfWork) -> None:
-        await self.mem_tests.test_delete_by_id(sql_uow)
-
-    @pytest.mark.integration
-    async def test_get_by_id_not_found_as_none(
+    async def test_can_get_by_id_not_found_as_none(
         self, sql_uow: ITestUnitOfWork
     ) -> None:
-        await self.mem_tests.test_get_by_id_not_found_as_none(sql_uow)
+        async with sql_uow as uow:
+            res = await uow.examples.get_by_id(next_id())
+            assert res is None
 
     @pytest.mark.integration
-    async def test_count(self, sql_uow: ITestUnitOfWork) -> None:
-        await self.mem_tests.test_count(sql_uow)
+    async def test_can_count(self, sql_uow: ITestUnitOfWork) -> None:
+        async with sql_uow as uow:
+            uow.examples.add(Example(name="example"))
+            uow.examples.add(Example(name="example"))
+            assert await uow.examples.count() == 2
+
+
+class TestMemoryRepository:
+    sql_repo = TestSqlAlchemyRepository()
+
+    @pytest.mark.unit
+    async def test_can_add_and_get(self, mem_uow: ITestUnitOfWork) -> None:
+        await self.sql_repo.test_can_add_and_get(mem_uow)
+
+    @pytest.mark.unit
+    async def test_can_delete(self, mem_uow: ITestUnitOfWork) -> None:
+        await self.sql_repo.test_can_delete(mem_uow)
+
+    @pytest.mark.unit
+    async def test_can_delete_by_id(self, mem_uow: ITestUnitOfWork) -> None:
+        await self.sql_repo.test_can_delete_by_id(mem_uow)
+
+    @pytest.mark.unit
+    async def test_can_get_by_id_not_found_as_none(
+        self, mem_uow: ITestUnitOfWork
+    ) -> None:
+        await self.sql_repo.test_can_get_by_id_not_found_as_none(mem_uow)
+
+    @pytest.mark.unit
+    async def test_can_count(self, mem_uow: ITestUnitOfWork) -> None:
+        await self.sql_repo.test_can_count(mem_uow)

@@ -15,7 +15,7 @@ def override_app_container(container, config, engine, session_factory) -> None:
 def get_memory_container() -> AppContainer:
     """
     Override infrastructure from SQLAlchemy to memory repositories
-    and units of work
+    and units of work.
     """
 
     container = AppContainer()
@@ -23,10 +23,7 @@ def get_memory_container() -> AppContainer:
         providers.Singleton(
             Factory,
             InMemoryUnitOfWork,
-            # examples={
-            #     "command": InMemoryCommandRepository,
-            #     "query": InMemoryQueryRepository,
-            # }
+            # examples=InMemoryCommandRepository,
         )
     )
     return container

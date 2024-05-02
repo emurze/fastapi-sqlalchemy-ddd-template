@@ -2,7 +2,11 @@ import pytest
 from asgi_lifespan import LifespanManager
 from httpx import AsyncClient
 from sqlalchemy import NullPool
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    async_sessionmaker,
+    AsyncSession,
+)
 
 from seedwork.application.messagebus import MessageBus
 from collections.abc import AsyncIterator
@@ -27,11 +31,16 @@ override_app_container(app_container, config, engine, session_factory)
 sqlalchemy_container: TypeAlias = app_container
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _start_mappers() -> None:
+    pass
+
+
 @pytest.fixture(scope="function")
 async def _restart_tables() -> None:
     """Cleans tables before each test."""
     async with engine.begin() as conn:
-        async with suppress_echo(engine):
+        with suppress_echo(engine):
             await conn.run_sync(Model.metadata.drop_all)
             await conn.run_sync(Model.metadata.create_all)
         await conn.commit()
@@ -65,6 +74,12 @@ def sql_bus(_restart_tables) -> MessageBus:
 @pytest.fixture(scope="function")
 def sql_uow(_restart_tables) -> IUnitOfWork:
     return sqlalchemy_container.uow()()
+
+
+@pytest.fixture(scope="function")
+async def async_session() -> AsyncIterator[AsyncSession]:
+    async with session_factory() as session:
+        yield session
 
 
 @pytest.fixture(scope="function")

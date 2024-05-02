@@ -1,8 +1,10 @@
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from seedwork.application.queries import Query, QueryResult
 from seedwork.domain.errors import Error
-from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
+from tests.seedwork.confdata.infra.models import ExampleModel
 
 
 class GetExampleQuery(Query):
@@ -11,19 +13,21 @@ class GetExampleQuery(Query):
 
 async def get_example(
     query: GetExampleQuery,
-    uow: ITestUnitOfWork,
+    session: AsyncSession,
+) -> dict | Error:
+    example = await session.get(ExampleModel, query.id)
+
+    if example is None:
+        return Error.not_found()
+
+    return example.scalar_one().as_dict()
+
+
+class GetExamplesQuery(Query):
+    pass
+
+
+async def get_examples(
+    query: GetExamplesQuery, session: AsyncSession
 ) -> QueryResult:
-    async with uow:
-        example = await uow.query_examples.get(id=query.id)
-
-        if example is None:
-            return QueryResult(error=Error.not_found())
-
-        payload = example.as_dict() | {
-            "items": [
-                item.as_dict()
-                | {"addresses": [addr.as_dict() for addr in item.addresses]}
-                for item in example.items
-            ]
-        }
-        return QueryResult(payload=payload)
+    pass

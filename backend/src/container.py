@@ -9,13 +9,9 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from config import TopLevelConfig
+from src.config import TopLevelConfig
 from seedwork.infra.uows import SqlAlchemyUnitOfWork
 from seedwork.presentation.factories import get_dict, get_bus
-
-
-def get_config() -> TopLevelConfig:
-    return TopLevelConfig()
 
 
 def get_engine(top_config: TopLevelConfig) -> AsyncEngine:
@@ -32,7 +28,7 @@ def get_session_factory(engine: AsyncEngine) -> Callable:
 
 
 class AppContainer(containers.DeclarativeContainer):
-    config = Singleton(get_config)
+    config: Any = Singleton(TopLevelConfig)
     db_engine = Singleton(get_engine, config)
     db_session_factory = Singleton(get_session_factory, db_engine)
 
