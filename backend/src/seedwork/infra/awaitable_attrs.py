@@ -18,44 +18,45 @@ class GenericAwaitableAttrs:
 
 
 class SqlAlchemyAwaitableAttrs(GenericAwaitableAttrs):
-    """Provides asynchronous access to lazy attributes."""  # todo: and loads
+    """Loads lazy sqlalchemy attributes and relations asynchronously."""
 
     def __getattr__(self, name: str) -> Awaitable[Any]:
         return greenlet_spawn(getattr, self._instance, name)
 
 
 class MemoryAwaitableAttrs(GenericAwaitableAttrs):
-    """Provides asynchronous lazy loading access to memory relations"""  # todo: and loads
+    """
+    Loads lazy memory attributes and relations asynchronously.  # reflects logic
+    Marks objects to raise errors when accessing unloaded attributes and relations.
+    """
 
     def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         self._loaded_objs: list = []
 
-    def _load_obj(self, obj: Any) -> Any:
+    def _mark_obj(self, obj: Any) -> Any:
+        """Marks obj as loaded and appends it to the list of loaded objects."""
         obj._is_loaded = True
         self._loaded_objs.append(obj)
         return obj
 
     def __getattr__(self, name: str) -> Awaitable[Any]:
-        """
-        Provides access to all properties, loaded or unloaded relations,
-        marking them as loaded.
-        """
+        """Loads memory attributes and relations, marking them as loaded."""
 
         async def wrapper():
-            return self._load_obj(getattr(self._instance, f"__loading{name}"))
+            return self._mark_obj(getattr(self._instance, f"__loading{name}"))
 
         getter = object.__getattribute__
         return getter(self, name) if name.startswith("_") else wrapper()
 
-    def _clear_flags(self) -> None:
-        """Clears flags from loaded objects."""
+    def _deletes_markers(self) -> None:
+        """Deletes markers from loaded objects."""
         for obj in self._loaded_objs:
             delattr(obj, "_is_loaded")
 
 
 def getattr_with_loading_errors(self, name: str) -> Any:
-    """Gets entity attributes and raises errors if relations are not loaded."""
+    """Gets attributes and raises errors if relations are not loaded."""
 
     if name.startswith("__loading"):
         return object.__getattribute__(self, name.replace("__loading", ""))

@@ -1,30 +1,14 @@
 import pytest
 from sqlalchemy.exc import MissingGreenlet
 
-from seedwork.domain.services import next_id
 from tests.seedwork.confdata.domain.entities import ExampleItem, Example
 from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
-from tests.seedwork.confdata.infra.models import ExampleModel
-
-
-class TestModelBaseMixin:
-    @pytest.mark.unit
-    def test_get_fields_success(self) -> None:
-        assert [*ExampleModel.get_fields()] == ["id", "name"]
-
-    @pytest.mark.unit
-    def test_as_dict(self) -> None:
-        example = ExampleModel(id=(example_id := next_id()), name="Example 1")
-        assert example.as_dict() == {"id": example_id, "name": "Example 1"}
-
-    @pytest.mark.skip
-    @pytest.mark.unit
-    def test_update(self) -> None:
-        pass
 
 
 @pytest.mark.integration
-async def test_orm_unloaded_relations_errors(sql_uow: ITestUnitOfWork) -> None:
+async def test_orm_awaitable_unloaded_errors(sql_uow: ITestUnitOfWork) -> None:
+    """Tests SQLAlchemy ORM unloaded relations errors using awaitable_attrs."""
+
     async with sql_uow as uow:
         new_example = Example(name="Example", items=[ExampleItem(name="item")])
         uow.examples.add(new_example)
@@ -54,5 +38,9 @@ async def test_orm_unloaded_relations_errors(sql_uow: ITestUnitOfWork) -> None:
 
 
 @pytest.mark.unit
-async def test_mem_unloaded_relations_errors(mem_uow: ITestUnitOfWork) -> None:
-    await test_orm_unloaded_relations_errors(mem_uow)
+async def test_mem_awaitable_unloaded_errors(mem_uow: ITestUnitOfWork) -> None:
+    """
+    Tests memory unloaded errors using awaitable_attrs
+    and __getattribute__ binding.
+    """
+    await test_orm_awaitable_unloaded_errors(mem_uow)

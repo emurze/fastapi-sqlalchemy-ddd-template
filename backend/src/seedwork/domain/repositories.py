@@ -11,7 +11,7 @@ M = TypeVar("M", bound=Any)
 
 
 class IGenericRepository(Generic[T], metaclass=abc.ABCMeta):
-    identity_map: dict[UUID, T]
+    identity_map: dict[UUID, Any]
 
     @abc.abstractmethod
     def add(self, entity: T) -> UUID: ...

@@ -1,9 +1,14 @@
+from collections.abc import Iterator
+
 import pytest
 
 from seedwork.application.messagebus import MessageBus
+from seedwork.domain.repositories import IGenericRepository
 from seedwork.infra.database import suppress_echo
+from seedwork.infra.repository import InMemoryRepository, raise_loading_errors
 from tests.conftest import engine
 from tests.seedwork.confdata.container import containers
+from tests.seedwork.confdata.domain.entities import Example
 from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 from tests.seedwork.confdata.infra.models import Model, start_mappers
 
@@ -43,3 +48,10 @@ def sql_bus(_restart_example_table) -> MessageBus:
 def mem_bus() -> MessageBus:
     memory_container = containers.get_memory_container()
     return memory_container.message_bus()
+
+
+@pytest.fixture(scope="function")
+def mem_examples() -> Iterator[IGenericRepository]:
+    repository = InMemoryRepository(Example)
+    with raise_loading_errors(repository):
+        yield repository

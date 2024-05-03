@@ -74,7 +74,7 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
         ]
 
     async def __aenter__(self) -> Self:
-        self.bind_getters()
+        self.override_getters()
         return self
 
     async def __aexit__(self, *args) -> None:
@@ -82,7 +82,7 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
             self._is_committed = False
         else:
             await self.rollback()
-        self.clear_getters()
+        self.restore_getters()
 
     async def commit(self) -> None:
         """Fixes a new repositories memory state."""
@@ -96,15 +96,18 @@ class InMemoryUnitOfWork(CollectEventsMixin, IBaseUnitOfWork):
         for repository, old_identity_map in self._memory_state:
             repository.identity_map = copy.deepcopy(old_identity_map)
 
-    def bind_getters(self) -> None:
-        """Binds memory getters to entity classes."""
+    def override_getters(self) -> None:
+        """
+        Overrides entity_class getters to raise errors
+        when accessing unloaded lazy attributes and relations.
+        """
         for repo in self._repos:
-            repo.bind_getter()
+            repo.override_getter()
 
-    def clear_getters(self) -> None:
-        """Clears memory getters from entity classes."""
+    def restore_getters(self) -> None:
+        """Restores entity_class getters to their previous state."""
         for repo in self._repos:
-            repo.clear_getter()
+            repo.restore_getter()
 
     def _set_repos_as_attrs(self, cls_repos: dict) -> list[IGenericRepository]:
         """Sets repositories as attributes of the unit of work."""

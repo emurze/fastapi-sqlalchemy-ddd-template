@@ -17,6 +17,7 @@ async def create_example(bus: MessageBus) -> ExampleId:
         items=[ExampleItemDTO(id=next_id(), name="Hello")],
     )
     res = await bus.handle(command)
+    # todo: bus.uow feature
     assert res.is_success()
     return res.payload["id"]
 

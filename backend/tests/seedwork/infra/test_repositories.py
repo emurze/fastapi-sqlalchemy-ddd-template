@@ -1,5 +1,7 @@
 import pytest
+from sqlalchemy.exc import MissingGreenlet
 
+from seedwork.domain.repositories import IGenericRepository
 from seedwork.domain.services import next_id
 from tests.seedwork.confdata.domain.entities import Example
 from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
@@ -72,3 +74,13 @@ class TestMemoryRepository:
     @pytest.mark.unit
     async def test_can_count(self, mem_uow: ITestUnitOfWork) -> None:
         await self.sql_repo.test_can_count(mem_uow)
+
+    @pytest.mark.marked
+    @pytest.mark.unit
+    async def test_repositories_with_explicit_binding(
+        self, mem_examples: IGenericRepository
+    ) -> None:
+        mem_examples.add(added := Example(name="example"))
+        example = await mem_examples.get_by_id(added.id)
+        with pytest.raises(MissingGreenlet):
+            _ = example.items

@@ -2,9 +2,10 @@ import abc
 
 from seedwork.domain.repositories import IGenericRepository
 from seedwork.domain.uows import IBaseUnitOfWork
+from tests.seedwork.confdata.domain.entities import Example
 
 
-class IExampleRepository(IGenericRepository, abc.ABC):
+class IExampleRepository(IGenericRepository[Example], abc.ABC):
     pass
 
 

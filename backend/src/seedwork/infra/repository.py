@@ -1,7 +1,8 @@
+import contextlib
 import itertools
 from functools import partial
 
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select, func
@@ -28,8 +29,8 @@ class Deleted:
 DELETED = Deleted()
 
 
-class SqlAlchemyRepository(IGenericRepository):
-    entity_class: type[Any]
+class SqlAlchemyRepository(IGenericRepository[AggregateRoot]):
+    entity_class: type[AggregateRoot]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -86,16 +87,26 @@ class SqlAlchemyRepository(IGenericRepository):
         )
 
 
-class InMemoryRepository(IGenericRepository):
+class InMemoryRepository(IGenericRepository[AggregateRoot]):
     """
-    Should always be wrapped by `bind_getter` and `clear_getter` methods.  # Todo: should be wrapped, one example
-    These methods set loading errors.  # todo: normal view
+    In-memory repository implementation.
+
+    Should always be wrapped by `override_getter` and `restore_getter` methods.
+    Example:
+        ```
+        repository = InMemoryRepository(Entity)
+        with raise_loading_errors(repository):
+            # Access entities here
+        ```
+
+    These methods enable raising loading errors when accessing
+    unloaded lazy attributes and relations.
     """
 
-    def __init__(self, entity_class) -> None:
-        self.entity_class = entity_class
-        self.identity_map: dict[UUID, AggregateRoot] = {}
-        self._old_entity_getter: Optional[Callable] = None
+    def __init__(self, entity_class: type[AggregateRoot]) -> None:
+        self.entity_class: type[AggregateRoot] = entity_class
+        self.identity_map: dict[UUID, Any] = {}
+        self._old_entity_getter: Any = None
 
     def add(self, entity: AggregateRoot) -> UUID:
         self.identity_map[entity.id] = entity
@@ -122,27 +133,41 @@ class InMemoryRepository(IGenericRepository):
     ) -> AggregateRoot | None:
         """
         Retrieves an entity by ID from the repository.
-        Sets memory awaitable for lazy loading.
+        Sets memory awaitable_attr for async lazy loading.
         """
         if entity := self.identity_map.get(entity_id):
             entity.awaitable_attrs = MemoryAwaitableAttrs.make(entity)
         return entity
 
-    def bind_getter(self) -> None:  # todo: only for me, test with explicit binding
-        """Binds getter with loading errors to the entity_class."""
+    def override_getter(self) -> None:
+        """
+        Overrides entity class __getattribute__ to raise errors
+        when accessing unloaded lazy attributes and relations.
+        """
         self._old_entity_getter = self.entity_class.__getattribute__
         self.entity_class.__getattribute__ = getattr_with_loading_errors
 
-    def clear_getter(self) -> None:
-        """Clears the getter with loading errors from the entity_class."""
+    def restore_getter(self) -> None:
+        """Restores entity class __getattribute__ to previous state."""
         self.entity_class.__getattribute__ = self._old_entity_getter
-        self._clear_flags()
+        self._deletes_markers()
 
-    def _clear_flags(self) -> None:
-        """Clears flags set by awaitable attrs for the custom getter."""
+    def _deletes_markers(self) -> None:
+        """Deletes markers set by awaitable_attrs for the overridden getter."""
         for item in self.identity_map.values():
             if attrs := getattr(item.awaitable_attrs, "_awaitable_attrs"):
-                getattr(attrs, "_clear_flags")()
+                getattr(attrs, "_deletes_markers")()
+
+
+@contextlib.contextmanager
+def raise_loading_errors(repository: InMemoryRepository) -> Iterator[None]:  # todo: rename
+    """
+    Wraps your repository to raise errors when accessing unloaded
+    lazy attributes and relations outside a unit of work.
+    """
+    repository.override_getter()
+    yield
+    repository.restore_getter()
 
 
 def as_memory(sql_repo: type[SqlAlchemyRepository]) -> Callable:

@@ -29,13 +29,6 @@ class TestAggregateRoot:
     def test_can_add_only_one_domain_event_at_time(self) -> None:
         example = Example(name="hello")
         example.add_domain_event(NameChanged(new_name="helloo"))
-        assert len(example._events) == 1
-        assert example._events[0] == NameChanged(new_name="helloo")
-
-    @pytest.mark.unit
-    def test_collect_events_dont_duplicate_events(self) -> None:
-        example = Example(name="hello")
-        example.add_domain_event(NameChanged(new_name="helloo"))
         events = example.collect_events()
         assert len(events) == 1
         assert events[0] == NameChanged(new_name="helloo")

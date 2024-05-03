@@ -4,7 +4,7 @@ from dependency_injector import containers
 from dependency_injector.providers import Factory, Singleton
 
 from seedwork.infra.injector import Link
-from seedwork.infra.repositories import as_memory
+from seedwork.infra.repository import as_memory
 from seedwork.infra.uows import InMemoryUnitOfWork, SqlAlchemyUnitOfWork
 from seedwork.presentation.factories import get_dict, get_bus, get_handler
 from tests.conftest import session_factory as _session_factory
