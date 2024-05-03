@@ -10,7 +10,7 @@ from tests.conftest import engine
 from tests.seedwork.confdata.container import containers
 from tests.seedwork.confdata.domain.entities import Example
 from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
-from tests.seedwork.confdata.infra.models import Model, start_mappers
+from tests.seedwork.confdata.infra.models import mapped_registry, start_mappers
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -22,8 +22,8 @@ async def _start_mappers() -> None:
 async def _restart_example_table() -> None:
     async with engine.begin() as conn:
         with suppress_echo(engine):
-            await conn.run_sync(Model.metadata.drop_all)
-            await conn.run_sync(Model.metadata.create_all)
+            await conn.run_sync(mapped_registry.metadata.drop_all)
+            await conn.run_sync(mapped_registry.metadata.create_all)
         await conn.commit()
 
 

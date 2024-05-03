@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from uuid import UUID
 
 from seedwork.domain.entities import AggregateRoot, LocalEntity
 from seedwork.domain.services import uuid_field
@@ -15,6 +16,16 @@ class Example(AggregateRoot):
     def change_name(self, new_name: str) -> None:
         self.name = new_name
         self.add_domain_event(NameChanged(new_name=new_name))
+
+    async def update_item(self, item_id: UUID, **kw) -> None:
+        for item in await self.awaitable_attrs.items:
+            if item.id == item_id:
+                for key, value in kw.items():
+                    setattr(item, key, value)
+                return
+
+    async def delete_example(self, example_id: UUID) -> None:
+        await self.awaitable_attrs.items.remove(example_id)
 
 
 @dataclass(kw_only=True)

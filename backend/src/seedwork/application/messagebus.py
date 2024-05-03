@@ -42,7 +42,9 @@ class MessageBus:
                 return CommandResult(error=result)
 
             self.queue += uow.collect_events()
-            self.background_queue += result.events
+
+            if result:
+                self.background_queue += result.events
 
             while len(self.queue) > 0:
                 event = self.queue.pop(0)
@@ -63,7 +65,17 @@ class MessageBus:
 
         wrapper_handler = partial(handler, *args, **(new_kw or kw))
         result = await wrapper_handler(query)
-        return result
+
+        if session := new_kw.get("session"):
+            await session.close()
+
+        if isinstance(result, QueryResult):
+            return result
+
+        if isinstance(result, Error):
+            return QueryResult(error=result)
+
+        return QueryResult(payload=result)
 
     async def _handle_domain_event(self, event: DomainEvent) -> EventResult:
         handler, args, kw = self.event_handlers[type(event)]

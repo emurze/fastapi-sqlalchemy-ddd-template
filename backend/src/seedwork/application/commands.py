@@ -14,5 +14,8 @@ class CommandResult(DTO):
     events: list[DomainEvent] = []
     error: Optional[Error] = None
 
-    def is_success(self):
+    def is_success(self) -> bool:
         return not self.error
+
+    def is_failure(self) -> bool:
+        return not self.is_success()

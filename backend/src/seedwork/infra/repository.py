@@ -71,6 +71,7 @@ class SqlAlchemyRepository(IGenericRepository[AggregateRoot]):
         )
         if entity:
             entity.awaitable_attrs = SqlAlchemyAwaitableAttrs.make(entity)
+            entity.events = []
             self.identity_map[entity.id] = entity
 
         return entity

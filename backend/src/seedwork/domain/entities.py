@@ -1,6 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import field, dataclass
 from typing import Optional, Any, Self
 from uuid import UUID
+
+from dacite import from_dict
 
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.services import uuid_field, hidden_field
@@ -17,9 +19,10 @@ class Entity:
 
     @classmethod
     def create(cls, **kw) -> tuple[Self, list[Any]]:
-        return cls(**kw), []
+        # validate
+        return from_dict(data_class=cls, data=kw), []
 
-    def update(self, **kw) -> None:
+    def update(self, **kw) -> Any:  # todo: Error | None
         assert kw.get("id") is None, "Entity can't update its identity."
         for key, value in kw.items():
             setattr(self, key, value)
@@ -35,14 +38,14 @@ class AggregateRoot(Entity):
     # https://docs.sqlalchemy.org/en/14/orm/composites.html
     # https://blog.szymonmiks.pl/p/what-are-architectural-drivers-in-software-engineering/
     """Consists of 1+ entities. Spans transaction boundaries."""
-    _events: list[DomainEvent] = field(repr=False, default_factory=list)
+    events: list[DomainEvent] = field(default_factory=list)
 
     def add_domain_event(self, event: DomainEvent) -> None:
-        self._events.append(event)
+        self.events.append(event)
 
     def collect_events(self) -> list[DomainEvent]:
-        events = self._events
-        self._events = []
+        events = self.events
+        self.events = []
         return events
 
 

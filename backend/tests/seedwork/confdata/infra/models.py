@@ -1,35 +1,41 @@
-from sqlalchemy import UUID, Column, String, ForeignKey
-from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy import UUID, Column, String, ForeignKey, Table
+from sqlalchemy.orm import registry, relationship
 
 from seedwork.domain.services import next_id
-from seedwork.infra.database import ModelBase
 from tests.seedwork.confdata.domain.entities import Example, ExampleItem
 
+mapped_registry = registry()
 
-class Model(ModelBase, AsyncAttrs, DeclarativeBase):
-    __allow_unmapped__ = True
+example_table = Table(
+    "example",
+    mapped_registry.metadata,
+    Column("id", UUID, primary_key=True, default=next_id),
+    Column("name", String, nullable=False),
+)
 
-
-class ExampleModel(Model):
-    __tablename__ = "example"
-    id = Column(UUID, primary_key=True, default=next_id)
-    name = Column(String, nullable=False)
-
-
-class ExampleItemModel(Model):
-    __tablename__ = "example_item"
-    id = Column(UUID, primary_key=True, default=next_id)
-    name = Column(String, nullable=False)
-    example_id = Column(UUID, ForeignKey("example.id"), nullable=False)
+example_item_table = Table(
+    "example_item",
+    mapped_registry.metadata,
+    Column("id", UUID, primary_key=True, default=next_id),
+    Column("name", String, nullable=False),
+    Column(
+        "example_id",
+        UUID,
+        ForeignKey("example.id", ondelete="CASCADE"),
+        nullable=False
+    ),
+)
 
 
 def start_mappers() -> None:
-    Model.map_imperatively(
+    mapped_registry.map_imperatively(
+        ExampleItem,
+        example_item_table,
+    )
+    mapped_registry.map_imperatively(
         Example,
-        ExampleModel,
+        example_table,
         properties={
-            "items": relationship(ExampleItem),
+            "items": relationship(ExampleItem, backref="example", cascade="all, delete"),
         },
     )
-    Model.map_imperatively(ExampleItem, ExampleItemModel)

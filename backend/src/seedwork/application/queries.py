@@ -14,3 +14,6 @@ class QueryResult(DTO):
 
     def is_success(self):
         return not self.error
+
+    def is_failure(self) -> bool:
+        return not self.is_success()

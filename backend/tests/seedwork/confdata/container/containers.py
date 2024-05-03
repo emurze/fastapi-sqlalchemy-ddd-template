@@ -23,11 +23,19 @@ class SqlAlchemySeedWorkContainer(containers.DeclarativeContainer):
     query_handlers: Callable = Singleton(
         get_dict,
         Singleton(get_handler, query.get_example, session=session_factory),
-        Singleton(get_handler, query.get_examples, session=session_factory),
+        Singleton(
+            get_handler,
+            query.get_example_item,
+            session=session_factory,
+        ),
     )
     command_handlers: Callable = Singleton(
         get_dict,
         Singleton(get_handler, command.create_example, uow=uow_factory),
+        Singleton(get_handler, command.update_example, uow=uow_factory),
+        Singleton(get_handler, command.delete_example, uow=uow_factory),
+        Singleton(get_handler, command.update_example_item, uow=uow_factory),
+        Singleton(get_handler, command.delete_example_item, uow=uow_factory),
     )
     event_handlers: Callable = Singleton(get_dict)
     message_bus: Callable = Singleton(

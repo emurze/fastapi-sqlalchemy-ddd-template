@@ -6,9 +6,9 @@ from tests.seedwork.confdata.domain.ports import ITestUnitOfWork
 
 
 @pytest.mark.integration
-async def test_orm_awaitable_unloaded_errors(sql_uow: ITestUnitOfWork) -> None:
-    """Tests SQLAlchemy ORM unloaded relations errors using awaitable_attrs."""
-
+async def test_orm_lazy_loading_with_awaitable_attrs_attributes(
+    sql_uow: ITestUnitOfWork
+) -> None:
     async with sql_uow as uow:
         new_example = Example(name="Example", items=[ExampleItem(name="item")])
         uow.examples.add(new_example)
@@ -38,9 +38,7 @@ async def test_orm_awaitable_unloaded_errors(sql_uow: ITestUnitOfWork) -> None:
 
 
 @pytest.mark.unit
-async def test_mem_awaitable_unloaded_errors(mem_uow: ITestUnitOfWork) -> None:
-    """
-    Tests memory unloaded errors using awaitable_attrs
-    and __getattribute__ binding.
-    """
-    await test_orm_awaitable_unloaded_errors(mem_uow)
+async def test_mem_lazy_loading_with_awaitable_attrs_attributes(
+    mem_uow: ITestUnitOfWork,
+) -> None:
+    await test_orm_lazy_loading_with_awaitable_attrs_attributes(mem_uow)

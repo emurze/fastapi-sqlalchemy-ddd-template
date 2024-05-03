@@ -26,33 +26,31 @@ class SqlAlchemyAwaitableAttrs(GenericAwaitableAttrs):
 
 class MemoryAwaitableAttrs(GenericAwaitableAttrs):
     """
-    Loads lazy memory attributes and relations asynchronously.  # reflects logic
-    Marks objects to raise errors when accessing unloaded attributes and relations.
+    Loads lazy memory attributes and relations asynchronously,
+    marking them as loaded.
     """
 
     def __init__(self, *args, **kw) -> None:
         super().__init__(*args, **kw)
         self._loaded_objs: list = []
 
-    def _mark_obj(self, obj: Any) -> Any:
+    def _load_obj(self, obj: Any) -> Any:
         """Marks obj as loaded and appends it to the list of loaded objects."""
         obj._is_loaded = True
         self._loaded_objs.append(obj)
         return obj
 
-    def __getattr__(self, name: str) -> Awaitable[Any]:
-        """Loads memory attributes and relations, marking them as loaded."""
-
-        async def wrapper():
-            return self._mark_obj(getattr(self._instance, f"__loading{name}"))
-
-        getter = object.__getattribute__
-        return getter(self, name) if name.startswith("_") else wrapper()
-
     def _deletes_markers(self) -> None:
         """Deletes markers from loaded objects."""
         for obj in self._loaded_objs:
             delattr(obj, "_is_loaded")
+
+    def __getattr__(self, name: str) -> Awaitable[Any]:
+        async def wrapper():
+            return self._load_obj(getattr(self._instance, f"__loading{name}"))
+
+        getter = object.__getattribute__
+        return getter(self, name) if name.startswith("_") else wrapper()
 
 
 def getattr_with_loading_errors(self, name: str) -> Any:
